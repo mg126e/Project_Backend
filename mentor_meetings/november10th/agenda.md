@@ -26,3 +26,12 @@ Not applicable for this first meeting.
 - Scheduled meetings to work on the project pitch video this Thursday and Friday  
 - Plan to discuss and delegate parts of Functional Design on Thursday after receiving feedback during this week’s Project Update  
   
+
+**Post Meeting**
+- Focus on running club idea first, if there’s a way to incorporate other aspect as just a feature rather than splitting into two equally important parts
+- Passion for our project
+- 6 evidence and 6 comparables is reasonable
+- 6 comparables and 6 evidence
+- 1-3 features, 5-7 concepts, cap at 7 concepts
+- Smaller ones like user authentication
+- See how many at minimum we can have while still keeping modularity
