@@ -25,7 +25,6 @@ Not applicable for this first meeting.
 
 - Scheduled meetings to work on the project pitch video this Thursday and Friday  
 - Plan to discuss and delegate parts of Functional Design on Thursday after receiving feedback during this week’s Project Update  
-  
 
 **Post Meeting**
 - Focus on running club idea first, if there’s a way to incorporate other aspect as just a feature rather than splitting into two equally important parts
