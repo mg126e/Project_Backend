@@ -35,4 +35,38 @@ These features address user needs and align with our goal of solving the problem
   * **Safety.** Since we know that applications such as Facebook Groups or dating apps that can facilitate in-person meetings can carry risks, we have thought about different safety measures. This would include allowing location sharing (which could also be useful for tracking a running route) or an option where if a user has not checked in to the app to mark their run as complete within a certain amount of time that would depend on their run, the application may alert a trusted contact they provide. 
   
 ## Ethical analysis
-  * Users
+
+
+**Insight 1: Adapting to Runners’ Changing Goals**
+(Prompt: Time - Adaptation)
+a) Observation: Runners’ motivations can evolve over time. A user might start out as a beginner looking to explore casual 5Ks and gradually transition to intensive marathon training. If the app doesn’t cater to this range of potential use cases, it risks losing relevance in the user’s life and stop benefiting them.
+b) Design response: Create modifiable profile settings that users can change based on what stage they are at in their running journey, allowing them to automatically filter out potential run partners or clubs.
+
+**Insight 2: Supporting Local Businesses and Communities**
+(Prompt: Stakeholders - Indirect Stakeholders)
+a) Observation: Local businesses and neighbourhoods are indirectly impacted by running groups using their spaces. Without an understanding, large groups running through the area might cause discontentment or missed opportunities for mutually beneficial collaborations.
+b) Design response: Add a feature that recommends verified local partners in the area to runners. This gives places like coffee shops and gear stores a chance to make profits, while giving runners convenient places to purchase desired products, and creates a reciprocal relationship that could help communities view the app as a positive local force.
+
+**Insight 3: Respecting Cultural and Regional Differences**
+(Prompt: Pervasivenes - Accounting for Culture)
+a) Observation: Running clubs often have a group cultural mindset; some treat running as a calming, meditative experience while others as a competitive sport or social activity. They may also largely comprise of members with shared backgrounds who are looking to make connections on that basis. Mismatches between existing run clubs and new members could cause interpersonal conflict and general dissatisfaction. 
+b) Design response: Allow customisations of running group pages, with langugage settings and culture indicators (like tags). This would allow users to sort and find running groups that fit their own ideals and mindset.
+
+**Insight 4: Moderating and Maintaining Healthy Communities**
+(Prompt: Pervasivenes - Widspread Use)
+a) Observation: As the app expands, running club message boards may face issues of spam or offensive content. Without oversight, these issues can affect the sense of belonging and community that the app is meant to provide to users.
+b) Design response: Run club message boards could have a permission-based system where only admins of the group can post announcements and other members can only react to posts. This would maintain it as more of a broadcast communication channel than another social media platform that would require extensive content moderation facilities in place.
+
+**Insight 5: Supporting Health and Relaxation**
+(Prompt: Time - Long-Term Health and Well-Being)
+a) Observation: We anticipate that most users of the app see running as a hobby, which is generally a source of relaxation. Running in groups could foster a sense of competitiveness that, while healthy to an extent, may devolve into pressure instead of enjoyment.
+b) Design response: The app could have integrated rest-day notifications that periodically remind the user to take a break and give their body enough time to recover, especially from more strenuous runs.
+
+**Insight 6: Protecting Users’ Trust and Privacy**
+(Prompt: Values - Trust and Privacy)
+a) Observations: The app regularly collects sensitive data about the users like their location, interests, and social activity. It’s important to maintain a degree of transparency with the user to assuage concerns about privacy.
+b) Design response: Include easily navigable privacy setting that let users control the visibility of their information like running stats and group participation. 
+
+
+
+
