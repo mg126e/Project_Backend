@@ -25,6 +25,9 @@ Problem Framing
   * [**RunHub**](https://www.runhub.com/): RunHub acts as a directory for running clubs and events, which makes it useful for finding formal clubs but does not support the formation of informal, small running groups or partners, which can be seen with its application that requires extensive information before one can submit their club. They tackle the problem of human connection when running, but it may seem daunting and unwelcoming to beginners.  
   
 ## Features 
+
+These features address user needs and align with our goal of solving the problem mentioned above. 
+
   * **Running clubs.** This feature would provide users with the ability to start their own running club by just requiring a form that would request information such as pace, location, and when they would typically have their runs, and the ability to join a group with minimal barriers to entry for either side. This feature also benefits an indirect stakeholder, grocery stores and athletic businesses, in the long term when these groups meet up to purchase any running related equipment they may need and if they order customized team merchandise.   
   * **Challenges.** By introducing the idea of challenges, it rewards and encourages the user to dedicate more time to running and to connecting with other users. An example challenge could be “reach 5 members in your run club.”  
   * **Leadership Boards.** A leadership board feature could be introduced that could tie in with the Challenges feature to add to the sense of motivation for runners. We would offer local and national leadership boards for statistics that relate to runners on an individual level and for statistics related to running clubs.   
