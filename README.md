@@ -6,7 +6,7 @@ Team Members: Gloria, Ananya, Marin
 
 Problem framing assignment is contained [here](./problem_framing.md). 
 
-## Problem Framing
+## Functional Design
 
 Functional design assignment is contained [here](./functional_design.md). 
 
