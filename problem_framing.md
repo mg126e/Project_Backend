@@ -38,7 +38,7 @@
 
 **Insight 1: Adapting to Runners’ Changing Goals**
 (Prompt: Time - Adaptation)
-a) Observation: Runners’ motivations can evolve over time. A user might start out as a beginner looking to explore casual 5Ks and gradually transition to intensive marathon training. If the app doesn’t cater to this range of potential use cases, it risks losing relevance in the user’s life and stop benefiting them.
+a) Observation: Runners’ motivations can evolve over time. A user might start out as a beginner looking to explore casual 5Ks and gradually transition to intensive marathon training. If the app doesn’t cater to this range of potential use cases, it risks losing relevance in the user’s life and stops benefiting them.
 b) Design response: Create modifiable profile settings that users can change based on what stage they are at in their running journey, allowing them to automatically filter out potential run partners.
 
 **Insight 2: Supporting Local Businesses and Communities**
@@ -47,12 +47,12 @@ a) Observation: Local businesses and neighbourhoods are indirectly impacted by r
 b) Design response: Add a feature that recommends verified local partners in the area to runners. This gives places like coffee shops and gear stores a chance to make profits, while giving runners convenient places to purchase desired products, and creates a reciprocal relationship that could help communities view the app as a positive local force.
 
 **Insight 3: Respecting Cultural and Regional Differences**
-(Prompt: Pervasivenes - Accounting for Culture)
+(Prompt: Pervasiveness - Accounting for Culture)
 a) Observation: Running clubs often have a group cultural mindset; some treat running as a calming, meditative experience while others as a competitive sport or social activity. They may also largely comprise of members with shared backgrounds who are looking to make connections on that basis. Mismatches between existing run clubs and new members could cause interpersonal conflict and general dissatisfaction. 
-b) Design response: Allow customisations of running group pages, with langugage settings and culture indicators (like tags). This would allow users to sort and find running groups that fit their own ideals and mindset.
+b) Design response: Allow customisations of running group pages, with language settings and culture indicators (like tags). This would allow users to sort and find running groups that fit their own ideals and mindset.
 
 **Insight 4: Moderating and Maintaining Healthy Communities**
-(Prompt: Pervasivenes - Widspread Use)
+(Prompt: Pervasiveness - Widespread Use)
 a) Observation: As the app expands, running club message boards may face issues of spam or offensive content. Without oversight, these issues can affect the sense of belonging and community that the app is meant to provide to users.
 b) Design response: Run club message boards could have a permission-based system where only admins of the group can post announcements and other members can only react to posts. This would maintain it as more of a broadcast communication channel than another social media platform that would require extensive content moderation facilities in place.
 
