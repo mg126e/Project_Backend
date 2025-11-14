@@ -8,13 +8,13 @@
        
 ## Evidence
 
-  * [Having running partners adds a level of accountability that is difficult to achieve otherwise](https://zapendurance.com/group-running-vs-running-alone/#:~:text=Joining%20a%20local%20running%20group,taxing%20both%20physically%20and%20mentally.): This article argues that running with a group can boost accountability, reduce perceived effort on harder days, and elevate motivation and performance, however the writer advises that it should be balanced with solo runs that can offer a valuable space for reflection.  
+  * [Having running partners adds a level of accountability that is difficult to achieve otherwise](https://zapendurance.com/group-running-vs-running-alone/#:~:text=Joining%20a%20local%20running%20group,taxing%20both%20physically%20and%20mentally.): This article argues that running with others can boost accountability, reduce perceived effort on harder days, and elevate motivation and performance, though the writer does advise that it could be balanced with solo runs that can offer a valuable space for reflection.  
   * [Social networks play an important role in maintaining a consistent training habit](https://pmc.ncbi.nlm.nih.gov/articles/PMC8966768/): A study concluded that runners who increased the number of key running partners they ran with tended to train more frequently and were more likely to accomplish their set goals regardless of whether they were socially motivated to run.  
-  *  [Members of the running group had positive social interaction and support during and outside running](https://www.researchgate.net/publication/337690074_Running_together_is_better_than_running_alone_a_qualitative_study_of_a_self-organised_distance_running_group_in_China):  A study on a self-organised running group reported that members found improvements in their running, physical/mental health, personality, and attitude towards life after joining the group.  
+  *  [Members of the running group had positive social interaction and support during and outside running](https://www.researchgate.net/publication/337690074_Running_together_is_better_than_running_alone_a_qualitative_study_of_a_self-organised_distance_running_group_in_China): A study on a self-organised running group reported that members found improvements in their running, physical/mental health, personality, and attitude towards life after joining, which demonstrates the benefits of not running alone.
   * [Affective feelings are directly influenced by the presence of opponents](https://pubmed.ncbi.nlm.nih.gov/32050163/): A 2020 study found that participants running in competition in a head to head 10 km race felt and performed better than their counterparts running alone.  
   * [How can moving together make us feel closer and more connected?](https://www.anthro.ox.ac.uk/article/why-exercising-friends-could-be-better-you): This Oxford article argues that working out with friends lessens fatigue and increases enjoyment and that this heightened positive effect can lead to better performance.  
   * [Reasons to Find a Running Buddy](https://campusrec.wfu.edu/2021/03/reasons-to-find-a-running-buddy/#:~:text=While%20similar%20to%20accountability%2C%20having,partner%20span%20across%20many%20dimensions.): Wake Forest University published an article stating that running partners increase improvement, motivation, and safety.  
-  * [Many women fear for their safety when running alone. Here’s how they prepare](https://www.cnn.com/2024/03/06/health/women-runners-safety-tips-wellness-cec): CNN Health reports that 92% of women surveyed feel concerned for their safety when they go for a run and share the many things they do to feel more safe while running.   
+  * [Many women fear for their safety when running alone. Here’s how they prepare](https://www.cnn.com/2024/03/06/health/women-runners-safety-tips-wellness-cec): CNN Health reports that 92% of women surveyed feel concerned for their safety when they go for a run and share the many things they do to feel more safe while running, including running with another person.   
 
 ## Comparables
   * [**Strava**](https://www.strava.com/): Strava is a popular app for runners, its “Community-Powered Motivation” helps many stay engaged. However, it primarily attracts experienced runners and looks less beginner friendly, especially after they appeared to recently change around their training plan feature. While it helps users find new routes, it does not have as much of a focus on matching users with running partners, which limits its usefulness for those seeking social connections on a closer level.   
@@ -31,18 +31,18 @@
   * **Shared Goals:** This feature would mean that once users who have been matched agree to continue seeing each other after their first run, they can opt in to create shared goals that they will work toward together, such as reaching 100 miles or running in various types of environments. This encourages them to continue working together with more concrete milestones to look forward to and push themselves physically.    
   * **Milestone Map:** A private shared map between two running partners where they can drop a pin at a location where they met a milestone and upload a picture if they want. For example, they could upload a selfie of the two at a Point A where they completed their first 5K.   
   * **Safety Measures.** Since we know that applications such as Facebook Groups or dating apps that can facilitate in-person meetings can carry risks, we have thought about different safety measures. This would include allowing location sharing to track their running route live, an option where if a user has not checked in to the app to mark their run as complete within a predetermined time, the application alerts a trusted contact.   
-  * **Shopping Recommendations.** As a user is on their run, our website will generate notifications when they are within a certain distance of shops to recommend any items they may have forgotten or may now require, such as additional drinks, protein bars, running reflectors, or more. This set of local recommendations for places to go to in the moment also gives businesses as indirect stakeholders a potential boost in customers. 
+  * **Shopping Recommendations.** As a user is on their run, our website will generate notifications when they are within a certain distance of shops to recommend any items they may have forgotten or may need, such as additional drinks, protein bars, a rain jacket, running reflectors, or more. This set of local recommendations for places to go to in the moment also gives businesses as indirect stakeholders a potential boost in customers. 
 
 ## Ethical analysis
 
 **Insight 1: Adapting to Runners’ Changing Goals**
 (Prompt: Time - Adaptation)
 a) Observation: Runners’ motivations can evolve over time. A user might start out as a beginner looking to explore casual 5Ks and gradually transition to intensive marathon training. If the app doesn’t cater to this range of potential use cases, it risks losing relevance in the user’s life and stop benefiting them.
-b) Design response: Create modifiable profile settings that users can change based on what stage they are at in their running journey, allowing them to automatically filter out potential run partners or clubs.
+b) Design response: Create modifiable profile settings that users can change based on what stage they are at in their running journey, allowing them to automatically filter out potential run partners.
 
 **Insight 2: Supporting Local Businesses and Communities**
 (Prompt: Stakeholders - Indirect Stakeholders)
-a) Observation: Local businesses and neighbourhoods are indirectly impacted by running groups using their spaces. Without an understanding, large groups running through the area might cause discontentment or missed opportunities for mutually beneficial collaborations.
+a) Observation: Local businesses and neighbourhoods are indirectly impacted by running duos using their spaces. Without an understanding, large groups running through the area might cause discontentment or missed opportunities for mutually beneficial collaborations.
 b) Design response: Add a feature that recommends verified local partners in the area to runners. This gives places like coffee shops and gear stores a chance to make profits, while giving runners convenient places to purchase desired products, and creates a reciprocal relationship that could help communities view the app as a positive local force.
 
 **Insight 3: Respecting Cultural and Regional Differences**
@@ -57,14 +57,10 @@ b) Design response: Run club message boards could have a permission-based system
 
 **Insight 5: Supporting Health and Relaxation**
 (Prompt: Time - Long-Term Health and Well-Being)
-a) Observation: We anticipate that most users of the app see running as a hobby, which is generally a source of relaxation. Running in groups could foster a sense of competitiveness that, while healthy to an extent, may devolve into pressure instead of enjoyment.
+a) Observation: We anticipate that most users of the app see running as a hobby, which is generally a source of relaxation. Running with a partner could foster a sense of competitiveness that, while healthy to an extent, may devolve into pressure instead of enjoyment.
 b) Design response: The app could have integrated rest-day notifications that periodically remind the user to take a break and give their body enough time to recover, especially from more strenuous runs.
 
 **Insight 6: Protecting Users’ Trust and Privacy**
 (Prompt: Values - Trust and Privacy)
 a) Observations: The app regularly collects sensitive data about the users like their location, interests, and social activity. It’s important to maintain a degree of transparency with the user to assuage concerns about privacy.
-b) Design response: Include easily navigable privacy setting that let users control the visibility of their information like running stats and group participation. 
-
-
-
-
+b) Design response: Include easily navigable privacy setting that let users control the visibility of their information like running stats and location. 
