@@ -30,11 +30,16 @@ Problem Framing
 
 These features address user needs and align with our goal of solving the problem mentioned above. 
 
-  * **Running clubs** This feature would provide users with the ability to start their own running club by just requiring a form that would request information such as pace, location, and when they would typically have their runs, and the ability to join a group with minimal barriers to entry for either side. This feature also benefits an indirect stakeholder, grocery stores and athletic businesses, in the long term when these groups meet up to purchase any running related equipment they may need and if they order customized team merchandise.   
-  * **Challenges** By introducing the idea of challenges, it rewards and encourages the user to dedicate more time to running and to connecting with other users. An example challenge could be “reach 5 members in your run club.”  
-  * **Leadership Boards.** A leadership board feature could be introduced that could tie in with the Challenges feature to add to the sense of motivation for runners. We would offer local and national leadership boards for statistics that relate to runners on an individual level and for statistics related to running clubs.   
-  * **Partner Matching.** This feature would look at the one on one aspect of our idea, which would be matching users looking for a person to go on a run with by generating matches based on running experience level, location, gender, and other filtering features. Whether they continue to keep running together or run once, it encourages human connection and helps users stay active through running.  
-  * **Safety.** Since we know that applications such as Facebook Groups or dating apps that can facilitate in-person meetings can carry risks, we have thought about different safety measures. This would include allowing location sharing (which could also be useful for tracking a running route) or an option where if a user has not checked in to the app to mark their run as complete within a certain amount of time that would depend on their run, the application may alert a trusted contact they provide. 
+* **Real-time Run Buddy:** Similar to Uber in which a user looks for drivers, a user can search for other users who are currently on a run within a certain radius around their ‘pick-up’ location or chosen starting point. Other runners receive this request and can choose to accept the partner run and meet them at the pick-up point. 
+
+* **Partner Matching:** This feature would mean matching users looking for a person to regularly go on runs with (to cultivate a long-standing relationship) by generating matches based on running experience level, pace and distance preferences, location, gender, age, and other filtering tags. Whether they continue to keep running together or run once, it encourages human connection and helps users stay active through running. It also indirectly benefits another stakeholder, grocery stores and athletic businesses, who would benefit from runners purchasing supplies and even customized duo merchandise for themselves. 
+
+* **Shared Goals:** This feature would mean that once users who have been matched agree to continue seeing each other after their first run, they can opt in to create shared goals that they will work toward together, such as reaching 100 miles or running in various types of environments. This encourages them to continue working together with more concrete milestones to look forward to and push themselves physically.  
+
+* **Milestone Map:** A private shared map between two running partners where they can drop a pin at a location where they met a milestone and upload a picture if they want. For example, they could upload a selfie of the two at a Point A where they completed their first 5K. 
+
+* **Safety Measures:** Since we know that applications such as Facebook Groups or dating apps that can facilitate in-person meetings can carry risks, we have thought about different safety measures. This would include allowing location sharing to track their running route live, an option where if a user has not checked in to the app to mark their run as complete within a predetermined time, the application alerts a trusted contact. 
+
   
 ## Ethical analysis
 
