@@ -4,11 +4,11 @@ Team Members: Gloria, Ananya, Marin
 
 ## Problem Framing
 
-Problem framing assignment is contained [here](./problem_framing.md). 
+Problem framing assignment is contained [here](design/functional_design.md). 
 
 ## Functional Design
 
-Functional design assignment is contained [here](./functional_design.md). 
+Functional design assignment is contained [here](design/functional_design.md). 
 
 ## Mentor Meetings
 
