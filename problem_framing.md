@@ -31,13 +31,13 @@ Problem Framing
 These features address user needs and align with our goal of solving the problem mentioned above. 
 
 * **Real-time Run Buddy:** Similar to Uber in which a user looks for drivers, a user can search for other users who are currently on a run within a certain radius around their ‘pick-up’ location or chosen starting point. Other runners receive this request and can choose to accept the partner run and meet them at the pick-up point. 
-
+/
 * **Partner Matching:** This feature would mean matching users looking for a person to regularly go on runs with (to cultivate a long-standing relationship) by generating matches based on running experience level, pace and distance preferences, location, gender, age, and other filtering tags. Whether they continue to keep running together or run once, it encourages human connection and helps users stay active through running. It also indirectly benefits another stakeholder, grocery stores and athletic businesses, who would benefit from runners purchasing supplies and even customized duo merchandise for themselves. 
-
+/
 * **Shared Goals:** This feature would mean that once users who have been matched agree to continue seeing each other after their first run, they can opt in to create shared goals that they will work toward together, such as reaching 100 miles or running in various types of environments. This encourages them to continue working together with more concrete milestones to look forward to and push themselves physically.  
-
+/
 * **Milestone Map:** A private shared map between two running partners where they can drop a pin at a location where they met a milestone and upload a picture if they want. For example, they could upload a selfie of the two at a Point A where they completed their first 5K. 
-
+/
 * **Safety Measures:** Since we know that applications such as Facebook Groups or dating apps that can facilitate in-person meetings can carry risks, we have thought about different safety measures. This would include allowing location sharing to track their running route live, an option where if a user has not checked in to the app to mark their run as complete within a predetermined time, the application alerts a trusted contact. 
 
   
