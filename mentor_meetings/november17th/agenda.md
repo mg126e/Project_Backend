@@ -21,6 +21,7 @@ We met up three times this past week to cover the changes we needed to make for 
   * Google sign in, which would get rid of our **PasswordAuthentication** concept?   
   * Use student ID somehow?  
 * How to start with implementation in terms of setup? We cannot fork the backend repo again. 
+* Feedback on our visual design study?
 
 **Design changes**  
 We made the huge design change of going from a run club based app to partnerships. This was a big shift and we thought about what features would most make sense with this type of app, which also affected which final features we ended up with.

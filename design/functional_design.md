@@ -109,8 +109,6 @@
         - `_filterUsers(tags?: { [tagType: string]: String|Number }, location?: String): (user: User)[]`
             - *Effects:* Returns all users who match all specified tag type/value pairs (if any), and/or are in the specified location (if provided). If neither is provided, returns all users.
 
-
-
 - **MilestoneMap** [User, User]
     - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations and optionally uploading photos.
     - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
@@ -132,6 +130,25 @@
         - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
             - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
 
+## Syncs
+
+- **After Registration → Create Profile**
+    - When a user successfully registers (PasswordAuthentication), an empty UserProfile is automatically created for them.
+
+- **Profile Completion → Activation & Discoverability**
+    - When a user completely fills out their profile (all required fields), their profile becomes active and they are discoverable by other runners for partner matching and filtering.
+
+- **Post-Run → Option to Continue**
+    - After both users complete a run together, they are prompted with the option to continue running together as partners.
+
+- **Partnership Agreement → SharedGoals & MilestoneMap Setup**
+    - If both users agree to continue running together, a SharedGoals instance and a MilestoneMap are automatically set up for the pair.
+
+- **Partnership End → Reset & Archive**
+    - If two users decide to end their partnership, the PartnerMatching page is reset for both, and their SharedGoals and MilestoneMap are erased from active use but remain accessible in an archive/history page for future reference.
+
+# TODO: add notes section to all concepts and syncs 
+
 ## User Journey
 After moving to a new city for her first year of college, a student feels uncertain about how to find her community on campus and in her city while prioritizing her safety. Reflecting on her past hobbies, she remembers her interest in running, which she had never committed to as she did not want to run alone for safety related reasons. She comes across our website, and upon registering and verifying her student ID, she personalizes her profile by adding a photo of herself, a short bio, and preferences for a running partner. She then decides she wants to go for a run at that moment and heads over to the real-time running partner finder where she finds that others are in the area. She matches with a runner, and has a good time and later decides to look for a longer-term partner. 
 
@@ -145,7 +162,6 @@ After filtering profiles by age, gender, and running level, she connects with so
 
 
 ## Design Summary
-
 
 ## Development Plan
 
