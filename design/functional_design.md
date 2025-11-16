@@ -133,19 +133,20 @@
 ## Syncs
 
 - **After Registration → Create Profile**
-    - When a user successfully registers (PasswordAuthentication), an empty UserProfile is automatically created for them.
+    - When a user successfully registers **(PasswordAuthentication)**, an empty **UserProfile** is automatically created for them.
 
 - **Profile Completion → Activation & Discoverability**
     - When a user completely fills out their profile (all required fields), their profile becomes active and they are discoverable by other runners for partner matching and filtering.
 
 - **Post-Run → Option to Continue**
-    - After both users complete a run together, they are prompted with the option to continue running together as partners.
+    - After both users complete a run together through the longer-term running partner option, they are prompted with the option to continue running together as partners.
 
 - **Partnership Agreement → SharedGoals & MilestoneMap Setup**
-    - If both users agree to continue running together, a SharedGoals instance and a MilestoneMap are automatically set up for the pair.
+    - If both users agree to continue running together and start their partnership, a **SharedGoals** instance and a **MilestoneMap** are automatically set up for the pair.
 
 - **Partnership End → Reset & Archive**
-    - If two users decide to end their partnership, the PartnerMatching page is reset for both, and their SharedGoals and MilestoneMap are erased from active use but remain accessible in an archive/history page for future reference.
+    - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
+
 
 # TODO: add notes section to all concepts and syncs 
 
