@@ -108,8 +108,31 @@
             - *Effects:* Returns all users who have the specified tag type and value.
         - `_filterUsers(tags?: { [tagType: string]: String|Number }, location?: String): (user: User)[]`
             - *Effects:* Returns all users who match all specified tag type/value pairs (if any), and/or are in the specified location (if provided). If neither is provided, returns all users.
-## User Journey
 
+
+
+- **MilestoneMap** [User, User]
+    - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations and optionally uploading photos.
+    - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
+    - **State:**
+        - A set of `MilestoneMaps`, each with:
+            - `userA`: User (one partner)
+            - `userB`: User (the other partner)
+            - `mapUrl`: String (the unique Google My Maps URL or ID for the shared map)
+            - `createdAt`: Date
+            - `isActive`: Boolean
+    - **Actions:**
+        - `createMilestoneMap(userA: User, userB: User, mapUrl: String): (milestoneMapId: MilestoneMap)`
+            - *Requires:* No existing MilestoneMap for this user pair.
+            - *Effects:* Stores a reference to a new shared Google My Map for the two users; returns the map's ID.
+        - `deleteMilestoneMap(milestoneMap: MilestoneMap, user: User): ()`
+            - *Requires:* `milestoneMap` exists and `user` is one of the partners.
+            - *Effects:* Permanently deletes the MilestoneMap reference from the backend. (Does not delete the map from Google My Maps.)
+    - **Queries:**
+        - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
+            - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
+
+## User Journey
 After moving to a new city for her first year of college, a student feels uncertain about how to find her community on campus and in her city while prioritizing her safety. Reflecting on her past hobbies, she remembers her interest in running, which she had never committed to as she did not want to run alone for safety related reasons. She comes across our website, and upon registering and verifying her student ID, she personalizes her profile by adding a photo of herself, a short bio, and preferences for a running partner. She then decides she wants to go for a run at that moment and heads over to the real-time running partner finder where she finds that others are in the area. She matches with a runner, and has a good time and later decides to look for a longer-term partner. 
 
 After filtering profiles by age, gender, and running level, she connects with someone and they meet up for a run. After running together, they indicate that they want to continue running together. This act unlocks new features that allow them to create shared goals together and have access to a milestone map where they can add photos and captions celebrating their achievements and memorable moments. Their partnership will ensure they remain committed to their goals and feel safer while doing so.
