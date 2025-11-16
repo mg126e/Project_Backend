@@ -159,8 +159,18 @@ After filtering profiles by age, gender, and running level, she connects with so
 ## UI Sketches
 
 
+
 ## Visual Design Study
 
+### Color
+
+![Color](./images/color.png)
+
+### Typography
+
+![Typography](./images/typography.png)
+
+# TODO: update the visual design study to final draft
 
 ## Design Summary
 
