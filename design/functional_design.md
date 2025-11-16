@@ -176,3 +176,12 @@ After filtering profiles by age, gender, and running level, she connects with so
 
 ## Development Plan
 
+We will aim for a timeline similar to the individual projects where we first created our backend, then our frontend, and then introduced syncs. This will ensure we are working incrementally and thoroughly. The table below provides more detailed information for each stage. 
+
+| Stage | Features | Responsibilities | Key Risks |
+| :---- | :---- | :---- | :---- |
+| November 25th, Checkpoint: Alpha | Password authentication User profile Real-time matching Messaging | Gloria: User profile, Ananya: Marin: | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
+| December 2nd, Checkpoint: Beta | UserVerification Long-term matching Shared goals Milestone map  | Gloria: SharedGoals, Ananya: Marin: |  |
+| December 9th, Full Demo | Based on user testing, we will refine our features based on the feedback we receive. We will also include our syncs.  | Gloria:  Ananya: Marin: |  |
+
+
