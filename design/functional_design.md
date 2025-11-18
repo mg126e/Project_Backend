@@ -4,6 +4,35 @@
 
 
 ## Concept Design
+- **EmailVerification**
+    - **Purpose:** Ensure that only users with a valid Boston-area college .edu email address can complete registration and access the app.
+    - **Principle:** When a user registers, a verification code is sent to their email. The user must enter the correct code to activate their account.
+    - **State:**
+        - A set of `EmailVerifications`, each with:
+            - `user`: User (reference)
+            - `email`: String
+            - `verificationCode`: String (randomly generated)
+            - `isVerified`: Boolean
+            - `codeSentAt`: DateTime
+    - **Actions:**
+        - `register(user: User, email: String): ()`
+            - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. No active verification exists for this user.
+            - *Effects:* Generates a verification code, sends it to the user's email, and stores the code and timestamp.
+        - `verifyCode(user: User, code: String): ({ success: Boolean, error?: String })`
+            - *Requires:* A verification code was sent to the user and not expired. The code matches the stored code.
+            - *Effects:* Sets `isVerified` to true if the code matches. Returns success or error.
+        - `resendCode(user: User): ()`
+            - *Requires:* The user has a pending verification and is not yet verified.
+            - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
+    - **Queries:**
+        - `_isEmailVerified(user: User): Boolean`
+            - *Effects:* Returns true if the user's email is verified.
+        - `_getVerificationStatus(user: User): { email: String, isVerified: Boolean, codeSentAt: DateTime }?`
+            - *Effects:* Returns the current verification status for the user, or null if none exists.
+    - **Notes:**
+        - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
+        - The user cannot become active or log in until their email is verified.
+
 - **PasswordAuthentication**
 	- **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
 	- **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
@@ -36,6 +65,7 @@
             - `description`: String
             - `start`: Date
             - `completion`: Date? (optional, when the step was completed)
+        - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
     - **Actions:**
         - `createSharedGoal(userA: User, userB: User, description: String): (sharedGoalId: SharedGoal)`
             - *Requires:* No active `SharedGoal` for this user pair with the same description already exists. `description` is not empty.
@@ -58,6 +88,9 @@
         - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
             - *Requires:* `sharedGoal` exists and is active. Either user may close the goal.
             - *Effects:* Sets `isActive` of the shared goal to `false`.
+        - `setInitialized(sharedGoal: SharedGoal, isInitialized: Boolean): Empty`
+            - *Requires:* `sharedGoal` exists.
+            - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
     - **Queries:**
         - `_getSharedGoals(userA: User, userB: User, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
             - *Effects:* If isActive is specified, returns only shared goals for the user pair with that active status. If not specified, returns all shared goals (active and inactive) for the user pair.
@@ -65,6 +98,8 @@
             - *Effects:* Returns the shared goal with the given id for the user pair, or null if not found.
         - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
             - *Effects:* Returns all steps for the given shared goal.
+    - **Notes:**
+        - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
 
 - **UserProfile** [User]
     - **Purpose:** Allow users to share their personal info, including a real profile image and key tags for access to running partner features.
@@ -120,7 +155,7 @@
             - `createdAt`: Date
             - `isActive`: Boolean
     - **Actions:**
-        - `createMilestoneMap(userA: User, userB: User, mapUrl: String): (milestoneMapId: MilestoneMap)`
+        - `createMilestoneMap(mapUrl: String): (milestoneMap: MilestoneMap)`
             - *Requires:* No existing MilestoneMap for this user pair.
             - *Effects:* Stores a reference to a new shared Google My Map for the two users; returns the map's ID.
         - `deleteMilestoneMap(milestoneMap: MilestoneMap, user: User): ()`
@@ -130,21 +165,36 @@
         - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
             - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
 
+
 ## Syncs
 
-- **After Registration → Create Profile**
-    - When a user successfully registers **(PasswordAuthentication)**, an empty **UserProfile** is automatically created for them.
+> sync emailVerificationOnRegister
+>> when PasswordAuthentication.register(username, password, email): (user)\
+>> then EmailVerification.register(user, email)
 
-- **Profile Completion → Activation & Discoverability**
-    - When a user completely fills out their profile (all required fields), their profile becomes active and they are discoverable by other runners for partner matching and filtering.
+- - **Notes: After Registration → Send Verification Email**:
+    - In **PasswordAuthentication**, `register` adds/logs the user and password.
+    - In **EmailVerification**, `register` is triggered, after the user makes that attempt to register, to send a verification email to the user.
 
-- **Post-Run → Option to Continue**
-    - After both users complete a run together through the longer-term running partner option, they are prompted with the option to continue running together as partners.
+> sync createProfileOnRegister
+>> when PasswordAuthentication.register(username, password, email): (user) and EmailVerification._isEmailVerified(user): true\
+>> then UserProfile.createProfile(user)
+
+- **Notes: After Completed Registration → Create Profile**
+    - When a user successfully registers, an empty **UserProfile** is automatically created for them.
+
+> sync createGoalsAndMapOnPartnership
+>> when Partnership.agree(userA, userB)\
+>> then SharedGoals.createSharedGoal(userA, userB, description) and SharedGoals.setInitialized(sharedGoal, true) and MilestoneMap.createMilestoneMap(mapUrl)
 
 - **Partnership Agreement → SharedGoals & MilestoneMap Setup**
     - If both users agree to continue running together and start their partnership, a **SharedGoals** instance and a **MilestoneMap** are automatically set up for the pair.
 
-- **Partnership End → Reset & Archive**
+> sync archiveOnPartnershipEnd
+>> when Partnership.end(userA, userB)\
+>> then SharedGoals.setInitialized(sharedGoal, false) and MilestoneMap.deleteMilestoneMap(milestoneMap)
+
+- **Partnership End → Delete SharedGoals & MilestoneMap**
     - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
 
 
@@ -181,5 +231,5 @@ We will aim for a timeline similar to the individual projects where we first cre
 | Stage | Features | Responsibilities | Key Risks |
 | :---- | :---- | :---- | :---- |
 | November 25th, Checkpoint: Alpha | Password authentication <br> User profile <br> Real-time matching <br> Messaging | Gloria: User profile, password authentication, start email verification  <br> Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
-| December 2nd, Checkpoint: Beta | UserVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals, complete email verification <br>Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfect our prompt and testing out step generation. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
+| December 2nd, Checkpoint: Beta | UserVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals, complete email verification <br>Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfecting our prompt and testing out step generation. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
 | December 9th, Full Demo | Based on user testing, we will refine our  password authentication, start email verification features based on the feedback we receive. We will also include our syncs.  | ALL: work on syncs related to the concepts we primarily developed & complete extensive testing on our backend and frontend | A potential key risk would be the feedback we get during user testing. For instance, if users find that an additional feature would be best to include but would be impossible to implement under the time frame, we will evaluate how aspects of the feature could be included within our existing concepts. Additionally, since we now have experience incorporating syncs, we do not expect there to be as many risks here but do we plan to ask questions on Piazza or to our TA Erin if huge issues arise that we would need another perspective on. |
