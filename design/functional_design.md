@@ -1,7 +1,7 @@
 # Functional Design
 
 ## Problem Framing (Revised)
-
+We made the huge design change of going from a run club based app to partnerships. This was a big shift and we thought about what features would most make sense with this type of app, which also affected which features we ended up with in our revised problem framing. Our initial version is here and Friday's revised version with our updated problem is here.
 
 ## Concept Design
 - **PasswordAuthentication**
