@@ -51,6 +51,8 @@ We made the huge design change of going from a run club based app to partnership
            - `deleteUser(user: User): ({} | { error: String })`
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
+    - **Notes:**
+       - deleteUser and closeProfile will work in a sync together
 
 - **UserProfile** [User]
    - **Purpose:** Allow users to share their personal info, including a real profile image and key tags for access to running partner features.
@@ -94,6 +96,8 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Returns all users who have the specified tag type and value.
        - `_filterUsers(tags?: { [tagType: string]: String|Number }, location?: String): (user: User)[]`
            - *Effects:* Returns all users who match all specified tag type/value pairs (if any), and/or are in the specified location (if provided). If neither is provided, returns all users.
+    - **Notes:**
+        - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
 
 
 - **SharedGoals** [User, User]
@@ -144,6 +148,7 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Returns all steps for the given shared goal.
    - **Notes:**
        - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
+       - We are allowing for LLM generation and manual creation of steps
 
 
 - **MilestoneMap** [User, User]
@@ -168,8 +173,9 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
 
    - **Notes:**
-       - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle in relation to the partnership.
+       - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle for the duo.
        - closeMileStoneMap would still preserve the map for the user's archive  
+        - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history
 
 
 ## Syncs
@@ -206,7 +212,14 @@ We made the huge design change of going from a run club based app to partnership
 - **Notes: Partnership End → Delete SharedGoals & MilestoneMap**
    - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
 
-# TODO: add notes section to all concepts and syncs 
+
+> sync deleteUserOnCloseProfile
+>> when UserProfile.closeProfile(user)
+>> then PasswordAuthentication.deleteUser(user)
+
+- **Notes:**
+   - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that would lead to
+
 
 ## User Journey
 After moving to a new city for her first year of college, a student feels uncertain about how to find her community on campus and in her city while prioritizing her safety. Reflecting on her past hobbies, she remembers her interest in running, which she had never committed to as she did not want to run alone for safety related reasons. She comes across our website, and upon registering and verifying her student ID, she personalizes her profile by adding a photo of herself, a short bio, and preferences for a running partner. She then decides she wants to go for a run at that moment and heads over to the real-time running partner finder where she finds that others are in the area. She matches with a runner, and has a good time and later decides to look for a longer-term partner. 
@@ -215,7 +228,6 @@ After filtering profiles by age, gender, and running level, she connects with so
 
 
 ## UI Sketches
-
 
 
 ## Visual Design Study
@@ -228,9 +240,9 @@ After filtering profiles by age, gender, and running level, she connects with so
 
 ![Typography](./images/typography.png)
 
-# TODO: update the visual design study to final draft
 
 ## Design Summary
+
 
 ## Development Plan
 
@@ -239,5 +251,5 @@ We will aim for a timeline similar to the individual projects where we first cre
 | Stage | Features | Responsibilities | Key Risks |
 | :---- | :---- | :---- | :---- |
 | November 25th, Checkpoint: Alpha | Password authentication <br> User profile <br> Real-time matching <br> Messaging | Gloria: User profile, password authentication, start email verification  <br> Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
-| December 2nd, Checkpoint: Beta | UserVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals, complete email verification <br>Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfect our prompt and testing out step generation. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
+| December 2nd, Checkpoint: Beta | UserVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals, complete email verification <br>Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfect our prompt, testing out step generation, and improving our error handling. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
 | December 9th, Full Demo | Based on user testing, we will refine our  password authentication, start email verification features based on the feedback we receive. We will also include our syncs. We will also deploy using Render. | ALL: work on syncs related to the concepts we primarily developed & complete extensive testing on our backend and frontend | A potential key risk would be the feedback we get during user testing. For instance, if users find that an additional feature would be best to include but would be impossible to implement under the time frame, we will evaluate how aspects of the feature could be included within our existing concepts. Additionally, since we now have experience incorporating syncs, we do not expect there to be as many risks here but do we plan to ask questions on Piazza or to our TA Erin if huge issues arise that we would need another perspective on. |
