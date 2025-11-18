@@ -1,7 +1,7 @@
 # Functional Design
 
 ## Problem Framing (Revised)
-We made the huge design change of going from a run club based app to partnerships based on feedback from our initial submission. This was a big shift and we thought about what features would most make sense with this type of app, which also affected which features we ended up with in our revised problem framing. Our initial version is [here](https://github.com/mg126e/Project_Backend/blob/8da22449ad7daee908d551b518a69d6533af1b25/problem_framing.md) and Friday's revised version with our updated problem is [here](https://github.com/mg126e/Project_Backend/blob/main/design/problem_framing.md).
+
 
 ## Concept Design
 - **PasswordAuthentication**
@@ -180,8 +180,6 @@ We will aim for a timeline similar to the individual projects where we first cre
 
 | Stage | Features | Responsibilities | Key Risks |
 | :---- | :---- | :---- | :---- |
-| November 25th, Checkpoint: Alpha | Password authentication<br> User profile<br> Real-time matching<br> Messaging | Gloria: User profile,<br> Ananya:<br> Marin: | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
-| December 2nd, Checkpoint: Beta | UserVerification<br> Long-term matching<br> Shared goals<br> Milestone map  | Gloria: SharedGoals, <br>Ananya: <br>Marin: |  |
-| December 9th, Full Demo | Based on user testing, we will refine our features based on the feedback we receive. We will also fully incorporate our syncs at this stage.  | Gloria:  <br>Ananya: <br>Marin: |  |
-
-
+| November 25th, Checkpoint: Alpha | Password authentication User profile Real-time matching Messaging | Gloria: User profile, Ananya: Marin: | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
+| December 2nd, Checkpoint: Beta | UserVerification Long-term matching Shared goals Milestone map  | Gloria: SharedGoals, Ananya: Marin: | A potential key risk would be incorporating LLM generation of potential steps for the duo to follow. As a fallback, we will allow users to manually create their own timeline for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to do testing to see what structure of the matching features ends up working best. |
+| December 9th, Full Demo | Based on user testing, we will refine our  password authentication, start email verificationfeatures based on the feedback we receive. We will also include our syncs.  | Marin: | A potential key risk would be the feedback we get during user testing. For instance, if users find that an additional feature would be best to include but would be difficult to implement under the time frame, we will evaluate how aspects of the feature could be included within our existing concepts. Additionally, since we now have experience incorporating syncs, we do not expect there to be as many risks here. We plan to keep in contact with our TA Erin to address any potential errors. |
