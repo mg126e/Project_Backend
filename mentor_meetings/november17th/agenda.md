@@ -35,3 +35,17 @@ We initially struggled after needing to transition our problem, but met with Pro
 - We will continue to meet to discuss our plans
 
 **Meeting Notes**
+- Email verification
+ - Check code generated is same code that user puts as input
+- Do keep the password authentication concept
+- Register would be a sync, two parts in both concepts
+ - In PA, register is to add/log user and password
+ - In EV, register should trigger the email to be sent to the user 
+ - Check the email domain is from a Boston area and ends with .edu
+ - This is sufficient in terms of security in combination with the code
+- Can clone the backend repo or just copy and paste in the source code
+- For checkpoints:
+ - They will be graded on a check-/check/check+ basis
+ - Can have features that may just be working on backend, just make note of it 
+ - Can add a corresponding frontend even if may not be working
+ - Don’t need to recopy problem framing, can just add a link to most recent version and specify if any changes were made
