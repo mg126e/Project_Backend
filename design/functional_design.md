@@ -1,7 +1,7 @@
 # Functional Design
 
 ## Problem Framing (Revised)
-We made the huge design change of going from a run club based app to partnerships. This was a big shift and we thought about what features would most make sense with this type of app, which also affected which features we ended up with in our revised problem framing. Our initial version is [here](https://github.com/mg126e/Project_Backend/blob/8da22449ad7daee908d551b518a69d6533af1b25/problem_framing.md) and Friday's revised version with our updated problem is [here](https://github.com/mg126e/Project_Backend/blob/main/design/problem_framing.md).
+We made the huge design change of going from a run club based app to partnerships based on feedback from our initial submission. This was a big shift and we thought about what features would most make sense with this type of app, which also affected which features we ended up with in our revised problem framing. Our initial version is [here](https://github.com/mg126e/Project_Backend/blob/8da22449ad7daee908d551b518a69d6533af1b25/problem_framing.md) and Friday's revised version with our updated problem is [here](https://github.com/mg126e/Project_Backend/blob/main/design/problem_framing.md).
 
 ## Concept Design
 - **PasswordAuthentication**
