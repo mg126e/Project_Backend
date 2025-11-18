@@ -180,8 +180,8 @@ We will aim for a timeline similar to the individual projects where we first cre
 
 | Stage | Features | Responsibilities | Key Risks |
 | :---- | :---- | :---- | :---- |
-| November 25th, Checkpoint: Alpha | Password authentication User profile Real-time matching Messaging | Gloria: User profile, Ananya: Marin: | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
-| December 2nd, Checkpoint: Beta | UserVerification Long-term matching Shared goals Milestone map  | Gloria: SharedGoals, Ananya: Marin: |  |
-| December 9th, Full Demo | Based on user testing, we will refine our features based on the feedback we receive. We will also include our syncs.  | Gloria:  Ananya: Marin: |  |
+| November 25th, Checkpoint: Alpha | Password authentication<br> User profile<br> Real-time matching<br> Messaging | Gloria: User profile,<br> Ananya:<br> Marin: | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
+| December 2nd, Checkpoint: Beta | UserVerification<br> Long-term matching<br> Shared goals<br> Milestone map  | Gloria: SharedGoals, <br>Ananya: <br>Marin: |  |
+| December 9th, Full Demo | Based on user testing, we will refine our features based on the feedback we receive. We will also fully incorporate our syncs at this stage.  | Gloria:  <br>Ananya: <br>Marin: |  |
 
 
