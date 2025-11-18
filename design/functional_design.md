@@ -52,58 +52,6 @@ We made the huge design change of going from a run club based app to partnership
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
 
-
-- **SharedGoals** [User, User]
-   - **Purpose:** Allow two users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
-   - **Principle:** After two users agree on a shared goal, they can either have an LLM generate recommended steps or input their own. Both can mark steps as complete, view progress, and see which steps remain.
-   - **State:**
-       - A set of `SharedGoals`, each with:
-           - `userA`: User (one partner)
-           - `userB`: User (the other partner)
-           - `description`: String (goal description)
-           - `isActive`: Boolean (true if the goal is currently being tracked)
-       - A set of `SharedSteps`, each with:
-           - `sharedGoalId`: SharedGoal (reference to the parent shared goal)
-           - `description`: String
-           - `start`: Date
-           - `completion`: Date? (optional, when the step was completed)
-       - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
-   - **Actions:**
-       - `createSharedGoal(userA: User, userB: User, description: String): (sharedGoalId: SharedGoal)`
-           - *Requires:* No active `SharedGoal` for this user pair with the same description already exists. `description` is not empty.
-           - *Effects:* Creates a new `SharedGoal` with `userA`, `userB`, and `description`; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user pair as long as each has a unique description.
-       - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
-           - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`.
-           - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps.
-       - `regenerateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
-           - *Requires:* `sharedGoal` exists and is active.
-           - *Effects:* Deletes all existing `SharedSteps` for the shared goal, then generates new steps as above; returns the array of new steps.
-       - `addSharedStep(sharedGoal: SharedGoal, description: String, user: User): (step: SharedStep)`
-           - *Requires:* `sharedGoal` exists and is active; `description` is not empty.
-           - *Effects:* Creates a new `SharedStep` for the shared goal; returns the new step.
-       - `completeSharedStep(step: SharedStep, user: User): Empty`
-           - *Requires:* `step` exists and does not have a completion date. The `SharedGoal` is active. Either user may complete a step.
-           - *Effects:* Sets the completion date for the step.
-       - `removeSharedStep(step: SharedStep, user: User): Empty`
-           - *Requires:* `step` exists; no completion date; `SharedGoal` is active. Either user may remove a step.
-           - *Effects:* Deletes the step from storage.
-       - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
-           - *Requires:* `sharedGoal` exists and is active. Either user may close the goal.
-           - *Effects:* Sets `isActive` of the shared goal to `false`.
-       - `setInitialized(sharedGoal: SharedGoal, isInitialized: Boolean): Empty`
-           - *Requires:* `sharedGoal` exists.
-           - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
-   - **Queries:**
-       - `_getSharedGoals(userA: User, userB: User, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
-           - *Effects:* If isActive is specified, returns only shared goals for the user pair with that active status. If not specified, returns all shared goals (active and inactive) for the user pair.
-       - `_getSharedGoalById(userA: User, userB: User, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
-           - *Effects:* Returns the shared goal with the given id for the user pair, or null if not found.
-       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
-           - *Effects:* Returns all steps for the given shared goal.
-   - **Notes:**
-       - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
-
-
 - **UserProfile** [User]
    - **Purpose:** Allow users to share their personal info, including a real profile image and key tags for access to running partner features.
    - **Principle:** After setting a display name, uploading a profile image from their device, and adding tags (running level, age, gender, etc.), users can be discovered and matched more effectively.
@@ -148,6 +96,56 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Returns all users who match all specified tag type/value pairs (if any), and/or are in the specified location (if provided). If neither is provided, returns all users.
 
 
+- **SharedGoals** [User, User]
+   - **Purpose:** Allow two users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
+   - **Principle:** After two users agree on a shared goal, they can either have an LLM generate recommended steps or input their own. Both can mark steps as complete, view progress, and see which steps remain.
+   - **State:**
+       - A set of `SharedGoals`, each with:
+           - `userA`: User (one partner)
+           - `userB`: User (the other partner)
+           - `description`: String (goal description)
+           - `isActive`: Boolean (true if the goal is currently being tracked)
+       - A set of `SharedSteps`, each with:
+           - `sharedGoalId`: SharedGoal (reference to the parent shared goal)
+           - `description`: String
+           - `start`: Date
+           - `completion`: Date? (optional, when the step was completed)
+       - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
+   - **Actions:**
+       - `createSharedGoal(userA: User, userB: User, description: String): (sharedGoalId: SharedGoal)`
+           - *Requires:* No active `SharedGoal` for this user pair with the same description already exists. `description` is not empty.
+           - *Effects:* Creates a new `SharedGoal` with `userA`, `userB`, and `description`; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user pair as long as each has a unique description.
+       - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
+           - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`.
+           - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps.
+       - `regenerateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
+           - *Requires:* `sharedGoal` exists and is active.
+           - *Effects:* Deletes all existing `SharedSteps` for the shared goal, then generates new steps as above; returns the array of new steps.
+       - `addSharedStep(sharedGoal: SharedGoal, description: String, user: User): (step: SharedStep)`
+           - *Requires:* `sharedGoal` exists and is active; `description` is not empty.
+           - *Effects:* Creates a new `SharedStep` for the shared goal; returns the new step.
+       - `completeSharedStep(step: SharedStep, user: User): Empty`
+           - *Requires:* `step` exists and does not have a completion date. The `SharedGoal` is active. Either user may complete a step.
+           - *Effects:* Sets the completion date for the step.
+       - `removeSharedStep(step: SharedStep, user: User): Empty`
+           - *Requires:* `step` exists; no completion date; `SharedGoal` is active. Either user may remove a step.
+           - *Effects:* Deletes the step from storage.
+       - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
+           - *Requires:* `sharedGoal` exists and is active. Either user may close the goal.
+           - *Effects:* Sets `isActive` of the shared goal to `false`.
+       - `setInitialized(sharedGoals: SharedGoals, isInitialized: Boolean): Empty`
+           - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
+   - **Queries:**
+       - `_getSharedGoals(userA: User, userB: User, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
+           - *Effects:* If isActive is specified, returns only shared goals for the user pair with that active status. If not specified, returns all shared goals (active and inactive) for the user pair.
+       - `_getSharedGoalById(userA: User, userB: User, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
+           - *Effects:* Returns the shared goal with the given id for the user pair, or null if not found.
+       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
+           - *Effects:* Returns all steps for the given shared goal.
+   - **Notes:**
+       - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
+
+
 - **MilestoneMap** [User, User]
    - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations and optionally uploading photos.
    - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
@@ -159,28 +157,28 @@ We made the huge design change of going from a run club based app to partnership
            - `createdAt`: Date
            - `isActive`: Boolean
    - **Actions:**
-       - `createMilestoneMap(mapUrl: String): (milestoneMap: MilestoneMap)`
+       - `createMilestoneMap(userA: User, userB: User): (milestoneMap: MilestoneMap)`
            - *Requires:* No existing MilestoneMap for this user pair.
            - *Effects:* Stores a reference to a new shared Google My Map for the two users; returns the map's ID.
-       - `deleteMilestoneMap(milestoneMap: MilestoneMap, user: User): ()`
-           - *Requires:* `milestoneMap` exists and `user` is one of the partners.
-           - *Effects:* Permanently deletes the MilestoneMap reference from the backend. (Does not delete the map from Google My Maps.)
+       - `closeMilestoneMap(milestoneMap: MilestoneMap): ()`
+           - *Requires:* `milestoneMap` exists.
+           - *Effects:* Closes the MilestoneMap reference for the two users.
    - **Queries:**
        - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
            - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
 
-
+   - **Notes:**
+       - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle in relation to the partnership.
+       - closeMileStoneMap would still preserve the map for the user's archive  
 
 
 ## Syncs
-
 
 > sync emailVerificationOnRegister
 >> when PasswordAuthentication.register(username, password, email): (user)\
 >> then EmailVerification.register(user, email)
 
-
-- - **Notes: After Registration → Send Verification Email**:
+- **Notes: After Registration → Send Verification Email**:
    - In **PasswordAuthentication**, `register` adds/logs the user and password.
    - In **EmailVerification**, `register` is triggered, after the user makes that attempt to register, to send a verification email to the user.
 
@@ -189,28 +187,24 @@ We made the huge design change of going from a run club based app to partnership
 >> when PasswordAuthentication.register(username, password, email): (user) and EmailVerification._isEmailVerified(user): true\
 >> then UserProfile.createProfile(user)
 
-
 - **Notes: After Completed Registration → Create Profile**
    - When a user successfully registers, an empty **UserProfile** is automatically created for them.
 
 
 > sync createGoalsAndMapOnPartnership
 >> when Partnership.agree(userA, userB)\
->> then SharedGoals.createSharedGoal(userA, userB, description) and SharedGoals.setInitialized(sharedGoal, true) and MilestoneMap.createMilestoneMap(mapUrl)
+>> then SharedGoals.setInitialized(sharedGoals, true) and MilestoneMap.createMilestoneMap(userA, userB)
 
-
-- **Partnership Agreement → SharedGoals & MilestoneMap Setup**
+- **Notes: Partnership Agreement → SharedGoals & MilestoneMap Setup**
    - If both users agree to continue running together and start their partnership, a **SharedGoals** instance and a **MilestoneMap** are automatically set up for the pair.
 
 
 > sync archiveOnPartnershipEnd
 >> when Partnership.end(userA, userB)\
->> then SharedGoals.setInitialized(sharedGoal, false) and MilestoneMap.deleteMilestoneMap(milestoneMap)
+>> then SharedGoals.setInitialized(sharedGoals, false) and MilestoneMap.closeMilestoneMap(milestoneMap)
 
-
-- **Partnership End → Delete SharedGoals & MilestoneMap**
+- **Notes: Partnership End → Delete SharedGoals & MilestoneMap**
    - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
-
 
 # TODO: add notes section to all concepts and syncs 
 
