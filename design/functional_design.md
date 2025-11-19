@@ -296,7 +296,7 @@ unmatch (activeMatch: Match, user: UserA, user: UserB)
 - The recipient user is the one who receives the suggestion and the candidate user is the one who is being suggested.  
 - Any notion of a createPreferences action is subsumed by the updatePreferences since technically, users can also have no preferences set (presumably when they first create their account).
 
-* Messaging  **\- Ananya**
+* Messaging  **
 
 **concept** Messaging  
 **purpose** one user can send a private message to another user to communicate about scheduled runs  
