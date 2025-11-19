@@ -165,8 +165,6 @@ We made the huge design change of going from a run club based app to partnership
         - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history
 
 
-* RunningBuddies **
-no 
 **concept** RunBuddyFinder  
 **purpose** find a running partner for a one-time run in the near or immediate future  
 **principle** a user chooses a region and a specific meeting location in it;  
