@@ -165,6 +165,194 @@ We made the huge design change of going from a run club based app to partnership
         - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history
 
 
+* RunningBuddies **
+
+**concept** RunBuddyFinder  
+**purpose** find a running partner for a one-time run in the near or immediate future  
+**principle** a user chooses a region and a specific meeting location in it;  
+   the user creates a run invite, which becomes visible to all users whose region is set to the same;  
+   other users may accept or decline the invite;  
+   once a user accepts, a run is scheduled for the inviter and accepter.
+
+**state**  
+	a set of Users with  
+	   a Region  
+	   a set of run Invites  
+	   a set of scheduled Runs
+
+   a set of run Invites with  
+	   a Sent flag  
+      
+   a start Time  
+	   an Inviter user  
+	   a running Distance  
+	   a meeting Location  
+	   an acceptance Status flag
+
+	a set of scheduled Runs with  
+  a start Time  
+  an Inviter user  
+  an Accepter user  
+  a Completed flag  
+	  a meeting Location  
+	        
+**actions** 
+
+setRegion (user: User, region: Region)  
+   **requires** user exists and Region is a valid region  
+   **effects** sets the user’s region to the given Region
+
+createInvite (inviter: Inviter, region: Region, start: Time, distance: Number, location: Location): (invite: Invite)  
+   **requires** inviter exists, location is in inviter’s Region, start is a future time, and distance is greater than zero  
+   **effects** creates a new run Invite with given details and Sent flag set to false
+
+sendInvite (invite: Invite)  
+   **requires** the invite exists and its Sent flag is set to False  
+   **effects** sends Invite to all users in its associated region and sets Sent flag to True
+
+deleteInvite (user: Inviter, invite: Invite)  
+   **requires** the invite exists and  the user is the Inviter for that invite  
+   **effects** remove Invite from the Inviter’s set of invites and set its Sent flag to false if true
+
+acceptInvite (inviter: Inviter, invite: Invite, accepter: Accepter): (scheduledRun: Run)  
+   **requires** the invite exists, its Sent flag is true, and its acceptance status is false  
+   **effects** the acceptance Status of the invite is set to true and the Inviter is notified of the acceptance
+
+declineInvite (invite: Invite, decliner: User)  
+   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false
+
+**system** scheduleRun (inviter: Inviter, accepter: Accepter, invite: Invite): (run: Run)  
+   **requires** the invite exists and its acceptance status is true  
+   **effects** creates a run with the details in the invite such as time and location
+
+completeRun (inviter: Inviter, accepter: Accepter, run: Run)  
+   **requires** the run exists for both users and has not already been marked Completed  
+   **effects** sets the Completed flag of the run to true
+
+cancelRun (inviter: Inviter, accepter: Accepter, run: Run, time: Time)  
+   **requires** the run exists for both users and is at a valid future time  
+   **effects** deletes the run from both users’ set of runs 
+
+
+* PartnerMatching **
+
+**concept** PartnerMatching  
+**purpose** match users with a long-term running partner based on running preferences and experience levels  
+**principle** a user creates a profile with their personal details and preferences;  
+  they are then presented with other users whose profiles indicate that they may align with theirs;  
+   a user can accept or decline a match and a match only turns active when both users accept the other;  
+   users can have multiple long-term running partner matches at the same time  
+     
+**state**  
+a set of Users with  
+   a Profile  
+   a set of active Matches  
+   a set of match Suggestions
+
+a Profile with  
+  a set of running Preferences
+
+a set of running Preferences with  
+	   a Pace selection   
+	   a distance Number  
+	   an experience Level  
+	   a preferred Time of day
+
+a set of match Suggestions with  
+   a Recipient user  
+   a Candidate user  
+   an acceptance Status flag
+
+**actions**
+
+updatePreferences (user: User, preferenceSet: Preferences)  
+   **requires** the user exists and has a profile  
+   **effects** replaces the running preferences in the user’s profile with given ones
+
+**system** suggestMatch (recipient: Recipient, candidate: Candidate): (match: Suggestion)  
+   **requires** the recipient and candidate exist and are distinct; both have profiles;  
+	    there is no active match and no existing suggestions with any combination of  the users;  
+	    at least three preferences must be the same for both users  
+   **effects** creates and returns a new match Suggestion with the candidate to the recipient
+
+acceptSuggestion (match: Suggestion, recipient: Recipient, candidate: Candidate): (match: Suggestion)  
+   **requires** a Suggestion exists with recipient user being Recipient and candidate user being Candidate  
+   **effects** the Status flag of the Suggestion is set to true and returns Suggestion as a potential match
+
+declineSuggestion (match: Suggestion, recipient: Recipient, candidate: Candidate)  
+   **requires** a Suggestion exists with recipient user being Recipient and candidate user being Candidate
+
+match (suggestionPair: Suggestions, user: UserA, user: UserB): (activeMatch: Match)  
+   **requires** the Suggestion of UserA to UserB needs to be accepted by UserB and vice versa  
+   **effects** creates and returns a new active Match between the two users 
+
+unmatch (activeMatch: Match, user: UserA, user: UserB)  
+   **requires** there exists an active Match between UserA and UserB  
+   **effects** deletes the Match from UserA and UserB’s set of Matches
+
+**Notes:** 
+
+- suggestMatch is a **system** action as users have no direct control or interaction with this, since matches are automatically generated based on preference settings  
+- The recipient user is the one who receives the suggestion and the candidate user is the one who is being suggested.  
+- Any notion of a createPreferences action is subsumed by the updatePreferences since technically, users can also have no preferences set (presumably when they first create their account).
+
+* Messaging  **\- Ananya**
+
+**concept** Messaging  
+**purpose** one user can send a private message to another user to communicate about scheduled runs  
+**principle** a user may send a private message to another user only if there is an active connection between them,  
+   this could be either an active match with a long-term partner or an accepted one-time run invite;  
+   messages are organised by the context of the connection (partner or one-time run);  
+   users can view a history of messages for each connection;  
+   each connection maintains its own separate conversation thread;  
+   messages cannot be sent to users with whom there is no active connection
+
+**state**  
+a set of Users with  
+   a set of Chats
+
+a set of Chats with  
+   a Recipient user  
+   a set of Messages  
+  a connection context Tag  \\\\ either a one-time or long-term running partner
+
+a set of Messages with	  
+   a Sender user  
+   a Timestamp  
+   a content String  
+   a delivered or read Status
+
+**actions**
+
+startChat (userA: User, userB: User, context: Tag): (chatA: Chat, chatB: Chat)  
+   **requires** userA and userB exist and are distinct; there is a valid context Tag connecting userA and userB;  
+     there is no existing chat in this context between userA and userB  
+   **effects** creates and returns a new Chat between userA and userB for each user, chatA and chatB
+
+deleteChat (initiator: User, userB: User, chat: Chat)  
+   **requires** there is an existing chat between the initiator of the deletion and userB  
+   **effects** deletes the chat between the initiator and userB only for the initiator
+
+**system** deleteChat (userA: User, userB: User, chat: Chat)  
+   **requires** there is an existing chat between userA and userB  
+   **effects** deletes the chat between userA and userB for both users
+
+createMessage (sender: User, recipient: User, chat: Chat, content: String): (message: Message)  
+   **requires** the sender and recipient must have an existing chat; the content must not be empty  
+   **effects** creates and returns a new message in the chat between the sender and recipient with the content
+
+sendMessage (message: Message, time: Timestamp, chat: Chat, sender: User, recipient: User)  
+   **requires** there is an existing chat between the sender and recipient; the message must exist   
+   **effects** sends the message from the recipient to the sender with a Timestamp, with Status set to delivered
+
+readMessage (message: Message, chat: Chat, sender: User, recipient: User, time: Timestamp)  
+   **requires** recipient has an existing chat with sender; message exists and its Status is set to ‘delivered’  
+   **effects** marks the Status of the message to ‘read’
+
+**Notes:** 
+
+- There are two versions of the deleteChat action. One is an action available to a user as in any messaging platform where they can delete a chat they have with another user without affecting the other user’s access to it. The **system** action is so that we, as developers, can delete a chat for both parties in cases where they should not be able to contact each other after a certain point (e.g. one-time running partners shouldn’t be able to message each other after the run is marked as complete, to prevent avenues for harassment and unsolicited messaging).
+
 ## Syncs
 
 > sync emailVerificationOnRegister
@@ -206,6 +394,36 @@ We made the huge design change of going from a run club based app to partnership
 
 - **Notes: Close Profile → Delete User**
    - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that that act would lead to.
+
+**sync** match  
+**when** PartnerMatching.acceptSuggestion (MatchAB, RecipientA, CandidateB): (match: SuggestionA)  
+             PartnerMatching.acceptSuggestion (MatchBA, RecipientB, CandidateA): (match: SuggestionB)  
+**then** PartnerMatching.match ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)
+
+**sync** chat  
+**when** PartnerMatching.match  ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)  
+**then** Messaging.startChat (UserA,  UserB, context: PartnerMatching): (chat: Chat)
+
+**sync** schedule  
+**when** RunBuddyFinder.acceptInvite (inviter: UserA, invite: Invite, accepter: UserB)  
+**then** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)
+
+**sync** deleteChat  
+**when** RunBuddyFinder.completeRun (inviter: Inviter, accepter: Accepter, run: Run)  
+**then system** Messaging.deleteChat (userA: Inviter, userB: Accepter, chat: Chat)
+
+**sync** suggest  
+**when** RunBuddyFinder.completeRun(inviter: Inviter, accepter: Accepter, run: Run)  
+**then** PartnerMatching.suggestMatch (recipient: Inviter, candidate: Accepter)  
+           PartnerMatching.suggestMatch (recipient: Accepter, candidate: Inviter)
+
+**sync** oneTimeChat  
+**when** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)  
+**then** Messaging.startChat (UserA,  UserB, context: RunBuddyFinder): (chat: Chat)
+
+**sync** cancelRun  
+**when** RunBuddyFinder.cancelRun (inviter: Inviter, accepter: Accepter, run: Run, time: Time)  
+**then system** Messaging.deleteChat(userA: Inviter, userB: Accepter, chat: Chat)
 
 
 ## User Journey
