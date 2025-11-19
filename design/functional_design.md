@@ -180,19 +180,19 @@ We made the huge design change of going from a run club based app to partnership
 
    a set of run Invites with  
 	   a Sent flag  
-      
+
    a start Time  
 	   an Inviter user  
 	   a running Distance  
 	   a meeting Location  
 	   an acceptance Status flag
 
-	a set of scheduled Runs with  
-  a start Time  
-  an Inviter user  
-  an Accepter user  
-  a Completed flag  
-	  a meeting Location  
+   a set of scheduled Runs with
+        a start Time  
+        an Inviter user  
+        an Accepter user  
+        a Completed flag  
+        a meeting Location  
 	        
 **actions** 
 
