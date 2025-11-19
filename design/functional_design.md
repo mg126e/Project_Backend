@@ -165,7 +165,7 @@ We made the huge design change of going from a run club based app to partnership
         - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history
 
 
-**concept** RunBuddyFinder  
+**concept: RunBuddyFinder**\
 **purpose** find a running partner for a one-time run in the near or immediate future  
 **principle** a user chooses a region and a specific meeting location in it;  
    the user creates a run invite, which becomes visible to all users whose region is set to the same;  
@@ -232,9 +232,7 @@ cancelRun (inviter: Inviter, accepter: Accepter, run: Run, time: Time)
    **effects** deletes the run from both users’ set of runs 
 
 
-* PartnerMatching **
-
-**concept** PartnerMatching  
+**concept: PartnerMatching**\
 **purpose** match users with a long-term running partner based on running preferences and experience levels  
 **principle** a user creates a profile with their personal details and preferences;  
   they are then presented with other users whose profiles indicate that they may align with theirs;  
@@ -294,9 +292,7 @@ unmatch (activeMatch: Match, user: UserA, user: UserB)
 - The recipient user is the one who receives the suggestion and the candidate user is the one who is being suggested.  
 - Any notion of a createPreferences action is subsumed by the updatePreferences since technically, users can also have no preferences set (presumably when they first create their account).
 
-* Messaging  **
-
-**concept** Messaging  
+**concept: Messaging**\
 **purpose** one user can send a private message to another user to communicate about scheduled runs  
 **principle** a user may send a private message to another user only if there is an active connection between them,  
    this could be either an active match with a long-term partner or an accepted one-time run invite;  
