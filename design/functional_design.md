@@ -395,25 +395,31 @@ readMessage (message: Message, chat: Chat, sender: User, recipient: User, time: 
 
 **sync** match  
 **when** PartnerMatching.acceptSuggestion (MatchAB, RecipientA, CandidateB): (match: SuggestionA)  
-             PartnerMatching.acceptSuggestion (MatchBA, RecipientB, CandidateA): (match: SuggestionB)  
+    	PartnerMatching.acceptSuggestion (MatchBA, RecipientB, CandidateA): (match: SuggestionB)  
 **then** PartnerMatching.match ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)
 
 **sync** chat  
 **when** PartnerMatching.match  ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)  
 **then** Messaging.startChat (UserA,  UserB, context: PartnerMatching): (chat: Chat)
 
+**Notes:** When both users accept a suggestion of the other user, they are automatically led to a chat feature to encourage communication.
+
 **sync** schedule  
 **when** RunBuddyFinder.acceptInvite (inviter: UserA, invite: Invite, accepter: UserB)  
-**then** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)
+**then** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run
 
 **sync** deleteChat  
 **when** RunBuddyFinder.completeRun (inviter: Inviter, accepter: Accepter, run: Run)  
 **then system** Messaging.deleteChat (userA: Inviter, userB: Accepter, chat: Chat)
 
+**Notes:** When a one-time run is over, users can no longer message each other. This is to preserve the idea of a low-commitment running partner and to prevent any unwanted messaging.
+
 **sync** suggest  
 **when** RunBuddyFinder.completeRun(inviter: Inviter, accepter: Accepter, run: Run)  
 **then** PartnerMatching.suggestMatch (recipient: Inviter, candidate: Accepter)  
-           PartnerMatching.suggestMatch (recipient: Accepter, candidate: Inviter)
+         PartnerMatching.suggestMatch (recipient: Accepter, candidate: Inviter)
+
+**Notes:** To still allow users to communicate with their one-time running partners if they want to, they will be suggested as a match for long-term partnerships after the run is over. This allows each user to decide whether they want to run with the other person again without the pressure of being questioned if either one chooses to decline since the chat feature will not be available after the run.
 
 **sync** oneTimeChat  
 **when** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)  
