@@ -63,7 +63,7 @@ We made the huge design change of going from a run club based app to partnership
            - `isActive`: Boolean
    - **Actions:**
        - `createProfile(user: User): ()`
-           - *Requires:* No profile for the given user already exists. `location` must be provided.
+           - *Requires:* No profile for the given user already exists.
            - *Effects:* Creates a new user profile record for the given user with no initial display name, profile image, location, bio, or tags. The profile is not active (not visible to others) until all required fields are filled out.
        - `setActive(user: User): ()`
            - *Requires:* The user exists in the set of users. All required fields (displayname, profileImage, bio, location, and all required tags) must be filled out.
@@ -166,7 +166,7 @@ We made the huge design change of going from a run club based app to partnership
 
 
 * RunningBuddies **
-
+no 
 **concept** RunBuddyFinder  
 **purpose** find a running partner for a one-time run in the near or immediate future  
 **principle** a user chooses a region and a specific meeting location in it;  
