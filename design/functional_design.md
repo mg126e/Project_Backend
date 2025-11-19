@@ -205,7 +205,7 @@ We made the huge design change of going from a run club based app to partnership
 >> then PasswordAuthentication.deleteUser(user)
 
 - **Notes: Close Profile → Delete User**
-   - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that would lead to
+   - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that that act would lead to.
 
 
 ## User Journey
