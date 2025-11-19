@@ -1,0 +1,19 @@
+**PasswordAuthentication**
+   - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
+   - **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
+       - **State:**
+           - A set of `Users`, each with:
+               - `username`: String
+               - `passwordHash`: String (hashed using SHA-256)
+       - **Actions:**
+           - `register(username: String, password: String): ({ user: User } | { error: String })`
+               - *Requires:* No User with the given username already exists.
+               - *Effects:* Creates a new User, stores a hash of the password, and returns the new user's ID. On failure, returns an error.
+           - `authenticate(username: String, password: String): ({ user: User } | { error: String })`
+               - *Requires:* A User with the given username exists AND the hash of the password matches the stored passwordHash.
+               - *Effects:* Returns the identifier of the authenticated User. On failure, returns an error.
+           - `deleteUser(user: User): ({} | { error: String })`
+               - *Requires:* A User with the given user ID exists.
+               - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
+    - **Notes:**
+       - deleteUser and closeProfile will work in a sync together

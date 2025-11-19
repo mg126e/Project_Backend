@@ -1,0 +1,25 @@
+**MilestoneMap** [User, User]
+   - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations and optionally uploading photos.
+   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
+   - **State:**
+       - A set of `MilestoneMaps`, each with:
+           - `userA`: User (one partner)
+           - `userB`: User (the other partner)
+           - `mapUrl`: String (the unique Google My Maps URL or ID for the shared map)
+           - `createdAt`: Date
+           - `isActive`: Boolean
+   - **Actions:**
+       - `createMilestoneMap(userA: User, userB: User): (milestoneMap: MilestoneMap)`
+           - *Requires:* No existing MilestoneMap for this user pair.
+           - *Effects:* Stores a reference to a new shared Google My Map for the two users; returns the map's ID.
+       - `closeMilestoneMap(milestoneMap: MilestoneMap): ()`
+           - *Requires:* `milestoneMap` exists.
+           - *Effects:* Closes the MilestoneMap reference for the two users.
+   - **Queries:**
+       - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
+           - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
+
+   - **Notes:**
+       - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle for the duo.
+       - closeMileStoneMap would still preserve the map for the user's archive  
+        - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history

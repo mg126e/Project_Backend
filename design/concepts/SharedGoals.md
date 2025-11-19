@@ -1,0 +1,49 @@
+**SharedGoals** [User, User]
+   - **Purpose:** Allow two users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
+   - **Principle:** After two users agree on a shared goal, they can either have an LLM generate recommended steps or input their own. Both can mark steps as complete, view progress, and see which steps remain.
+   - **State:**
+       - A set of `SharedGoals`, each with:
+           - `userA`: User (one partner)
+           - `userB`: User (the other partner)
+           - `description`: String (goal description)
+           - `isActive`: Boolean (true if the goal is currently being tracked)
+       - A set of `SharedSteps`, each with:
+           - `sharedGoalId`: SharedGoal (reference to the parent shared goal)
+           - `description`: String
+           - `start`: Date
+           - `completion`: Date? (optional, when the step was completed)
+       - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
+   - **Actions:**
+       - `createSharedGoal(userA: User, userB: User, description: String): (sharedGoalId: SharedGoal)`
+           - *Requires:* No active `SharedGoal` for this user pair with the same description already exists. `description` is not empty.
+           - *Effects:* Creates a new `SharedGoal` with `userA`, `userB`, and `description`; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user pair as long as each has a unique description.
+       - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
+           - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`.
+           - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps.
+       - `regenerateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
+           - *Requires:* `sharedGoal` exists and is active.
+           - *Effects:* Deletes all existing `SharedSteps` for the shared goal, then generates new steps as above; returns the array of new steps.
+       - `addSharedStep(sharedGoal: SharedGoal, description: String, user: User): (step: SharedStep)`
+           - *Requires:* `sharedGoal` exists and is active; `description` is not empty.
+           - *Effects:* Creates a new `SharedStep` for the shared goal; returns the new step.
+       - `completeSharedStep(step: SharedStep, user: User): Empty`
+           - *Requires:* `step` exists and does not have a completion date. The `SharedGoal` is active. Either user may complete a step.
+           - *Effects:* Sets the completion date for the step.
+       - `removeSharedStep(step: SharedStep, user: User): Empty`
+           - *Requires:* `step` exists; no completion date; `SharedGoal` is active. Either user may remove a step.
+           - *Effects:* Deletes the step from storage.
+       - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
+           - *Requires:* `sharedGoal` exists and is active. Either user may close the goal.
+           - *Effects:* Sets `isActive` of the shared goal to `false`.
+       - `setInitialized(sharedGoals: SharedGoals, isInitialized: Boolean): Empty`
+           - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
+   - **Queries:**
+       - `_getSharedGoals(userA: User, userB: User, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
+           - *Effects:* If isActive is specified, returns only shared goals for the user pair with that active status. If not specified, returns all shared goals (active and inactive) for the user pair.
+       - `_getSharedGoalById(userA: User, userB: User, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
+           - *Effects:* Returns the shared goal with the given id for the user pair, or null if not found.
+       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
+           - *Effects:* Returns all steps for the given shared goal.
+   - **Notes:**
+       - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
+       - We are allowing for LLM generation and manual creation of steps

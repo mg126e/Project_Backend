@@ -1,0 +1,28 @@
+**EmailVerification**
+   - **Purpose:** Ensure that only users with a valid Boston-area college .edu email address can complete registration and access the app.
+   - **Principle:** When a user registers, a verification code is sent to their email. The user must enter the correct code to activate their account.
+   - **State:**
+       - A set of `EmailVerifications`, each with:
+           - `user`: User (reference)
+           - `email`: String
+           - `verificationCode`: String (randomly generated)
+           - `isVerified`: Boolean
+           - `codeSentAt`: DateTime
+   - **Actions:**
+       - `register(user: User, email: String): ()`
+           - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. No active verification exists for this user.
+           - *Effects:* Generates a verification code, sends it to the user's email, and stores the code and timestamp.
+       - `verifyCode(user: User, code: String): ({ success: Boolean, error?: String })`
+           - *Requires:* A verification code was sent to the user and not expired. The code matches the stored code.
+           - *Effects:* Sets `isVerified` to true if the code matches. Returns success or error.
+       - `resendCode(user: User): ()`
+           - *Requires:* The user has a pending verification and is not yet verified.
+           - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
+   - **Queries:**
+       - `_isEmailVerified(user: User): Boolean`
+           - *Effects:* Returns true if the user's email is verified.
+       - `_getVerificationStatus(user: User): { email: String, isVerified: Boolean, codeSentAt: DateTime }?`
+           - *Effects:* Returns the current verification status for the user, or null if none exists.
+   - **Notes:**
+       - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
+       - The user cannot become active or log in until their email is verified.

@@ -24,11 +24,6 @@ We made the huge design change of going from a run club based app to partnership
        - `resendCode(user: User): ()`
            - *Requires:* The user has a pending verification and is not yet verified.
            - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
-   - **Queries:**
-       - `_isEmailVerified(user: User): Boolean`
-           - *Effects:* Returns true if the user's email is verified.
-       - `_getVerificationStatus(user: User): { email: String, isVerified: Boolean, codeSentAt: DateTime }?`
-           - *Effects:* Returns the current verification status for the user, or null if none exists.
    - **Notes:**
        - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
        - The user cannot become active or log in until their email is verified.
@@ -89,13 +84,6 @@ We made the huge design change of going from a run club based app to partnership
        - `closeProfile(user: User): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Permanently deletes the user's profile and all associated data.
-   - **Queries:**
-       - `_getUserProfile(user: User): (userProfile: {displayname: String, profileImage: Image, location: String, tags: {gender?: String, age?: Number, runningLevel?: String, personality?: String, ...}})?`
-           - *Effects:* Returns the full profile data for the specified user, including location and all allowed tags.
-       - `_findUsersByTag(tagType: String, value: String|Number): (user: User)[]`
-           - *Effects:* Returns all users who have the specified tag type and value.
-       - `_filterUsers(tags?: { [tagType: string]: String|Number }, location?: String): (user: User)[]`
-           - *Effects:* Returns all users who match all specified tag type/value pairs (if any), and/or are in the specified location (if provided). If neither is provided, returns all users.
     - **Notes:**
         - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
 
@@ -139,13 +127,6 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Sets `isActive` of the shared goal to `false`.
        - `setInitialized(sharedGoals: SharedGoals, isInitialized: Boolean): Empty`
            - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
-   - **Queries:**
-       - `_getSharedGoals(userA: User, userB: User, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
-           - *Effects:* If isActive is specified, returns only shared goals for the user pair with that active status. If not specified, returns all shared goals (active and inactive) for the user pair.
-       - `_getSharedGoalById(userA: User, userB: User, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
-           - *Effects:* Returns the shared goal with the given id for the user pair, or null if not found.
-       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
-           - *Effects:* Returns all steps for the given shared goal.
    - **Notes:**
        - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
        - We are allowing for LLM generation and manual creation of steps
@@ -168,10 +149,6 @@ We made the huge design change of going from a run club based app to partnership
        - `closeMilestoneMap(milestoneMap: MilestoneMap): ()`
            - *Requires:* `milestoneMap` exists.
            - *Effects:* Closes the MilestoneMap reference for the two users.
-   - **Queries:**
-       - `_getMilestoneMap(userA: User, userB: User): (milestoneMap: {id: MilestoneMap, mapUrl: String, createdAt: Date, isActive: Boolean})?`
-           - *Effects:* Returns the MilestoneMap reference for the user pair, or null if none exists. All pin and photo data is managed within Google My Maps.
-
    - **Notes:**
        - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle for the duo.
        - closeMileStoneMap would still preserve the map for the user's archive  
@@ -250,6 +227,6 @@ We will aim for a timeline similar to the individual projects where we first cre
 
 | Stage | Features | Responsibilities | Key Risks |
 | :---- | :---- | :---- | :---- |
-| November 25th, Checkpoint: Alpha | Password authentication <br> User profile <br> Real-time matching <br> Messaging | Gloria: User profile, password authentication, start email verification  <br> Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
-| December 2nd, Checkpoint: Beta | UserVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals, complete email verification <br>Ananya: <br>Marin: <br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfect our prompt, testing out step generation, and improving our error handling. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
-| December 9th, Full Demo | Based on user testing, we will refine our  password authentication, start email verification features based on the feedback we receive. We will also include our syncs. We will also deploy using Render. | ALL: work on syncs related to the concepts we primarily developed & complete extensive testing on our backend and frontend | A potential key risk would be the feedback we get during user testing. For instance, if users find that an additional feature would be best to include but would be impossible to implement under the time frame, we will evaluate how aspects of the feature could be included within our existing concepts. Additionally, since we now have experience incorporating syncs, we do not expect there to be as many risks here but do we plan to ask questions on Piazza or to our TA Erin if huge issues arise that we would need another perspective on. |
+| November 25th, Checkpoint: Alpha | Password authentication <br> User profile <br> Real-time matching <br> Messaging | Gloria: User profile, password authentication, start email verification  <br> Ananya: Real-time matching <br>Marin: Messaging <br>ALL: collaborate to connect our concepts to our frontend | If we find that we are having difficulties with the real-time runner matching, as a fallback, we may decide to combine this feature and the long-term runner matching. This would mean making it so that once a user goes on a run through the real-time matching, the long-term aspect would kick in immediately after they complete their run by asking if they want to be long-term partners.  |
+| December 2nd, Checkpoint: Beta | EmailVerification <br> Long-term matching <br> Shared goals <br> Milestone map  | Gloria: SharedGoals <br>Ananya: Long-term matching <br>Marin: Milestone map<br>ALL: collaborate to connect our concepts to our frontend | A potential key risk would be incorporating LLM generation of potential steps for the duo to work toward as the steps may be irrelevant or in the wrong format. We will mitigate this risk by working on perfecting our prompt, testing out step generation, and improving our error handling. As a fallback, we will allow users to manually create their own steps for their shared goals. Another key risk would be perfecting the long-term matching but as mentioned in the row above, we will be sure to deeply evaluate what structure of the matching features ends up working best. |
+| December 9th, Full Demo | Based on user testing, we will refine our features based on the feedback we receive. We will also include our syncs. We will also deploy using Render. | ALL: work on syncs & complete extensive testing on our backend and frontend | A potential key risk would be the feedback we get during user testing. For instance, if users find that an additional feature would be best to include but would be impossible to implement under the time frame, we will evaluate how aspects of the feature could be included within our existing concepts. Additionally, since we now have experience incorporating syncs, we do not expect there to be as many risks here but do we plan to ask questions on Piazza or to our TA Erin if huge issues arise that we would need another perspective on. |
