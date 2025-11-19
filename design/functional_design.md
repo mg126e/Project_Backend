@@ -16,13 +16,13 @@ We made the huge design change of going from a run club based app to partnership
            - `codeSentAt`: DateTime
    - **Actions:**
        - `register(user: User, email: String): ()`
-           - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. No active verification exists for this user.
+           - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. The user is not already verified.
            - *Effects:* Generates a verification code, sends it to the user's email, and stores the code and timestamp.
        - `verifyCode(user: User, code: String): ({ success: Boolean, error?: String })`
-           - *Requires:* A verification code was sent to the user and not expired. The code matches the stored code.
-           - *Effects:* Sets `isVerified` to true if the code matches. Returns success or error.
+           - *Requires:* A verification code was sent to the user and the code matches the stored code.
+           - *Effects:* Sets `isVerified` to true if the code matches
        - `resendCode(user: User): ()`
-           - *Requires:* The user has a pending verification and is not yet verified.
+           - *Requires:* The user is not verified yet.
            - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
    - **Notes:**
        - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
@@ -50,25 +50,29 @@ We made the huge design change of going from a run club based app to partnership
        - deleteUser and closeProfile will work in a sync together
 
 - **UserProfile** [User]
-   - **Purpose:** Allow users to share their personal info, including a real profile image and key tags for access to running partner features.
-   - **Principle:** After setting a display name, uploading a profile image from their device, and adding tags (running level, age, gender, etc.), users can be discovered and matched more effectively.
+   - **Purpose:** Allow users to share their personal info, including a profile image and key tags for access to running partner features.
+   - **Principle:** After setting a display name, uploading a profile image from their device, creating a bio, and adding personal tags (running level, age, gender, and personality), users can be discovered and matched more effectively.
    - **State:**
        - A set of `Users`, each with:
            - `displayname`: String
            - `profileImage`: Image (uploaded from user's device; e.g., file upload or photo)
+           - `bio`: String (a biography where users can state more about themselves and what they are looking for)
            - `location`: String
-           - `tags`: Object with allowed keys: "gender", "age", "runningLevel", "personality" (e.g., "introvert"/"extrovert"), etc. Each key maps to a single value (String or Number as appropriate).
+           - `tags`: Object with allowed keys: "gender", "age", "runningLevel", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
            - `isActive`: Boolean
    - **Actions:**
-       - `createProfile(user: User, location: String): ()`
+       - `createProfile(user: User): ()`
            - *Requires:* No profile for the given user already exists. `location` must be provided.
-           - *Effects:* Creates a new user profile record for the given user with no initial display name, profile image, or tags, and sets the user's location. The profile is not active (not visible) until all required fields are filled out and setActive is called.
+           - *Effects:* Creates a new user profile record for the given user with no initial display name, profile image, location, bio, or tags. The profile is not active (not visible to others) until all required fields are filled out.
        - `setActive(user: User): ()`
-           - *Requires:* The user exists in the set of users. All required fields (displayname, profileImage, location, and all required tags) must be filled out.
+           - *Requires:* The user exists in the set of users. All required fields (displayname, profileImage, bio, location, and all required tags) must be filled out.
            - *Effects:* Sets the user's profile to active (visible to others).
        - `setLocation(user: User, location: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Updates the user's location.
+       - `setBio(user: User, bio: String): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Updates the user's biography.
        - `setName(user: User, displayname: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Sets the user's display name.
@@ -76,7 +80,7 @@ We made the huge design change of going from a run club based app to partnership
            - *Requires:* The user exists in the set of users.
            - *Effects:* Sets the user's profile image to the uploaded image (from file/photo).
        - `setTag(user: User, tagType: String, value: String|Number): ()`
-           - *Requires:* The user exists in the set of users. `tagType` must be one of the allowed types: "gender", "age", "runningLevel", "personality" (e.g., "introvert"/"extrovert"), or other relevant factors as defined by the system. `location` cannot be set or changed with this action.
+           - *Requires:* The user exists in the set of users. `tagType` must be one of the allowed types: "gender", "age", "runningLevel", "personality" ("introvert"/"extrovert").
            - *Effects:* Sets or updates the tag of the specified type for the user's profile. Only one value per tag type is allowed per user.
        - `removeTag(user: User, tagType: String): ()`
            - *Requires:* The user exists in the set of users and the tag type exists for the user.
@@ -86,6 +90,7 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Permanently deletes the user's profile and all associated data.
     - **Notes:**
         - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
+        - We are also going to continue to work on our set of allowed tags as we do testing to see what runners would want to see and filter by most. Though, users could also discuss the tags within their bio and expand there
 
 
 - **SharedGoals** [User, User]
@@ -129,12 +134,12 @@ We made the huge design change of going from a run club based app to partnership
            - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
    - **Notes:**
        - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
-       - We are allowing for LLM generation and manual creation of steps
+       - We are going to allow LLM generation and manual creation of steps
 
 
 - **MilestoneMap** [User, User]
-   - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations and optionally uploading photos.
-   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
+   - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations with captions and optionally uploading photos.
+   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (for example, their first 5K), add descriptions, and upload photos (for example, a selfie at the milestone spot). Only the two partners can view and edit their shared map.
    - **State:**
        - A set of `MilestoneMaps`, each with:
            - `userA`: User (one partner)
