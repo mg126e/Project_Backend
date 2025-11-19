@@ -187,7 +187,7 @@ We made the huge design change of going from a run club based app to partnership
 	   a meeting Location  
 	   an acceptance Status flag
 
-   a set of scheduled Runs with
+   a set of scheduled Runs with\
         a start Time  
         an Inviter user  
         an Accepter user  
