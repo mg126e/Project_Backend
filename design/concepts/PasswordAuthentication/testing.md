@@ -1,3 +1,4 @@
+```typescript
 import { assertEquals, assertExists, assertNotEquals } from "@std/assert";
 import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
@@ -246,3 +247,4 @@ Deno.test("Action: deleteUser permanently removes user and prevents authenticati
     await client.close();
   }
 });
+```
