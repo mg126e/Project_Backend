@@ -10,6 +10,9 @@ Problem framing assignment is contained [here](design/problem_framing.md).
 
 Functional design assignment is contained [here](design/functional_design.md). 
 
+## Peer Critique for team Oval
+Marin's critique is contained [here]()
+
 ## Checkpoint: Alpha
 
 Alpha checkpoint related information, including a screen recording is contained [here](design/alpha.md).
