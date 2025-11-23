@@ -4,7 +4,7 @@
    - **State:**
        - A set of `Users`, each with:
            - `displayname`: String
-           - `profileImage`: Image (uploaded from user's device; e.g., file upload or photo)
+           - `profileImage`: Image (an opaque file ID managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
            - `emergencyContact`: String (phone number)
@@ -45,4 +45,5 @@
         - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
         - We are also going to continue to work on our set of allowed tags as we do testing to see what runners would want to see and filter by the most. Though, users could also discuss the tags within their bio and expand there.
         - Another topic we will navigate is the emergency contact information. A user would provide the phone number of the person. 
+        - Integrating FileUploading concept from provided code from course
 

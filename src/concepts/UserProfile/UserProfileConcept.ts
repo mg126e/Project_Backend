@@ -1,5 +1,4 @@
 import { Collection, Db } from "mongodb";
-// FileUploadingConcept handles all file storage and URL logic
 import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
@@ -10,9 +9,6 @@ const PREFIX = "UserProfile.";
 type User = ID;
 type Image = File; // Opaque identifier, managed by FileUploading concept
 type File = ID;
-
-
-
 
 /**
  * State:
@@ -38,25 +34,9 @@ interface UserProfileDoc {
   isActive?: boolean;
 }
 
-/**
- * State:
- * a set of Hobbies with
- *   an active status Boolean
- *
- * A collection representing the relationship between a user and a specific hobby,
- * along with whether that hobby is currently active for that user.
- */
-interface UserHobbyDoc {
-  _id: ID; // Unique ID for this specific user-hobby relationship record
-  userId: User; // The ID of the user
-  hobby: string;
-  active: boolean;
-}
 
 /**
  * @concept UserProfile
- * @purpose allow users to share their personal info
- * @principle after setting a name, hobby, and image for a user, other users can see them
  */
 export default class UserProfileConcept {
 
