@@ -1,0 +1,48 @@
+**UserProfile** [User]
+   - **Purpose:** Allow users to share their personal info, including a profile image and key tags for access to running partner features.
+   - **Principle:** After setting a display name, uploading a profile image from their device, creating a bio, and adding personal tags (running pace, running level, age, gender, and personality), users can be discovered and matched more effectively.
+   - **State:**
+       - A set of `Users`, each with:
+           - `displayname`: String
+           - `profileImage`: Image (uploaded from user's device; e.g., file upload or photo)
+           - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
+           - `location`: String
+           - `emergencyContact`: String (phone number)
+           - `tags`: Object with allowed keys: "gender", "age", "runningLevel", "runningPace", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
+           - `isActive`: Boolean
+   - **Actions:**
+       - `createProfile(user: User): ()`
+           - *Requires:* No profile for the given user already exists.
+           - *Effects:* Creates a new user profile record for the given user with no initial display name, profile image, location, bio, or tags. The profile is not active (not visible to others) until all required fields are filled out.
+       - `setActive(user: User): ()`
+           - *Requires:* The user exists in the set of users. All required fields (displayname, profileImage, bio, location, and all required tags) must be filled out.
+           - *Effects:* Sets the user's profile to active (visible to others).
+       - `setLocation(user: User, location: String): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Updates the user's location.
+       - `setEmergencyContact(user: User, emergencyContact: String): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Updates the user's emergency contact.
+       - `setBio(user: User, bio: String): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Updates the user's biography.
+       - `setName(user: User, displayname: String): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Sets the user's display name.
+       - `setProfileImage(user: User, image: Image): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Sets the user's profile image to the uploaded image (from file/photo).
+       - `setTag(user: User, tagType: String, value: String|Number): ()`
+           - *Requires:* The user exists in the set of users. `tagType` must be one of the allowed types: "runningPace", "gender", "age", "runningLevel", "personality" ("introvert"/"extrovert").
+           - *Effects:* Sets or updates the tag of the specified type for the user's profile. Only one value per tag type is allowed per user.
+       - `removeTag(user: User, tagType: String): ()`
+           - *Requires:* The user exists in the set of users and the tag type exists for the user.
+           - *Effects:* Removes the tag of the specified type from the user's profile.
+       - `closeProfile(user: User): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Permanently deletes the user's profile and all associated data.
+    - **Notes:**
+        - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
+        - We are also going to continue to work on our set of allowed tags as we do testing to see what runners would want to see and filter by the most. Though, users could also discuss the tags within their bio and expand there.
+        - Another topic we will navigate is the emergency contact information. A user would provide the phone number of the person. 
+
