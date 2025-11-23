@@ -120,4 +120,31 @@ export default class PasswordAuthenticationConcept {
 
     return {};
   }
+  /**
+   * changePassword (user: User, oldPassword: String, newPassword: String): ({} | { error: string })
+   *
+   * @requires a User with the given user ID exists AND the old password matches the stored passwordHash
+   * @effects updates the user's password to the new password (hashed)
+   */
+  async changePassword(
+    { user, oldPassword, newPassword }: { user: User; oldPassword: string; newPassword: string },
+  ): Promise<Empty | { error: string }> {
+    // Find the user by ID
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    // Check old password
+    const oldPasswordHash = await hashPassword(oldPassword);
+    if (userDoc.passwordHash !== oldPasswordHash) {
+      return { error: "Old password is incorrect." };
+    }
+    // Hash new password and update
+    const newPasswordHash = await hashPassword(newPassword);
+    await this.users.updateOne(
+      { _id: user },
+      { $set: { passwordHash: newPasswordHash } },
+    );
+    return {};
+  }
 }

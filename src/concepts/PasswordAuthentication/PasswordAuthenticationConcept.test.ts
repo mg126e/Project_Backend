@@ -246,3 +246,84 @@ Deno.test("Action: deleteUser permanently removes user and prevents authenticati
     await client.close();
   }
 });
+
+
+  Deno.test("Action: changePassword updates password and enforces old password", async () => {
+    const [db, client] = await testDb();
+    const concept = new PasswordAuthenticationConcept(db);
+
+    try {
+      const username = "changepwuser";
+      const password = "oldpass";
+      const newPassword = "newpass";
+
+      // Register user
+      const registerResult = await concept.register({ username, password });
+      assertNotEquals(
+        "error" in registerResult,
+        true,
+        "Registration should succeed",
+      );
+      const { user: userId } = registerResult as { user: ID };
+
+      // Authenticate with old password
+      const authOld = await concept.authenticate({ username, password });
+      assertNotEquals(
+        "error" in authOld,
+        true,
+        "Authentication with old password should succeed",
+      );
+
+      // Change password with correct old password
+      const changeResult = await concept.changePassword({ user: userId, oldPassword: password, newPassword });
+      assertNotEquals(
+        "error" in changeResult,
+        true,
+        "Password change should succeed with correct old password",
+      );
+
+      // Authenticate with new password
+      const authNew = await concept.authenticate({ username, password: newPassword });
+      assertNotEquals(
+        "error" in authNew,
+        true,
+        "Authentication with new password should succeed",
+      );
+
+      // Authenticate with old password should now fail
+      const authOldAgain = await concept.authenticate({ username, password });
+      assertEquals(
+        "error" in authOldAgain,
+        true,
+        "Authentication with old password should now fail",
+      );
+
+      // Try to change password with wrong old password
+      const changeWrong = await concept.changePassword({ user: userId, oldPassword: "wrongpass", newPassword: "irrelevant" });
+      assertEquals(
+        "error" in changeWrong,
+        true,
+        "Password change should fail with wrong old password",
+      );
+      assertEquals(
+        (changeWrong as { error: string }).error,
+        "Old password is incorrect.",
+        "Should return correct error message for wrong old password",
+      );
+
+      // Try to change password for non-existent user
+      const changeNonExistent = await concept.changePassword({ user: "nonexistentid" as ID, oldPassword: "irrelevant", newPassword: "irrelevant" });
+      assertEquals(
+        "error" in changeNonExistent,
+        true,
+        "Password change should fail for non-existent user",
+      );
+      assertEquals(
+        (changeNonExistent as { error: string }).error,
+        "User nonexistentid not found.",
+        "Should return correct error message for non-existent user",
+      );
+    } finally {
+      await client.close();
+    }
+  });

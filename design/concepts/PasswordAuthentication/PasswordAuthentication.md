@@ -15,6 +15,9 @@
            - `deleteUser(user: User): ({} | { error: String })`
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
+            - `changePassword(user: User, oldPassword: String, newPassword: String): ({} | { error: String })`
+              - *Requires:* A User with the given user ID exists AND the old password matches the stored passwordHash.
+              - *Effects:* Updates the user's password to the new password
     - **Notes:**
        - deleteUser and closeProfile will work in a sync together
 
