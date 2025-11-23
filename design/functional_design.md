@@ -29,7 +29,6 @@ We made the huge design change of going from a run club based app to partnership
        - The user cannot become active or log in until their email is verified.
 
 
-- **PasswordAuthentication**
    - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
    - **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
        - **State:**
@@ -46,16 +45,19 @@ We made the huge design change of going from a run club based app to partnership
            - `deleteUser(user: User): ({} | { error: String })`
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
+            - `changePassword(user: User, oldPassword: String, newPassword: String): ({} | { error: String })`
+              - *Requires:* A User with the given user ID exists AND the old password matches the stored passwordHash.
+              - *Effects:* Updates the user's password to the new password
     - **Notes:**
        - deleteUser and closeProfile will work in a sync together
 
-- **UserProfile** [User]
+**UserProfile** [User]
    - **Purpose:** Allow users to share their personal info, including a profile image and key tags for access to running partner features.
    - **Principle:** After setting a display name, uploading a profile image from their device, creating a bio, and adding personal tags (running pace, running level, age, gender, and personality), users can be discovered and matched more effectively.
    - **State:**
        - A set of `Users`, each with:
            - `displayname`: String
-           - `profileImage`: Image (uploaded from user's device; e.g., file upload or photo)
+           - `profileImage`: Image ( managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
            - `emergencyContact`: String (phone number)
@@ -96,15 +98,14 @@ We made the huge design change of going from a run club based app to partnership
         - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
         - We are also going to continue to work on our set of allowed tags as we do testing to see what runners would want to see and filter by the most. Though, users could also discuss the tags within their bio and expand there.
         - Another topic we will navigate is the emergency contact information. A user would provide the phone number of the person. 
+        - Integrating FileUploading concept from provided code from course
 
-
-- **SharedGoals** [User, User]
-   - **Purpose:** Allow two users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
-   - **Principle:** After two users agree on a shared goal, they can either have an LLM generate recommended steps or input their own. Both can mark steps as complete, view progress, and see which steps remain.
+**SharedGoals** [User, User]
+    - **Purpose:** Allow a group of users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
+    - **Principle:** After a set of users agree on a shared goal, they can either have an LLM generate recommended steps or input their own. Any user can mark steps as complete, view progress, and see which steps remain.
    - **State:**
        - A set of `SharedGoals`, each with:
-           - `userA`: User (one partner)
-           - `userB`: User (the other partner)
+           - `users`: Set<User> (the group of users sharing the goal)
            - `description`: String (goal description)
            - `isActive`: Boolean (true if the goal is currently being tracked)
        - A set of `SharedSteps`, each with:
@@ -114,33 +115,39 @@ We made the huge design change of going from a run club based app to partnership
            - `completion`: Date? (optional, when the step was completed)
        - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
    - **Actions:**
-       - `createSharedGoal(userA: User, userB: User, description: String): (sharedGoalId: SharedGoal)`
-           - *Requires:* No active `SharedGoal` for this user pair with the same description already exists. `description` is not empty.
-           - *Effects:* Creates a new `SharedGoal` with `userA`, `userB`, and `description`; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user pair as long as each has a unique description.
+       - `createSharedGoal(users: Set<User>, description: String): (sharedGoalId: SharedGoal)`
+           - *Requires:* No active `SharedGoal` for this set of users with the same description already exists. `description` is not empty. `users` must contain at least two users.
+           - *Effects:* Creates a new `SharedGoal` with the given set of users and description; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user group as long as each has a unique description.
        - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
-           - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`.
+           - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`. `user` must be a member of the shared goal's users.
            - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps.
        - `regenerateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
-           - *Requires:* `sharedGoal` exists and is active.
+           - *Requires:* `sharedGoal` exists and is active. `user` must be a member of the shared goal's users.
            - *Effects:* Deletes all existing `SharedSteps` for the shared goal, then generates new steps as above; returns the array of new steps.
        - `addSharedStep(sharedGoal: SharedGoal, description: String, user: User): (step: SharedStep)`
-           - *Requires:* `sharedGoal` exists and is active; `description` is not empty.
+           - *Requires:* `sharedGoal` exists and is active; `description` is not empty. `user` must be a member of the shared goal's users.
            - *Effects:* Creates a new `SharedStep` for the shared goal; returns the new step.
        - `completeSharedStep(step: SharedStep, user: User): Empty`
-           - *Requires:* `step` exists and does not have a completion date. The `SharedGoal` is active. Either user may complete a step.
+           - *Requires:* `step` exists and does not have a completion date. The `SharedGoal` is active. `user` must be a member of the shared goal's users.
            - *Effects:* Sets the completion date for the step.
        - `removeSharedStep(step: SharedStep, user: User): Empty`
-           - *Requires:* `step` exists; no completion date; `SharedGoal` is active. Either user may remove a step.
+           - *Requires:* `step` exists; no completion date; `SharedGoal` is active. `user` must be a member of the shared goal's users.
            - *Effects:* Deletes the step from storage.
        - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
-           - *Requires:* `sharedGoal` exists and is active. Either user may close the goal.
+           - *Requires:* `sharedGoal` exists and is active. `user` must be a member of the shared goal's users.
            - *Effects:* Sets `isActive` of the shared goal to `false`.
        - `setInitialized(sharedGoals: SharedGoals, isInitialized: Boolean): Empty`
            - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
+   - **Queries:**
+       - `_getSharedGoals(users: Set<User>, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
+           - *Effects:* If isActive is specified, returns only shared goals for the user group with that active status. If not specified, returns all shared goals (active and inactive) for the user group.
+       - `_getSharedGoalById(users: Set<User>, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
+           - *Effects:* Returns the shared goal with the given id for the user group, or null if not found.
+       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
+           - *Effects:* Returns all steps for the given shared goal.
    - **Notes:**
-       - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the partners
-       - We are going to allow LLM generation and manual creation of steps
-
+    - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the group of users
+    - We are allowing for LLM generation and manual creation of steps
 
 - **MilestoneMap** [User, User]
    - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations with captions and optionally uploading photos.

@@ -4,7 +4,7 @@
    - **State:**
        - A set of `Users`, each with:
            - `displayname`: String
-           - `profileImage`: Image (an opaque file ID managed by the FileUploading concept; uploaded from user's device)
+           - `profileImage`: Image ( managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
            - `emergencyContact`: String (phone number)
