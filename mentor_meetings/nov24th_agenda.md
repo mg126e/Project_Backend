@@ -1,4 +1,4 @@
-# TA Meeting Agenda – November 17th
+# TA Meeting Agenda – November 24th
 
 Meeting Time: 5:45 
 
