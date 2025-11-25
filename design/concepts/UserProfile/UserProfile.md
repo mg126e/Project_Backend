@@ -76,17 +76,21 @@ type File = ID;
  */
 type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
 
+interface EmergencyContact {
+  name: string;
+  phone: string;
+}
+
 interface UserProfileDoc {
   _id: User;
   displayname?: string;
   profileImage?: Image; // Now stores a File ID
   bio?: string;
   location?: string;
-  emergencyContact?: string;
+  emergencyContact?: EmergencyContact;
   tags?: Partial<Record<AllowedTag, string | number>>;
   isActive?: boolean;
 }
-
 
 /**
  * @concept UserProfile
@@ -214,14 +218,15 @@ export default class UserProfileConcept {
   }
 
   /**
-   * setEmergencyContact (user: User, emergencyContact: String)
+   * setEmergencyContact (user: User, name: String, phone: String)
    *
    * @requires the user exists in the set of users.
-   * @effects updates the user's emergency contact.
+   * @effects updates the user's emergency contact (name and phone).
    */
   async setEmergencyContact(
-    { user, emergencyContact }: { user: User; emergencyContact: string },
+    { user, name, phone }: { user: User; name: string; phone: string },
   ): Promise<Empty | { error: string }> {
+    const emergencyContact = { name, phone };
     const result = await this.userProfiles.updateOne(
       { _id: user },
       { $set: { emergencyContact } },

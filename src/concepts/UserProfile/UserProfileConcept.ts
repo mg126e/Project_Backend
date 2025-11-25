@@ -39,7 +39,6 @@ interface UserProfileDoc {
   isActive?: boolean;
 }
 
-
 /**
  * @concept UserProfile
  */
