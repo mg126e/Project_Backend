@@ -26,9 +26,9 @@ Deno.test("Principle: User creates profile and sets personal information", async
 		const setLocationResult = await concept.setLocation({ user: userA, location: "NYC" });
 		assertNotEquals("error" in setLocationResult, true, "Setting location should succeed");
 
-		// 5. Set emergency contact
-		const setECResult = await concept.setEmergencyContact({ user: userA, emergencyContact: "555-1234" });
-		assertNotEquals("error" in setECResult, true, "Setting emergency contact should succeed");
+    	// 5. Set emergency contact (name and phone)
+    	const setECResult = await concept.setEmergencyContact({ user: userA, name: "Alice Mom", phone: "555-1234" });
+    	assertNotEquals("error" in setECResult, true, "Setting emergency contact should succeed");
 
 		// 6. Set profile image (simulate file ID)
 		const setImageResult = await concept.setProfileImage({ user: userA, image: "file:imgid123" as ID });

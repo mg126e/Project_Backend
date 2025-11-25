@@ -7,7 +7,9 @@
            - `profileImage`: Image ( managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
-           - `emergencyContact`: String (phone number)
+             - `emergencyContact`: Object with fields:
+               - `name`: String (contact person's name)
+               - `phone`: String (contact's phone number)
            - `tags`: Object with allowed keys: "gender", "age", "runningLevel", "runningPace", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
            - `isActive`: Boolean
    - **Actions:**
@@ -20,9 +22,9 @@
        - `setLocation(user: User, location: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Updates the user's location.
-       - `setEmergencyContact(user: User, emergencyContact: String): ()`
-           - *Requires:* The user exists in the set of users.
-           - *Effects:* Updates the user's emergency contact.
+        - `setEmergencyContact(user: User, name: String, phone: String): ()`
+          - *Requires:* The user exists in the set of users.
+          - *Effects:* Updates the user's emergency contact (name and phone).
        - `setBio(user: User, bio: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Updates the user's biography.
