@@ -16,7 +16,7 @@ EXPOSE 10000
 COPY --chown=deno:deno . .
 
 # Deno install for dependencies that might be on npm
-RUN deno install
+RUN deno cache src/main.ts
 
 # Run the custom build step defined in deno.json.
 # This step writes to src/concepts/concepts.ts and now has permission to do so.
