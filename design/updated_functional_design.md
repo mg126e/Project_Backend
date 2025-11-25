@@ -16,7 +16,7 @@ We made the huge design change of going from a run club based app to partnership
            - `codeSentAt`: DateTime
    - **Actions:**
        - `register(user: User, email: String): ()`
-           - *Requires:* The email domain is a valid Boston-area .edu domain. The user is not already verified.
+           - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. The user is not already verified.
            - *Effects:* Generates a verification code, sends it to the user's email, and stores the code and timestamp.
        - `verifyCode(user: User, code: String): ({ success: Boolean, error?: String })`
            - *Requires:* A verification code was sent to the user and the code matches the stored code.
@@ -25,10 +25,10 @@ We made the huge design change of going from a run club based app to partnership
            - *Requires:* The user is not verified yet.
            - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
    - **Notes:**
-       - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email. The sync will account for this.
+       - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
        - The user cannot become active or log in until their email is verified.
 
-- **PasswordAuthentication**
+
    - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
    - **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
        - **State:**
@@ -149,30 +149,48 @@ We made the huge design change of going from a run club based app to partnership
     - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the group of users
     - We are allowing for LLM generation and manual creation of steps
 
-- **MilestoneMap** [User, User]
-   - **Purpose:** Provide a private, shared map using Google Maps API for two running partners to commemorate milestones by dropping pins at specific locations with captions and optionally uploading photos.
-   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (for example, their first 5K), add descriptions, and upload photos (for example, a selfie at the milestone spot). Only the two partners can view and edit their shared map.
-   - **State:**
-       - A set of `MilestoneMaps`, each with:
-           - `userA`: User (one partner)
-           - `userB`: User (the other partner)
-           - `mapUrl`: String (the unique Google My Maps URL or ID for the shared map)
-           - `createdAt`: Date
-           - `isActive`: Boolean
-   - **Actions:**
-       - `createMilestoneMap(userA: User, userB: User): (milestoneMap: MilestoneMap)`
-           - *Requires:* No existing MilestoneMap for this user pair.
-           - *Effects:* Stores a reference to a new shared Google My Map for the two users; returns the map's ID.
-       - `closeMilestoneMap(milestoneMap: MilestoneMap): ()`
-           - *Requires:* `milestoneMap` exists.
-           - *Effects:* Closes the MilestoneMap reference for the two users.
+concept MilestoneMap
+purpose manage the creation, persistence, and access permissions of the Google Maps API
+for running partners to commemorate milestones on a private, shared map
+principle once two users are matched as long-term running partners, 
+   they can drop pins at locations where they achieved milestones together (e.g. first 5K);
+   they can also upload photos taken at that location (e.g. a selfie after the 5K) and add descriptions;
+   only the two partners can view and edit their shared map
+   
+state
+a set of milestone Maps with
+   a set of Users
+   an Active flag
+   a creation Date
+   a map URL String (the unique Google MyMaps URL or an ID)
+   
+
+actions
+
+createMileStoneMap (users: Users, mapURL: String): (milestoneMap: Map)\
+   requires all users exist and there is no existing map for this set of users\
+   effects stores a reference to a new shared Google My Map for the users and returns the map,\
+	 Map’s Active flag is set to true\
+
+deleteMilestoneMap (milestoneMap: Map, user: User)\
+   requires Map exists and User is one of its owners\
+   effects permanently deletes Map for only the user and removes them from Map\
+
+closeMilestoneMap (milestoneMap: Map)\
+   requires the milestoneMap exists and its Active flag is true\
+   effects sets Active flag to false so users can no longer edit Map\
+
+revokeAccess  (milestoneMap: Map, user: User)\
+   requires Map must exist and User is one of its owners\
+   effects User alone is no longer able to access (view or edit) this  Map\
+
    - **Notes:**
        - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle for the duo.
        - closeMileStoneMap would still preserve the map for the user's archive  
         - An issue to resolve with this would be perfecting the manner we will go about a full history reset, including with shared goals if the two users end their partnership and either does not want a saved history
 
 
-**concept: RunBuddyFinder**\
+**concept** OneRunMatching  
 **purpose** find a running partner for a one-time run in the near or immediate future  
 **principle** a user chooses a region and a specific meeting location in it;  
    the user creates a run invite, which becomes visible to all users whose region is set to the same;  
@@ -181,65 +199,65 @@ We made the huge design change of going from a run club based app to partnership
 
 **state**  
 	a set of Users with  
-	   a Region  
+	   a region String  
 	   a set of run Invites  
 	   a set of scheduled Runs
 
-   a set of run Invites with  
+	a set of run Invites with  
 	   a Sent flag  
-
-   a start Time  
+     ``a start Time  
 	   an Inviter user  
-	   a running Distance  
-	   a meeting Location  
-	   an acceptance Status flag
+	   a set of invitee Users  
+	   a meeting location String  
+    `` a running distance Number  
+	   an acceptance Status (accepted, declined, pending)
 
-   a set of scheduled Runs with\
-        a start Time  
-        an Inviter user  
-        an Accepter user  
-        a Completed flag  
-        a meeting Location  
+	a set of scheduled Runs with  
+	   a user UserA  
+	   a user UserB  
+     ``a Completed flag  
 	        
 **actions** 
 
-setRegion (user: User, region: Region)  
-   **requires** user exists and Region is a valid region  
-   **effects** sets the user’s region to the given Region
+setRegion (user: User, region: String)  
+   **requires** user exists and the String is a valid region  
+   **effects** sets the user’s region to the given region String
 
-createInvite (inviter: Inviter, region: Region, start: Time, distance: Number, location: Location): (invite: Invite)  
-   **requires** inviter exists, location is in inviter’s Region, start is a future time, and distance is greater than zero  
+createInvite (inviter: User, region: String, start: Time, distance: Number, location: String):  
+(invite: Invite)  
+   **requires** inviter exists, region and location are valid, start is a future time,  and distance is greater than zero  
    **effects** creates a new run Invite with given details and Sent flag set to false
 
-sendInvite (invite: Invite)  
-   **requires** the invite exists and its Sent flag is set to False  
-   **effects** sends Invite to all users in its associated region and sets Sent flag to True
+sendInvite (invite: Invite, invitees: Users)  
+   **requires** the invitees and invite exists, and its Sent flag is set to False  
+   **effects** sends Invite to all invitees (users in its associated region), sets Sent flag to True, sets Status to ‘pending’
 
 deleteInvite (user: Inviter, invite: Invite)  
    **requires** the invite exists and  the user is the Inviter for that invite  
-   **effects** remove Invite from the Inviter’s set of invites and set its Sent flag to false if true
+   **effects** remove Invite from the Inviter’s set of invites
 
-acceptInvite (inviter: Inviter, invite: Invite, accepter: Accepter): (scheduledRun: Run)  
+acceptInvite (inviter: UserA, invite: Invite, accepter: UserB): (scheduledRun: Run)  
    **requires** the invite exists, its Sent flag is true, and its acceptance status is false  
-   **effects** the acceptance Status of the invite is set to true and the Inviter is notified of the acceptance
+   **effects** creates a new Run and the Status of the invite is set to ‘accepted’
 
 declineInvite (invite: Invite, decliner: User)  
-   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false
+   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false  
+   **effects** sets invite Status to ‘declined’   
 
-**system** scheduleRun (inviter: Inviter, accepter: Accepter, invite: Invite): (run: Run)  
-   **requires** the invite exists and its acceptance status is true  
-   **effects** creates a run with the details in the invite such as time and location
-
-completeRun (inviter: Inviter, accepter: Accepter, run: Run)  
-   **requires** the run exists for both users and has not already been marked Completed  
+completeRun (user: User, run: Run)  
+   **requires** the run exists for the user and has not already been marked Completed  
    **effects** sets the Completed flag of the run to true
 
-cancelRun (inviter: Inviter, accepter: Accepter, run: Run, time: Time)  
-   **requires** the run exists for both users and is at a valid future time  
-   **effects** deletes the run from both users’ set of runs 
+cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)  
+   **requires** the run exists for all users and the initiator user, and is at a valid future time  
+   **effects** deletes the run from the set of runs for all users associated with that Run 
+
+**system** expireInvite (start: Time): (invite: Invite)  
+   **requires** Start time for invite is in the past  
+   **effects** returns invite and removes it from set of invites
 
 
-**concept: PartnerMatching**\
+**concept** PartnerMatching  
 **purpose** match users with a long-term running partner based on running preferences and experience levels  
 **principle** a user creates a profile with their personal details and preferences;  
   they are then presented with other users whose profiles indicate that they may align with theirs;  
@@ -264,7 +282,11 @@ a set of running Preferences with
 a set of match Suggestions with  
    a Recipient user  
    a Candidate user  
-   an acceptance Status flag
+   an acceptance Status (accepted, declined, pending)
+
+a set of active Matches with  
+    a user UserA  
+    a user UserB
 
 **actions**
 
@@ -272,50 +294,44 @@ updatePreferences (user: User, preferenceSet: Preferences)
    **requires** the user exists and has a profile  
    **effects** replaces the running preferences in the user’s profile with given ones
 
-**system** suggestMatch (recipient: Recipient, candidate: Candidate): (match: Suggestion)  
+**system** suggestMatch (recipient: Recipient, candidate: Candidate): (suggestion: Suggestion)  
    **requires** the recipient and candidate exist and are distinct; both have profiles;  
 	    there is no active match and no existing suggestions with any combination of  the users;  
 	    at least three preferences must be the same for both users  
-   **effects** creates and returns a new match Suggestion with the candidate to the recipient
+   **effects** creates and returns a new match Suggestion with Candidate to Recipient,  
+	 sets Status to ‘pending’
 
-acceptSuggestion (match: Suggestion, recipient: Recipient, candidate: Candidate): (match: Suggestion)  
+acceptSuggestion (suggestion: Suggestion, recipient: Recipient, candidate: Candidate): (match: Match)  
    **requires** a Suggestion exists with recipient user being Recipient and candidate user being Candidate  
-   **effects** the Status flag of the Suggestion is set to true and returns Suggestion as a potential match
+   **effects** set Status to ‘accepted’,  
+creates and returns a new Match if Candidate has also accepted their suggestion of the Recipient
 
-declineSuggestion (match: Suggestion, recipient: Recipient, candidate: Candidate)  
-   **requires** a Suggestion exists with recipient user being Recipient and candidate user being Candidate
-
-match (suggestionPair: Suggestions, user: UserA, user: UserB): (activeMatch: Match)  
-   **requires** the Suggestion of UserA to UserB needs to be accepted by UserB and vice versa  
-   **effects** creates and returns a new active Match between the two users 
+declineSuggestion (suggestion: Suggestion, recipient: Recipient, candidate: Candidate)  
+   **requires** a Suggestion exists with recipient user being Recipient and candidate user being Candidate  
+   **effects** set Status of suggestion to ‘declined’ and deletes it from recipient’s set of suggestions
 
 unmatch (activeMatch: Match, user: UserA, user: UserB)  
    **requires** there exists an active Match between UserA and UserB  
    **effects** deletes the Match from UserA and UserB’s set of Matches
-
+   
 **Notes:** 
 
 - suggestMatch is a **system** action as users have no direct control or interaction with this, since matches are automatically generated based on preference settings  
 - The recipient user is the one who receives the suggestion and the candidate user is the one who is being suggested.  
 - Any notion of a createPreferences action is subsumed by the updatePreferences since technically, users can also have no preferences set (presumably when they first create their account).
 
-**concept: Messaging**\
-**purpose** one user can send a private message to another user to communicate about scheduled runs  
-**principle** a user may send a private message to another user only if there is an active connection between them,  
-   this could be either an active match with a long-term partner or an accepted one-time run invite;  
-   messages are organised by the context of the connection (partner or one-time run);  
-   users can view a history of messages for each connection;  
-   each connection maintains its own separate conversation thread;  
+
+**concept** Messaging  
+**purpose** one user can send a message to other users to communicate about scheduled runs  
+**principle** a user may send messages to other users,  
+   users can view a history of messages for each thread;  
    messages cannot be sent to users with whom there is no active connection
 
 **state**  
-a set of Users with  
-   a set of Chats
-
-a set of Chats with  
-   a Recipient user  
-   a set of Messages  
-  a connection context Tag  \\\\ either a one-time or long-term running partner
+a set of Threads with  
+   a user UserA  
+   a user UserB  
+   a set of Messages
 
 a set of Messages with	  
    a Sender user  
@@ -325,113 +341,108 @@ a set of Messages with
 
 **actions**
 
-startChat (userA: User, userB: User, context: Tag): (chatA: Chat, chatB: Chat)  
-   **requires** userA and userB exist and are distinct; there is a valid context Tag connecting userA and userB;  
-     there is no existing chat in this context between userA and userB  
-   **effects** creates and returns a new Chat between userA and userB for each user, chatA and chatB
+startChat (userA: UserA, userB: UserB): (thread: Thread)  
+   **requires** userA and userB  exist and are distinct; there is no existing thread between userA and userB  
+   **effects** creates and returns a new thread between userA and userB
 
-deleteChat (initiator: User, userB: User, chat: Chat)  
-   **requires** there is an existing chat between the initiator of the deletion and userB  
-   **effects** deletes the chat between the initiator and userB only for the initiator
+deleteChat (initiator: User, userB: UserB, thread: Thread)  
+   **requires** there is an existing thread between the initiator of the deletion and UserB  
+   **effects** deletes the thread between the initiator and users only for the initiator
 
-**system** deleteChat (userA: User, userB: User, chat: Chat)  
-   **requires** there is an existing chat between userA and userB  
-   **effects** deletes the chat between userA and userB for both users
+sendMessage (content: String, time: Time, thread: Thread, sender: User, userB: UserB): (message: Message)  
+   **requires** there is an existing thread between the sender and UserBs; the content must not be empty   
+   **effects** creates a new message from UserA in the thread with a timestamp and sets its Status to ‘delivered’
 
-createMessage (sender: User, recipient: User, chat: Chat, content: String): (message: Message)  
-   **requires** the sender and recipient must have an existing chat; the content must not be empty  
-   **effects** creates and returns a new message in the chat between the sender and recipient with the content
+readMessage (message: Message, thread: Thread, sender: User, userB: UserB, time: Timestamp)  
+   **requires** there is an existing thread between sender and UserB; message exists and its Status is set to ‘delivered’  
+   **effects** sets the Status of the message to ‘read’
 
-sendMessage (message: Message, time: Timestamp, chat: Chat, sender: User, recipient: User)  
-   **requires** there is an existing chat between the sender and recipient; the message must exist   
-   **effects** sends the message from the recipient to the sender with a Timestamp, with Status set to delivered
-
-readMessage (message: Message, chat: Chat, sender: User, recipient: User, time: Timestamp)  
-   **requires** recipient has an existing chat with sender; message exists and its Status is set to ‘delivered’  
-   **effects** marks the Status of the message to ‘read’
-
-**Notes:** 
-
-- There are two versions of the deleteChat action. One is an action available to a user as in any messaging platform where they can delete a chat they have with another user without affecting the other user’s access to it. The **system** action is so that we, as developers, can delete a chat for both parties in cases where they should not be able to contact each other after a certain point (e.g. one-time running partners shouldn’t be able to message each other after the run is marked as complete, to prevent avenues for harassment and unsolicited messaging).
-
+   
 ## Syncs
 
-> sync emailVerificationOnRegister
->> when PasswordAuthentication.register(username, password, email): (user)\
->> then EmailVerification.register(user, email)
+**sync** emailVerificationOnRegister\
+**when** PasswordAuthentication.register(username, password, email): (user)\
+**then** EmailVerification.register(user, email)\
+
 
 - **Notes: After Registration → Send Verification Email**:
    - In **PasswordAuthentication**, `register` adds/logs the user and password.
    - In **EmailVerification**, `register` is triggered, after the user makes that attempt to register, to send a verification email to the user.
 
 
-> sync createProfileOnRegister
->> when PasswordAuthentication.register(username, password, email): (user) and EmailVerification._isEmailVerified(user): true\
->> then UserProfile.createProfile(user)
+**sync** createProfileOnRegister\
+**when** PasswordAuthentication.register(username, password, email): (user)\
+         EmailVerification.verifyCode (): (success: Boolean)\
+**where** in EmailVerification: success Boolean is true\
+**then** UserProfile.createProfile(user)\
 
 - **Notes: After Completed Registration → Create Profile**
-   - When a user successfully registers, an empty **UserProfile** is automatically created for them.
+   - When a user successfully registers and is verified, an empty **UserProfile** is automatically created for them.
 
 
-> sync createGoalsAndMapOnPartnership
->> when Partnership.agree(userA, userB)\
->> then SharedGoals.setInitialized(sharedGoals, true) and MilestoneMap.createMilestoneMap(userA, userB)
+**sync** createGoalsAndMapOnPartnership\
+**when** Partnership.agree(userA, userB)\
+**then** SharedGoals.createSharedGoal(users: Users, description: String): (SharedGoal)\
+         SharedGoals.setInitialized(SharedGoal, true)\
+         MilestoneMap.createMilestoneMap(userA, userB): (milestoneMap: Map)\
 
 - **Notes: Partnership Agreement → SharedGoals & MilestoneMap Setup**
    - If both users agree to continue running together and start their partnership, a **SharedGoals** instance and a **MilestoneMap** are automatically set up for the pair.
 
 
-> sync archiveOnPartnershipEnd
->> when Partnership.end(userA, userB)\
->> then SharedGoals.setInitialized(sharedGoals, false) and MilestoneMap.closeMilestoneMap(milestoneMap)
+**sync** archiveOnPartnershipEnd\
+**when** PartnerMatching.unmatch (Match, UserA, UserB)\
+**where** in SharedGoals: S is the set of created SharedGoals between UserA and UserB\
+              in MileStoneMap: Map is the shared MilestoneMap between  UserA and UserB\
+**then** SharedGoals.setInitialized(S, false)\
+           MilestoneMap.closeMilestoneMap(Map)\
+           SharedGoals.closeGoal ([UserA, UserB], S)\
 
 - **Notes: Partnership End → Delete SharedGoals & MilestoneMap**
    - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
 
 
-> sync deleteUserOnCloseProfile
->> when UserProfile.closeProfile(user)\
->> then PasswordAuthentication.deleteUser(user)
+**sync** deleteUserOnCloseProfile\
+**when** UserProfile.closeProfile(user)\
+**then** PasswordAuthentication.deleteUser(user)\
 
 - **Notes: Close Profile → Delete User**
    - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that that act would lead to.
 
-**sync** match  
-**when** PartnerMatching.acceptSuggestion (MatchAB, RecipientA, CandidateB): (match: SuggestionA)  
-    	PartnerMatching.acceptSuggestion (MatchBA, RecipientB, CandidateA): (match: SuggestionB)  
-**then** PartnerMatching.match ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)
+**sync** matchAndChat\
+**when** PartnerMatching.acceptSuggestion (SuggestionAB, RecipientA, CandidateB): (match: SuggestionA)\
+**where** in PartnerMatching: CandidateB has already accepted the suggestion of RecipientA\
+**then** Messaging.startChat (UserA,  UserB): (thread: Thread)\
 
-**sync** chat  
-**when** PartnerMatching.match  ({SuggestionA, SuggestionB}, UserA, UserB): (activeMatch: Match)  
-**then** Messaging.startChat (UserA,  UserB, context: PartnerMatching): (chat: Chat)
+**Notes:** When both users accept a suggestion of the other user, they are automatically led to a chat feature to encourage communication. Based on feedback, the match action's functionality was subsumed in acceptSuggestion so a **where** clause is used instead to determine whether users A and B are match or not.
 
-**Notes:** When both users accept a suggestion of the other user, they are automatically led to a chat feature to encourage communication.
-
-**sync** schedule  
-**when** RunBuddyFinder.acceptInvite (inviter: UserA, invite: Invite, accepter: UserB)  
-**then** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run
-
-**sync** deleteChat  
-**when** RunBuddyFinder.completeRun (inviter: Inviter, accepter: Accepter, run: Run)  
-**then system** Messaging.deleteChat (userA: Inviter, userB: Accepter, chat: Chat)
+**sync** deleteChatOnCompletion\
+**when** OneRunMatching.completeRun (userA: UserA, userB: UserB, run: Run)\
+**then** Messaging.deleteChat (initiator: UserA, userB: UserB, thread: Thread)\
+         Messaging.deleteChat (initiator: UserB, userB: UserA, thread: Thread)\
+         
+**Notes:** Since deleteChat only deletes the chat for the initiator User, it is called for both users so neither has access to it once the run is cancelled.
 
 **Notes:** When a one-time run is over, users can no longer message each other. This is to preserve the idea of a low-commitment running partner and to prevent any unwanted messaging.
 
-**sync** suggest  
-**when** RunBuddyFinder.completeRun(inviter: Inviter, accepter: Accepter, run: Run)  
-**then** PartnerMatching.suggestMatch (recipient: Inviter, candidate: Accepter)  
-         PartnerMatching.suggestMatch (recipient: Accepter, candidate: Inviter)
+**sync** suggest\
+**when** OneRunMatching.completeRun(inviter: UserA, accepter: UserB, run: Run)\
+**then** PartnerMatching.suggestMatch (recipient: UserA, candidate: UserB)\
+         PartnerMatching.suggestMatch (recipient: UserB, candidate: UserA)\
+
 
 **Notes:** To still allow users to communicate with their one-time running partners if they want to, they will be suggested as a match for long-term partnerships after the run is over. This allows each user to decide whether they want to run with the other person again without the pressure of being questioned if either one chooses to decline since the chat feature will not be available after the run.
 
-**sync** oneTimeChat  
-**when** RunBuddyFinder.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)  
-**then** Messaging.startChat (UserA,  UserB, context: RunBuddyFinder): (chat: Chat)
+**sync** oneTimeChat\
+**when** OneRunMatching.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)\
+**then** Messaging.startChat (UserA,  UserB): (thread: Thread)\
 
-**sync** cancelRun  
-**when** RunBuddyFinder.cancelRun (inviter: Inviter, accepter: Accepter, run: Run, time: Time)  
-**then system** Messaging.deleteChat(userA: Inviter, userB: Accepter, chat: Chat)
-
+**sync** cancelRun\
+**when** cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)\
+**where** in Messaging: initiator UserA and other user UserB have a thread T together\ 
+**then** Messaging.deleteChat initiator: UserA, userB: UserB, thread: T)\
+         Messaging.deleteChat initiator: UserB, userB: UserA, thread: T)\
+         
 
 ## User Journey
 After moving to a new city for her first year of college, a student feels uncertain about how to find her community on campus and in her city while prioritizing her safety. Reflecting on her past hobbies, she remembers her interest in running, which she had never committed to as she did not want to run alone for safety related reasons. She comes across our website, and upon registering and verifying her student ID, she personalizes her profile by adding a photo of herself, a short bio, and preferences for a running partner. She then decides she wants to go for a run at that moment and heads over to the one-time running partner finder where she finds that others are in the area. She matches with a runner, and has a good time and later decides to look for a longer-term partner. 
