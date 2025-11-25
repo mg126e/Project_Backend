@@ -16,7 +16,7 @@ We made the huge design change of going from a run club based app to partnership
            - `codeSentAt`: DateTime
    - **Actions:**
        - `register(user: User, email: String): ()`
-           - *Requires:* The user exists in PasswordAuthentication. The email domain is a valid Boston-area .edu domain. The user is not already verified.
+           - *Requires:* The email domain is a valid Boston-area .edu domain. The user is not already verified.
            - *Effects:* Generates a verification code, sends it to the user's email, and stores the code and timestamp.
        - `verifyCode(user: User, code: String): ({ success: Boolean, error?: String })`
            - *Requires:* A verification code was sent to the user and the code matches the stored code.
@@ -25,10 +25,10 @@ We made the huge design change of going from a run club based app to partnership
            - *Requires:* The user is not verified yet.
            - *Effects:* Generates and sends a new code, updates the stored code and timestamp.
    - **Notes:**
-       - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
+       - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email. The sync will account for this. 
        - The user cannot become active or log in until their email is verified.
 
-
+- **PasswordAuthentication**
    - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
    - **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
        - **State:**
