@@ -7,10 +7,10 @@
            - `profileImage`: Image ( managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
-             - `emergencyContact`: Object with fields:
+           - `emergencyContact`: Object with fields:
                - `name`: String (contact person's name)
                - `phone`: String (contact's phone number)
-           - `tags`: Object with allowed keys: "gender", "age", "runningLevel", "runningPace", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
+           - `tags`: Object with keys: "gender", "age", "runningLevel", "runningPace", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
            - `isActive`: Boolean
    - **Actions:**
        - `createProfile(user: User): ()`
@@ -22,7 +22,7 @@
        - `setLocation(user: User, location: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Updates the user's location.
-        - `setEmergencyContact(user: User, name: String, phone: String): ()`
+       - `setEmergencyContact(user: User, name: String, phone: String): ()`
           - *Requires:* The user exists in the set of users.
           - *Effects:* Updates the user's emergency contact (name and phone).
        - `setBio(user: User, bio: String): ()`
@@ -35,20 +35,16 @@
            - *Requires:* The user exists in the set of users.
            - *Effects:* Sets the user's profile image to the uploaded image (from file/photo).
        - `setTag(user: User, tagType: String, value: String|Number): ()`
-           - *Requires:* The user exists in the set of users. `tagType` must be one of the allowed types: "runningPace", "gender", "age", "runningLevel", "personality" ("introvert"/"extrovert").
+           - *Requires:* The user exists in the set of users
            - *Effects:* Sets or updates the tag of the specified type for the user's profile. Only one value per tag type is allowed per user.
-       - `removeTag(user: User, tagType: String): ()`
-           - *Requires:* The user exists in the set of users and the tag type exists for the user.
-           - *Effects:* Removes the tag of the specified type from the user's profile.
        - `closeProfile(user: User): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Permanently deletes the user's profile and all associated data.
     - **Notes:**
         - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
-        - We are also going to continue to work on our set of allowed tags as we do testing to see what runners would want to see and filter by the most. Though, users could also discuss the tags within their bio and expand there.
-        - Another topic we will navigate is the emergency contact information. A user would provide the phone number of the person. 
+        - A user would provide the phone number of the person. 
         - Integrating FileUploading concept from provided code from course
-
+        - Removed removeTag since that sets expectation that these tags are optional, when we want to actually be required. That also led to us changing the requirements about tags
 
 ```typescript
 import { Collection, Db } from "mongodb";
