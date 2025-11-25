@@ -167,22 +167,22 @@ a set of milestone Maps with
 
 actions
 
-createMileStoneMap (users: Users, mapURL: String): (milestoneMap: Map)
-   requires all users exist and there is no existing map for this set of users
-   effects stores a reference to a new shared Google My Map for the users and returns the map,
-	 Map’s Active flag is set to true
+createMileStoneMap (users: Users, mapURL: String): (milestoneMap: Map)\
+   requires all users exist and there is no existing map for this set of users\
+   effects stores a reference to a new shared Google My Map for the users and returns the map,\
+	 Map’s Active flag is set to true\
 
-deleteMilestoneMap (milestoneMap: Map, user: User)
-   requires Map exists and User is one of its owners
-   effects permanently deletes Map for only the user and removes them from Map
+deleteMilestoneMap (milestoneMap: Map, user: User)\
+   requires Map exists and User is one of its owners\
+   effects permanently deletes Map for only the user and removes them from Map\
 
-closeMilestoneMap (milestoneMap: Map)
-   requires the milestoneMap exists and its Active flag is true
-   effects sets Active flag to false so users can no longer edit Map
+closeMilestoneMap (milestoneMap: Map)\
+   requires the milestoneMap exists and its Active flag is true\
+   effects sets Active flag to false so users can no longer edit Map\
 
-revokeAccess  (milestoneMap: Map, user: User)
-   requires Map must exist and User is one of its owners
-   effects User alone is no longer able to access (view or edit) this  Map
+revokeAccess  (milestoneMap: Map, user: User)\
+   requires Map must exist and User is one of its owners\
+   effects User alone is no longer able to access (view or edit) this  Map\
 
    - **Notes:**
        - The actual milestone data (pins, photos, descriptions) is managed within Google My Maps, and this concept primarily stores the reference to the shared map and handles its lifecycle for the duo.
@@ -205,17 +205,17 @@ revokeAccess  (milestoneMap: Map, user: User)
 
 	a set of run Invites with  
 	   a Sent flag  
-     a start Time  
+     ``a start Time  
 	   an Inviter user  
 	   a set of invitee Users  
 	   a meeting location String  
-     a running distance Number  
+    `` a running distance Number  
 	   an acceptance Status (accepted, declined, pending)
 
 	a set of scheduled Runs with  
 	   a user UserA  
 	   a user UserB  
-     a Completed flag  
+     ``a Completed flag  
 	        
 **actions** 
 
@@ -360,9 +360,9 @@ readMessage (message: Message, thread: Thread, sender: User, userB: UserB, time:
    
 ## Syncs
 
-**sync** emailVerificationOnRegister
+**sync** emailVerificationOnRegister\
 **when** PasswordAuthentication.register(username, password, email): (user)\
-**then** EmailVerification.register(user, email)
+**then** EmailVerification.register(user, email)\
 
 
 - **Notes: After Registration → Send Verification Email**:
@@ -370,78 +370,78 @@ readMessage (message: Message, thread: Thread, sender: User, userB: UserB, time:
    - In **EmailVerification**, `register` is triggered, after the user makes that attempt to register, to send a verification email to the user.
 
 
-**sync** createProfileOnRegister
-**when** PasswordAuthentication.register(username, password, email): (user) and 
-         EmailVerification.verifyCode (): (success: Boolean)
-**where** in EmailVerification: success Boolean is true
-**then** UserProfile.createProfile(user)
+**sync** createProfileOnRegister\
+**when** PasswordAuthentication.register(username, password, email): (user)\
+         EmailVerification.verifyCode (): (success: Boolean)\
+**where** in EmailVerification: success Boolean is true\
+**then** UserProfile.createProfile(user)\
 
 - **Notes: After Completed Registration → Create Profile**
    - When a user successfully registers and is verified, an empty **UserProfile** is automatically created for them.
 
 
-**sync** createGoalsAndMapOnPartnership
-**when** Partnership.agree(userA, userB)
-**then** SharedGoals.createSharedGoal(users: Users, description: String): (SharedGoal)
-         SharedGoals.setInitialized(SharedGoal, true)
-         MilestoneMap.createMilestoneMap(userA, userB): (milestoneMap: Map)
+**sync** createGoalsAndMapOnPartnership\
+**when** Partnership.agree(userA, userB)\
+**then** SharedGoals.createSharedGoal(users: Users, description: String): (SharedGoal)\
+         SharedGoals.setInitialized(SharedGoal, true)\
+         MilestoneMap.createMilestoneMap(userA, userB): (milestoneMap: Map)\
 
 - **Notes: Partnership Agreement → SharedGoals & MilestoneMap Setup**
    - If both users agree to continue running together and start their partnership, a **SharedGoals** instance and a **MilestoneMap** are automatically set up for the pair.
 
 
-**sync** archiveOnPartnershipEnd
-**when** PartnerMatching.unmatch (Match, UserA, UserB)
-**where** in SharedGoals: S is the set of created SharedGoals between UserA and UserB
-              in MileStoneMap: Map is the shared MilestoneMap between  UserA and UserB
-**then** SharedGoals.setInitialized(S, false) 
-           MilestoneMap.closeMilestoneMap(Map)
-           SharedGoals.closeGoal ([UserA, UserB], S)
+**sync** archiveOnPartnershipEnd\
+**when** PartnerMatching.unmatch (Match, UserA, UserB)\
+**where** in SharedGoals: S is the set of created SharedGoals between UserA and UserB\
+              in MileStoneMap: Map is the shared MilestoneMap between  UserA and UserB\
+**then** SharedGoals.setInitialized(S, false)\
+           MilestoneMap.closeMilestoneMap(Map)\
+           SharedGoals.closeGoal ([UserA, UserB], S)\
 
 - **Notes: Partnership End → Delete SharedGoals & MilestoneMap**
    - If two users decide to end their partnership, the **PartnerMatching** page is reset for both so they can move on to other matches, and their **SharedGoals** and **MilestoneMap** are erased from active use but remain accessible in an archive/history page for future reference.
 
 
-**sync** deleteUserOnCloseProfile
+**sync** deleteUserOnCloseProfile\
 **when** UserProfile.closeProfile(user)\
-**then** PasswordAuthentication.deleteUser(user)
+**then** PasswordAuthentication.deleteUser(user)\
 
 - **Notes: Close Profile → Delete User**
    - Ensures that when a user closes their profile, their authentication credentials are also deleted, which prevents them from trying to log in again and then seeing an empty profile and running into the errors that that act would lead to.
 
-**sync** matchAndChat
-**when** PartnerMatching.acceptSuggestion (SuggestionAB, RecipientA, CandidateB): (match: SuggestionA)
-**where** in PartnerMatching: CandidateB has already accepted the suggestion of RecipientA 
-**then** Messaging.startChat (UserA,  UserB): (thread: Thread)
+**sync** matchAndChat\
+**when** PartnerMatching.acceptSuggestion (SuggestionAB, RecipientA, CandidateB): (match: SuggestionA)\
+**where** in PartnerMatching: CandidateB has already accepted the suggestion of RecipientA\
+**then** Messaging.startChat (UserA,  UserB): (thread: Thread)\
 
 **Notes:** When both users accept a suggestion of the other user, they are automatically led to a chat feature to encourage communication. Based on feedback, the match action's functionality was subsumed in acceptSuggestion so a **where** clause is used instead to determine whether users A and B are match or not.
 
-**sync** deleteChatOnCompletion
-**when** OneRunMatching.completeRun (userA: UserA, userB: UserB, run: Run)
-**then** Messaging.deleteChat (initiator: UserA, userB: UserB, thread: Thread)
-         Messaging.deleteChat (initiator: UserB, userB: UserA, thread: Thread)
+**sync** deleteChatOnCompletion\
+**when** OneRunMatching.completeRun (userA: UserA, userB: UserB, run: Run)\
+**then** Messaging.deleteChat (initiator: UserA, userB: UserB, thread: Thread)\
+         Messaging.deleteChat (initiator: UserB, userB: UserA, thread: Thread)\
          
 **Notes:** Since deleteChat only deletes the chat for the initiator User, it is called for both users so neither has access to it once the run is cancelled.
 
 **Notes:** When a one-time run is over, users can no longer message each other. This is to preserve the idea of a low-commitment running partner and to prevent any unwanted messaging.
 
-**sync** suggest  
-**when** OneRunMatching.completeRun(inviter: UserA, accepter: UserB, run: Run)
-**then** PartnerMatching.suggestMatch (recipient: UserA, candidate: UserB)
-         PartnerMatching.suggestMatch (recipient: UserB, candidate: UserA)
+**sync** suggest\
+**when** OneRunMatching.completeRun(inviter: UserA, accepter: UserB, run: Run)\
+**then** PartnerMatching.suggestMatch (recipient: UserA, candidate: UserB)\
+         PartnerMatching.suggestMatch (recipient: UserB, candidate: UserA)\
 
 
 **Notes:** To still allow users to communicate with their one-time running partners if they want to, they will be suggested as a match for long-term partnerships after the run is over. This allows each user to decide whether they want to run with the other person again without the pressure of being questioned if either one chooses to decline since the chat feature will not be available after the run.
 
-**sync** oneTimeChat
-**when** OneRunMatching.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)
-**then** Messaging.startChat (UserA,  UserB): (thread: Thread)
+**sync** oneTimeChat\
+**when** OneRunMatching.scheduleRun (inviter: UserA, invite: Invite, accepter: UserB): (run: Run)\
+**then** Messaging.startChat (UserA,  UserB): (thread: Thread)\
 
-**sync** cancelRun
-**when** cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)
-**where** in Messaging: initiator UserA and other user UserB have a thread T together  
-**then** Messaging.deleteChat initiator: UserA, userB: UserB, thread: T)
-         Messaging.deleteChat initiator: UserB, userB: UserA, thread: T)
+**sync** cancelRun\
+**when** cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)\
+**where** in Messaging: initiator UserA and other user UserB have a thread T together\ 
+**then** Messaging.deleteChat initiator: UserA, userB: UserB, thread: T)\
+         Messaging.deleteChat initiator: UserB, userB: UserA, thread: T)\
          
 
 ## User Journey
