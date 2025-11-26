@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 
 // Types for this concept
@@ -31,7 +31,7 @@ export default class SharedGoalsConcept {
   // Now includes groupKey for deterministic group identity
   private sharedGoalsInstance: Collection<{ groupKey: string; users: User[]; isInitialized: boolean }>;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.sharedGoals = this.db.collection<SharedGoalDoc>("SharedGoals.sharedGoals");
     this.sharedSteps = this.db.collection<SharedStepDoc>("SharedGoals.sharedSteps");
     this.sharedGoalsInstance = this.db.collection<{ groupKey: string; users: User[]; isInitialized: boolean }>("SharedGoals.sharedGoalsInstance");

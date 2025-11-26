@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
@@ -47,7 +47,7 @@ export default class UserProfileConcept {
   private userProfiles: Collection<UserProfileDoc>;
   private readonly fileUploading: FileUploadingConcept;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.userProfiles = this.db.collection<UserProfileDoc>(PREFIX + "userProfiles");
     this.fileUploading = new FileUploadingConcept(db);
   }

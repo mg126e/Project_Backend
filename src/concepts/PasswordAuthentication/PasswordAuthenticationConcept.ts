@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
@@ -37,7 +37,7 @@ interface UserDocument {
 export default class PasswordAuthenticationConcept {
   private users: Collection<UserDocument>;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.users = this.db.collection<UserDocument>(PREFIX + "users");
   }
 

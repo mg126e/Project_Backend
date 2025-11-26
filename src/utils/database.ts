@@ -1,6 +1,6 @@
 // This import loads the `.env` file as environment variables
 import "jsr:@std/dotenv/load";
-import { Db, MongoClient } from "npm:mongodb";
+import { Database, MongoClient } from "@deps/mongo";
 import { ID } from "@utils/types.ts";
 import { generate } from "jsr:@std/uuid/unstable-v7";
 
@@ -9,9 +9,9 @@ async function initMongoClient() {
   if (DB_CONN === undefined) {
     throw new Error("Could not find environment variable: MONGODB_URL");
   }
-  const client = new MongoClient(DB_CONN);
+  const client = new MongoClient();
   try {
-    await client.connect();
+    await client.connect(DB_CONN);
   } catch (e) {
     throw new Error("MongoDB connection failed: " + e);
   }
@@ -27,14 +27,12 @@ async function init() {
   return [client, DB_NAME] as [MongoClient, string];
 }
 
-async function dropAllCollections(db: Db): Promise<void> {
+async function dropAllCollections(db: Database): Promise<void> {
   try {
-    // Get all collection names
-    const collections = await db.listCollections().toArray();
+    const collections = await db.listCollectionNames();
 
-    // Drop each collection
-    for (const collection of collections) {
-      await db.collection(collection.name).drop();
+    for (const name of collections) {
+      await db.collection(name).drop();
     }
   } catch (error) {
     console.error("Error dropping collections:", error);
@@ -44,23 +42,23 @@ async function dropAllCollections(db: Db): Promise<void> {
 
 /**
  * MongoDB database configured by .env
- * @returns {[Db, MongoClient]} initialized database and client
+ * @returns {[Database, MongoClient]} initialized database and client
  */
 export async function getDb() {
   const [client, DB_NAME] = await init();
-  return [client.db(DB_NAME), client] as [Db, MongoClient];
+  return [client.database(DB_NAME), client] as [Database, MongoClient];
 }
 
 /**
  * Test database initialization
- * @returns {[Db, MongoClient]} initialized test database and client
+ * @returns {[Database, MongoClient]} initialized test database and client
  */
 export async function testDb() {
   const [client, DB_NAME] = await init();
   const test_DB_NAME = `test-${DB_NAME}`;
-  const test_Db = client.db(test_DB_NAME);
+  const test_Db = client.database(test_DB_NAME);
   await dropAllCollections(test_Db);
-  return [test_Db, client] as [Db, MongoClient];
+  return [test_Db, client] as [Database, MongoClient];
 }
 
 /**

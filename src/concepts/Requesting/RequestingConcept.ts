@@ -1,6 +1,6 @@
 import { Hono } from "jsr:@hono/hono";
 import { cors } from "jsr:@hono/hono/cors";
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { freshID } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import { exclusions, inclusions } from "./passthrough.ts";
@@ -66,7 +66,7 @@ export default class RequestingConcept {
   private readonly pending: Map<Request, PendingRequest> = new Map();
   private readonly timeout: number;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.requests = this.db.collection(PREFIX + "requests");
     this.timeout = REQUESTING_TIMEOUT;
     console.log(

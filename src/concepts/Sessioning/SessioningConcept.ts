@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
@@ -27,7 +27,7 @@ interface SessionDoc {
 export default class SessioningConcept {
   private sessions: Collection<SessionDoc>;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.sessions = this.db.collection<SessionDoc>(PREFIX + "sessions");
   }
 

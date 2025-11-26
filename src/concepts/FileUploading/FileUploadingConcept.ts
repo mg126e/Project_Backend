@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { join } from "@std/path";
 import { Empty, ID } from "@utils/types.ts";
 
@@ -33,7 +33,7 @@ export default class FileUploadingConcept {
 
   private readonly uploadDir: string;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.files = this.db.collection<FileState>(PREFIX + "files");
     this.uploadDir = Deno.env.get("FILE_UPLOADING_LOCAL_DIR") || "uploads";
     // Ensure upload directory exists

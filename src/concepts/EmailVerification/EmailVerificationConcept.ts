@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
@@ -57,7 +57,7 @@ interface EmailVerificationRecordDoc {
 export default class EmailVerificationConcept {
   records: Collection<EmailVerificationRecordDoc>;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.records = this.db.collection(PREFIX + "records");
     // It's good practice to create indexes for frequently queried fields
     // For example, to quickly find pending records for a user/email, or to clean up expired ones.
