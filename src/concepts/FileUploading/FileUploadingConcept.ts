@@ -1,6 +1,5 @@
-import { Collection, Db } from "mongodb";
-import { extname, join } from "@std/path";
-import { contentType } from "jsr:@std/media-types/content-type";
+import { Collection, Db } from "npm:mongodb";
+import { join } from "@std/path";
 import { Empty, ID } from "@utils/types.ts";
 
 // Prefix for MongoDB collections to avoid name collisions

@@ -1,4 +1,4 @@
-import { Collection, Db } from "mongodb";
+import { Collection, Db } from "npm:mongodb";
 import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
@@ -67,7 +67,6 @@ export default class UserProfileConcept {
    * createProfile (user: User)
    *
    * @requires no profile for the given user already exists.
-   * @effects creates a new user profile record for the given user with no initial display name, profile image, location, bio, or tags. The profile is not active (not visible to others) until all required fields are filled out.
    */
   async createProfile(
     { user }: { user: User },
@@ -214,31 +213,18 @@ export default class UserProfileConcept {
   }
 
   /**
-   * removeTag (user: User, tagType: String)
+   * getProfile (user: User)
    *
-   * @requires the user exists in the set of users and the tag type exists for the user.
-   * @effects removes the tag of the specified type from the user's profile.
+   * @requires the user exists in the set of users.
+   * @returns the user's profile document, or an error if not found.
    */
-  async removeTag(
-    { user, tagType }: { user: User; tagType: AllowedTag },
-  ): Promise<Empty | { error: string }> {
-    const allowedTags: AllowedTag[] = ["runningPace", "gender", "age", "runningLevel", "personality"];
-    if (!allowedTags.includes(tagType)) {
-      return { error: `Tag type '${tagType}' is not allowed.` };
-    }
+  async getProfile(
+    { user }: { user: User },
+  ): Promise<UserProfileDoc | { error: string }> {
     const profile = await this.userProfiles.findOne({ _id: user });
-    if (!profile || !profile.tags || !(tagType in profile.tags)) {
-      return { error: `Tag type '${tagType}' not found for user ${user}.` };
-    }
-    const tags: Partial<Record<AllowedTag, string | number>> = { ...profile.tags };
-    delete tags[tagType];
-    const result = await this.userProfiles.updateOne(
-      { _id: user },
-      { $set: { tags } },
-    );
-    if (result.matchedCount === 0) {
+    if (!profile) {
       return { error: `User profile for ${user} not found.` };
     }
-    return {};
+    return profile;
   }
 }

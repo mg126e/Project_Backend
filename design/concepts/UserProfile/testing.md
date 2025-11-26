@@ -28,9 +28,7 @@ const userA = "user:Alice" as ID;
 			assertNotEquals("error" in setImageResult, true, "Setting profile image should succeed");
 			const setTagResult = await concept.setTag({ user: userA, tagType: "runningPace", value: "fast" });
 			assertNotEquals("error" in setTagResult, true, "Setting tag should succeed");
-			const removeTagResult = await concept.removeTag({ user: userA, tagType: "runningPace" });
-			assertNotEquals("error" in removeTagResult, true, "Removing tag should succeed");
-			console.log("   ✓ All profile fields set and tag added/removed");
+			console.log("   ✓ All profile fields set and tag added");
 		} finally {
 			await client.close();
 		}
@@ -64,21 +62,6 @@ const userA = "user:Alice" as ID;
 			assertEquals("error" in disallowed, true, "Disallowed tag should fail");
 			if ("error" in disallowed) {
 				console.log(`   ✓ Disallowed tag correctly rejected: ${disallowed.error}`);
-			}
-		} finally {
-			await client.close();
-		}
-	});
-
-	Deno.test("Action: removeTag fails for missing tag", async () => {
-		const [db, client] = await testDb();
-		const concept = new UserProfileConcept(db);
-		try {
-			await concept.createProfile({ user: userA });
-			const result = await concept.removeTag({ user: userA, tagType: "runningLevel" });
-			assertEquals("error" in result, true, "Removing non-existent tag should fail");
-			if ("error" in result) {
-				console.log(`   ✓ Removing non-existent tag correctly rejected: ${result.error}`);
 			}
 		} finally {
 			await client.close();
