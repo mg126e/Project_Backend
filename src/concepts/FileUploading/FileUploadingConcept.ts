@@ -1,6 +1,5 @@
 import { Collection, Db } from "mongodb";
-import { Storage } from "npm:@google-cloud/storage";
-import { extname } from "@std/path/extname";
+import { extname, join } from "@std/path";
 import { contentType } from "jsr:@std/media-types/content-type";
 import { Empty, ID } from "@utils/types.ts";
 
@@ -32,25 +31,16 @@ interface FileState {
  */
 export default class FileUploadingConcept {
   public readonly files: Collection<FileState>;
-  private readonly storage: Storage;
-  private readonly bucketName: string;
+
+  private readonly uploadDir: string;
 
   constructor(private readonly db: Db) {
     this.files = this.db.collection<FileState>(PREFIX + "files");
-    this.bucketName = Deno.env.get("FILE_UPLOADING_GCS_BUCKET_NAME")!;
-    const projectId = Deno.env.get("FILE_UPLOADING_GCS_PROJECT_ID");
-    const privateKey = Deno.env.get("FILE_UPLOADING_GCS_PRIVATE_KEY")?.replace(/\\n/g, "\n");
-    const clientEmail = Deno.env.get("FILE_UPLOADING_GCS_CLIENT_EMAIL");
-    if (!this.bucketName || !projectId || !privateKey || !clientEmail) {
-      throw new Error("Missing required GCS environment variables for FileUploadingConcept. Please check your .env file.");
-    }
-    this.storage = new Storage({
-      projectId,
-      credentials: {
-        private_key: privateKey,
-        client_email: clientEmail,
-      },
-    });
+    this.uploadDir = Deno.env.get("FILE_UPLOADING_LOCAL_DIR") || "uploads";
+    // Ensure upload directory exists
+    try {
+      Deno.mkdirSync(this.uploadDir, { recursive: true });
+    } catch (_) {}
   }
 
   /**
@@ -63,7 +53,7 @@ export default class FileUploadingConcept {
     { owner, filename }: { owner: User; filename: string },
   ): Promise<{ file: File; uploadURL: string } | { error: string }> {
     const newFileId = (Math.random().toString(36).slice(2) + Date.now()) as File;
-    const storagePath = `${newFileId}/${filename}`;
+    const storagePath = join(this.uploadDir, `${newFileId}_${filename}`);
     const newFile: FileState = {
       _id: newFileId,
       owner,
@@ -72,17 +62,9 @@ export default class FileUploadingConcept {
       status: "pending",
     };
     try {
-      const extension = extname(filename);
-      const inferredContentType = contentType(extension) || "application/octet-stream";
-      const options = {
-        version: "v4" as const,
-        action: "write" as const,
-        expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-        contentType: inferredContentType,
-      };
-      const [url] = await this.storage.bucket(this.bucketName).file(storagePath).getSignedUrl(options);
       await this.files.insertOne(newFile);
-      return { file: newFileId, uploadURL: url };
+      // For local, the "uploadURL" is just a local file path to write to (simulate upload)
+      return { file: newFileId, uploadURL: `/uploads/${newFileId}_${filename}` };
     } catch (e) {
       console.error("FileUploadingConcept: Error generating upload URL:", e);
       return { error: "Failed to generate an upload URL." };
@@ -105,6 +87,7 @@ export default class FileUploadingConcept {
     if (fileRecord.status !== "pending") {
       return { error: `File is not in 'pending' state. Current state: ${fileRecord.status}` };
     }
+    // For local, assume file is written by some other process (e.g., direct write to uploads/)
     const result = await this.files.updateOne({ _id: file }, { $set: { status: "uploaded" } });
     if (result.modifiedCount === 0) {
       return { error: "Failed to confirm upload." };
@@ -125,18 +108,8 @@ export default class FileUploadingConcept {
     if (!fileRecord) {
       return { error: "File not found or not uploaded." };
     }
-    try {
-      const options = {
-        version: "v4" as const,
-        action: "read" as const,
-        expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-      };
-      const [url] = await this.storage.bucket(this.bucketName).file(fileRecord.storagePath).getSignedUrl(options);
-      return { downloadURL: url };
-    } catch (e) {
-      console.error(`FileUploadingConcept: Failed to generate download URL for file ${file}:`, e);
-      return { error: "Failed to generate download URL." };
-    }
+    // For local, return a static URL path
+    return { downloadURL: `/uploads/${fileRecord.storagePath.split('/').pop()}` };
   }
 
   /**
@@ -153,11 +126,12 @@ export default class FileUploadingConcept {
       return { error: "File not found." };
     }
     try {
-      await this.storage.bucket(this.bucketName).file(fileRecord.storagePath).delete();
+      // Delete the file from local storage
+      await Deno.remove(fileRecord.storagePath).catch(() => {});
       await this.files.deleteOne({ _id: file });
       return {};
     } catch (e) {
-      console.error(`FileUploadingConcept: Failed to delete file ${file} from GCS or DB:`, e);
+      console.error(`FileUploadingConcept: Failed to delete file ${file} from local storage or DB:`, e);
       return { error: "An error occurred during file deletion." };
     }
   }
