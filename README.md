@@ -17,8 +17,8 @@ Gloria's critique is contained [here](design/gloria_OVAL_critique.md)
 
 ## Checkpoint: Alpha (Updated Development Plan)
 
-Alpha checkpoint updated development plan is [here](design/alpha.md).
-Screen Recording [here](https://youtu.be/H_QJMjaU02E)
+Alpha checkpoint updated development plan is [here](design/alpha.md).\
+Screen Recording [here](https://youtu.be/H_QJMjaU02E).
 
 ## Mentor Meetings
 
