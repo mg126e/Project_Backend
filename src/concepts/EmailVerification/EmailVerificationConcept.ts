@@ -144,15 +144,15 @@ export default class EmailVerificationConcept {
       const record = await this.records.findOne({ _id: verificationRecordId });
 
       if (!record) {
-        return { error: "Invalid verification record ID." };
+        return { error: `Verification record with ID '${verificationRecordId}' not found.` };
       }
 
       if (record.isVerified) {
-        return { error: "Email address already verified with this record." };
+        return { error: "Verification record is not in 'pending' status." };
       }
 
       if (record.expiresAt < new Date()) {
-        return { error: "Verification code has expired." };
+        return { error: "Verification record is not in 'pending' status." };
       }
 
       if (record.verificationCode !== verificationCode) {
