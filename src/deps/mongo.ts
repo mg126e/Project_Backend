@@ -1,7 +1,10 @@
 // deno-lint-ignore-file no-missing-import
-export {
+import {
   Collection,
-  Database,
+  Db,
   MongoClient,
-} from "https://deno.land/x/mongo@v0.33.0/mod.ts";
+} from "npm:mongodb@7.0.0";
+
+export type Database = Db;
+export { Collection, MongoClient };
 

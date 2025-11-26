@@ -9,9 +9,9 @@ async function initMongoClient() {
   if (DB_CONN === undefined) {
     throw new Error("Could not find environment variable: MONGODB_URL");
   }
-  const client = new MongoClient();
+  const client = new MongoClient(DB_CONN);
   try {
-    await client.connect(DB_CONN);
+    await client.connect();
   } catch (e) {
     throw new Error("MongoDB connection failed: " + e);
   }
@@ -29,10 +29,11 @@ async function init() {
 
 async function dropAllCollections(db: Database): Promise<void> {
   try {
-    const collections = await db.listCollectionNames();
-
-    for (const name of collections) {
-      await db.collection(name).drop();
+    const collections = await db.listCollections().toArray();
+    for (const { name } of collections) {
+      if (name) {
+        await db.collection(name).drop();
+      }
     }
   } catch (error) {
     console.error("Error dropping collections:", error);
@@ -46,7 +47,7 @@ async function dropAllCollections(db: Database): Promise<void> {
  */
 export async function getDb() {
   const [client, DB_NAME] = await init();
-  return [client.database(DB_NAME), client] as [Database, MongoClient];
+  return [client.db(DB_NAME), client] as [Database, MongoClient];
 }
 
 /**
@@ -56,7 +57,7 @@ export async function getDb() {
 export async function testDb() {
   const [client, DB_NAME] = await init();
   const test_DB_NAME = `test-${DB_NAME}`;
-  const test_Db = client.database(test_DB_NAME);
+  const test_Db = client.db(test_DB_NAME);
   await dropAllCollections(test_Db);
   return [test_Db, client] as [Database, MongoClient];
 }

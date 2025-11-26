@@ -7,7 +7,6 @@ import { getDb } from "@utils/database.ts";
 const TEST_COLLECTION = "_connection_check";
 
 try {
-  console.log("URI:", Deno.env.get("MONGODB_URL"));
   const [db, client] = await getDb();
   const collection = db.collection(TEST_COLLECTION);
 
