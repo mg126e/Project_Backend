@@ -15,6 +15,9 @@ EXPOSE 10000
 # This grants the necessary write permissions for the build step.
 COPY --chown=deno:deno . .
 
+RUN echo "Project files:" && ls -R .
+
+
 # Deno install for dependencies that might be on npm
 RUN deno cache src/main.ts
 
