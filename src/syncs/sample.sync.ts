@@ -1,6 +1,6 @@
 /**
  * Sample synchronizations: feel free to delete this entire file!
- */
+
 
 import { LikertSurvey, Requesting } from "@concepts";
 import { actions, Sync } from "@engine";
@@ -45,3 +45,4 @@ export const AddQuestionResponse: Sync = ({ request, question }) => ({
   ),
   then: actions([Requesting.respond, { request, question }]),
 });
+ */
