@@ -1,8 +1,6 @@
 # Checkpoint: Alpha
 
-Our frontend code is stored [here](https://github.com/mg126e/Project_Frontend). The deployed version using Render is here (TODO: add link).
-
-## Screen Recording
+Our frontend code is stored [here](https://github.com/mg126e/Project_Frontend).
 
 ## Updated Development Plan
 
