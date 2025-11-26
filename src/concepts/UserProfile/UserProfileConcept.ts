@@ -3,7 +3,7 @@ import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
 // Collection prefix to ensure namespace separation
-const PREFIX = "UserProfile.";
+const PREFIX = "Userprofile.";
 
 // Generic types for this concept
 type User = ID;
@@ -85,6 +85,25 @@ export default class UserProfileConcept {
       tags: {},
       isActive: false,
     });
+    return {};
+  }
+
+  /**
+   * setIsActive (user: User, isActive: boolean)
+   *
+   * @requires the user exists in the set of users.
+   * @effects sets the user's isActive field to the given boolean value.
+   */
+  async setIsActive(
+    { user, isActive }: { user: User; isActive: boolean },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.userProfiles.updateOne(
+      { _id: user },
+      { $set: { isActive } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
     return {};
   }
 
