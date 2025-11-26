@@ -1,6 +1,5 @@
-import { Collection, Db } from "mongodb";
-import { extname, join } from "@std/path";
-import { contentType } from "jsr:@std/media-types/content-type";
+import { Collection, Db } from "npm:mongodb";
+import { join } from "@std/path";
 import { Empty, ID } from "@utils/types.ts";
 
 // Prefix for MongoDB collections to avoid name collisions
@@ -64,7 +63,8 @@ export default class FileUploadingConcept {
     try {
       await this.files.insertOne(newFile);
       // For local, the "uploadURL" is just a local file path to write to (simulate upload)
-      return { file: newFileId, uploadURL: `/uploads/${newFileId}_${filename}` };
+      const backendBase = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+return { file: newFileId, uploadURL: `${backendBase}/uploads/${newFileId}_${filename}` };
     } catch (e) {
       console.error("FileUploadingConcept: Error generating upload URL:", e);
       return { error: "Failed to generate an upload URL." };

@@ -1,50 +1,28 @@
-import { Hono } from "@hono/hono";
-import { walk } from "@std/fs";
-import { toFileUrl } from "@std/path/to-file-url";
+import { Hono } from "jsr:@hono/hono";
 import { getDb } from "@utils/database.ts";
-import { parseArgs } from "@std/cli/parse-args";
-import { load } from "@std/dotenv";
+import { walk } from "jsr:@std/fs";
+import { parseArgs } from "jsr:@std/cli/parse-args";
+import { toFileUrl } from "@std/path/to-file-url";
+
+// Parse command-line arguments for port and base URL
+const flags = parseArgs(Deno.args, {
+  string: ["port", "baseUrl"],
+  default: {
+    port: "8000",
+    baseUrl: "/api",
+  },
+});
+
+const PORT = parseInt(flags.port, 10);
+const BASE_URL = flags.baseUrl;
+const CONCEPTS_DIR = "src/concepts";
 
 /**
  * Main server function to initialize DB, load concepts, and start the server.
  */
 async function main() {
-  // Load environment variables from .env file
-  await load({ export: true });
-
-  // CORS middleware for all requests
-  // Parse command-line arguments for port and base URL
-  const flags = parseArgs(Deno.args, {
-    string: ["port", "baseUrl"],
-    default: {
-      port: "8000",
-      baseUrl: "/api",
-    },
-  });
-  const PORT = parseInt(flags.port, 10);
-  const app = new Hono();
-  const CONCEPTS_DIR = "src/concepts";
-  const BASE_URL = "/api";
-
   const [db] = await getDb();
-  // CORS middleware for all requests
-  app.use("*", async (c, next) => {
-    await next();
-    c.header("Access-Control-Allow-Origin", "*");
-    c.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  });
-
-  app.options("*", () => {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
-  });
+  const app = new Hono();
 
   app.get("/", (c) => c.text("Concept Server is running."));
 
@@ -78,16 +56,7 @@ async function main() {
         continue;
       }
 
-      // Pass Gemini API key to QuizMatchmakerConcept, others just get db
-      let instance;
-      if (
-        conceptName === "QuizMatchmaker" || conceptName === "MilestoneTracker"
-      ) {
-        const apiKey = Deno.env.get("GEMINI_API_KEY");
-        instance = new ConceptClass(db, apiKey);
-      } else {
-        instance = new ConceptClass(db);
-      }
+      const instance = new ConceptClass(db);
       const conceptApiName = conceptName;
       console.log(
         `- Registering concept: ${conceptName} at ${BASE_URL}/${conceptApiName}`,
@@ -106,32 +75,8 @@ async function main() {
 
         app.post(route, async (c) => {
           try {
-            console.log(
-              `[CONCEPT_SERVER DEBUG] Entered POST handler for ${route}`,
-            );
-            // Extract session from Authorization header if present
-            let session: string | undefined = undefined;
-            const authHeader = c.req.header("authorization");
-            if (authHeader && authHeader.startsWith("Bearer ")) {
-              session = authHeader.slice("Bearer ".length);
-            }
             const body = await c.req.json().catch(() => ({})); // Handle empty body
-            console.log(
-              `[CONCEPT_SERVER DEBUG] Parsed body for ${route}:`,
-              body,
-            );
-            // Inject session into body if not already present
-            const input = { ...body };
-            if (session && !input.session) {
-              input.session = session;
-            }
-            // Debug log for session injection
-            console.log(
-              `[CONCEPT_SERVER DEBUG] POST ${route} input.session:`,
-              input.session,
-            );
-            console.log(`[CONCEPT_SERVER DEBUG] POST ${route} input:`, input);
-            const result = await instance[methodName](input);
+            const result = await instance[methodName](body);
             return c.json(result);
           } catch (e) {
             console.error(`Error in ${conceptName}.${methodName}:`, e);
@@ -148,9 +93,9 @@ async function main() {
     }
   }
 
-  // Run the server
   console.log(`\nServer listening on http://localhost:${PORT}`);
   Deno.serve({ port: PORT }, app.fetch);
 }
 
+// Run the server
 main();
