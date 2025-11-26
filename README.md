@@ -15,9 +15,9 @@ Marin's critique is contained [here](design/Marin's_OVAL_Critique.md)\
 Ananya's critique is contained here\
 Gloria's critique is contained [here](design/gloria_OVAL_critique.md)
 
-## Checkpoint: Alpha
+## Checkpoint: Alpha (Updatedd development plan)
 
-Alpha checkpoint related information, including a screen recording is contained [here](design/alpha.md).
+Alpha checkpoint updated development plan is [here](design/alpha.md).
 
 ## Mentor Meetings
 
