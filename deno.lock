@@ -208,7 +208,8 @@
     ],
     "packageJson": {
       "dependencies": [
-        "npm:axios@^1.13.2"
+        "npm:axios@^1.13.2",
+        "npm:mongodb@7"
       ]
     }
   }
