@@ -1,6 +1,8 @@
 import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { GeminiLLM } from "@utils/gemini-llm.ts";
+// For displayname lookup
+const USER_PROFILE_COLLECTION = "Userprofile.userProfiles";
 
 // Types for this concept
 type User = ID;
@@ -12,13 +14,13 @@ interface SharedGoalDoc {
   users: User[]; // Set of users sharing the goal
   description: string;
   isActive: boolean;
+  createdAt: Date;
 }
 
 interface SharedStepDoc {
   _id: SharedStep;
   sharedGoalId: SharedGoal;
   description: string;
-  start: Date;
   completion?: Date;
 }
 
@@ -95,7 +97,7 @@ export default class SharedGoalsConcept {
    */
   async createSharedGoal({ users, description }: { users: User[]; description: string }): Promise<{ sharedGoalId: SharedGoal } | { error: string }> {
     if (!description || users.length < 2) {
-      return { error: "Description must not be empty and at least two users required." };
+      return { error: "Description must not be empty and/or at least two users required." };
     }
     // Check for existing active goal with same users and description
     const existing = await this.sharedGoals.findOne({
@@ -107,7 +109,7 @@ export default class SharedGoalsConcept {
       return { error: "Active shared goal with these users and description already exists." };
     }
     const _id = crypto.randomUUID() as SharedGoal;
-    await this.sharedGoals.insertOne({ _id, users, description, isActive: true });
+    await this.sharedGoals.insertOne({ _id, users, description, isActive: true, createdAt: new Date() });
     return { sharedGoalId: _id };
   }
 
@@ -169,12 +171,10 @@ export default class SharedGoalsConcept {
     if (validationError) {
       return { error: validationError };
     }
-    const now = new Date();
     const steps: SharedStepDoc[] = stepDescriptions.map((desc) => ({
       _id: crypto.randomUUID() as SharedStep,
       sharedGoalId: sharedGoal,
       description: desc.trim(),
-      start: now,
     }));
     if (steps.length > 0) {
       await this.sharedSteps.insertMany(steps);
@@ -209,7 +209,6 @@ export default class SharedGoalsConcept {
       _id: crypto.randomUUID() as SharedStep,
       sharedGoalId: sharedGoal,
       description,
-      start: new Date(),
     };
     await this.sharedSteps.insertOne(step);
     return { step };
@@ -267,29 +266,49 @@ export default class SharedGoalsConcept {
   }
 
   /**
+   * Returns all shared goals that include the given user.
+   * Accepts an object: { user: User }
+   * Returns users as objects: { id, displayname }
+   */
+  async getAllGoalsForUser({ user }: { user: User }): Promise<Array<Omit<SharedGoalDoc, "users"> & { users: { id: User; displayname: string }[] }>> {
+    const goals = await this.sharedGoals.find({ users: user }).toArray();
+    // Gather all unique user IDs from all goals
+    const allUserIds = [...new Set(goals.flatMap(g => g.users))].map(String); // ensure string[]
+    // Fetch displaynames from UserProfile.userProfiles
+    const profilesCollection = this.db.collection<{ _id: string; displayname?: string }>(USER_PROFILE_COLLECTION);
+    const profileDocs = await profilesCollection.find({ _id: { $in: allUserIds } }).toArray();
+    const userMapLocal = Object.fromEntries(profileDocs.map(u => [u._id, u.displayname]));
+    // Map users in each goal to { id, displayname }
+    return goals.map(g => ({
+      ...g,
+      users: g.users.map(u => ({ id: u, displayname: userMapLocal[String(u)] || String(u) }))
+    }));
+  }
+
+  /**
    * _getSharedGoals(users: User[], isActive?: Boolean)
    */
-  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean }[]> {
-    const query: any = { users: { $all: users, $size: users.length } };
+  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; users: User[] }[]> {
+    const query: Record<string, unknown> = { users: { $all: users, $size: users.length } };
     if (typeof isActive === "boolean") query.isActive = isActive;
     const goals = await this.sharedGoals.find(query).toArray();
-    return goals.map(g => ({ id: g._id, description: g.description, isActive: g.isActive }));
+    return goals.map(g => ({ id: g._id, description: g.description, isActive: g.isActive, createdAt: g.createdAt, users: g.users }));
   }
 
   /**
    * _getSharedGoalById(users: User[], sharedGoalId: SharedGoal)
    */
-  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean } | null> {
+  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; users: User[] } | null> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoalId, users: { $all: users, $size: users.length } });
     if (!goal) return null;
-    return { id: goal._id, description: goal.description, isActive: goal.isActive };
+    return { id: goal._id, description: goal.description, isActive: goal.isActive, createdAt: goal.createdAt, users: goal.users };
   }
 
   /**
    * _getSharedSteps(sharedGoal: SharedGoal)
    */
-  async _getSharedSteps({ sharedGoal }: { sharedGoal: SharedGoal }): Promise<{ id: SharedStep; description: string; start: Date; completion?: Date }[]> {
+  async _getSharedSteps({ sharedGoal }: { sharedGoal: SharedGoal }): Promise<{ id: SharedStep; description: string; completion?: Date }[]> {
     const steps = await this.sharedSteps.find({ sharedGoalId: sharedGoal }).toArray();
-    return steps.map(s => ({ id: s._id, description: s.description, start: s.start, completion: s.completion }));
+    return steps.map(s => ({ id: s._id, description: s.description, completion: s.completion }));
   }
 }
