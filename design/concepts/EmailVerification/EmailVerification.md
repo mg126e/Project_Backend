@@ -26,3 +26,4 @@
    - **Notes:**
        - When `register` is called in PasswordAuthentication, it also triggers `register` in EmailVerification to send the verification email.
        - The user cannot become active or log in until their email is verified.
+        - Verification code for twilo ZGZG1VGPQPNAALXBEZUBQXA5
