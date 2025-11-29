@@ -60,7 +60,11 @@ export default class UserProfileConcept {
     if (!profile || !profile.profileImage) {
       return { error: "No profile image set for this user." };
     }
-    return this.fileUploading.getDownloadURL({ file: profile.profileImage });
+    const result = await this.fileUploading._getDownloadURL({ file: profile.profileImage });
+    if (result.length === 0) {
+      return { error: "Failed to get download URL for profile image." };
+    }
+    return { downloadURL: result[0].downloadURL };
   }
 
   /**
@@ -237,7 +241,7 @@ export default class UserProfileConcept {
    * @requires the user exists in the set of users.
    * @returns the user's profile document, or an error if not found.
    */
-  async getProfile(
+  async _getProfile(
     { user }: { user: User },
   ): Promise<UserProfileDoc | { error: string }> {
     const profile = await this.userProfiles.findOne({ _id: user });

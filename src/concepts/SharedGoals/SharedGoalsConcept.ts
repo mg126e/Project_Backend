@@ -271,7 +271,7 @@ export default class SharedGoalsConcept {
    * Accepts an object: { user: User }
    * Returns users as objects: { id, displayname }
    */
-  async getAllGoalsForUser({ user }: { user: User }): Promise<Array<Omit<SharedGoalDoc, "users"> & { users: { id: User; displayname: string }[] }>> {
+  async _getAllGoalsForUser({ user }: { user: User }): Promise<Array<Omit<SharedGoalDoc, "users"> & { users: { id: User; displayname: string }[] }>> {
     const goals = await this.sharedGoals.find({ users: user }).toArray();
     // Gather all unique user IDs from all goals
     const allUserIds = [...new Set(goals.flatMap(g => g.users))].map(String); // ensure string[]
