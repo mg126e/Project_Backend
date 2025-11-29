@@ -1,7 +1,7 @@
 import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { GeminiLLM } from "@utils/gemini-llm.ts";
-// For displayname lookup
+
 const USER_PROFILE_COLLECTION = "Userprofile.userProfiles";
 
 // Types for this concept

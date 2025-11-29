@@ -2,7 +2,6 @@ import { Collection, Database } from "@deps/mongo";
 import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
-// Collection prefix to ensure namespace separation
 const PREFIX = "Userprofile.";
 
 // Generic types for this concept
@@ -230,6 +229,22 @@ export default class UserProfileConcept {
       { $set: { tags } },
     );
     if (result.matchedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
+   * closeAccount (user: User)
+   *
+   * @requires the user exists in the set of users.
+   * @effects closes the user's profile permanently.
+   */
+  async closeProfile(
+    { user }: { user: User },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.userProfiles.deleteOne({ _id: user });
+    if (result.deletedCount === 0) {
       return { error: `User profile for ${user} not found.` };
     }
     return {};
