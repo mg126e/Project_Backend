@@ -1,6 +1,7 @@
 import { Collection, Database } from "@deps/mongo";
 import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { createSendGridEmailFromEnv, SendGridEmail } from "@utils/sendgrid-email.ts";
 
 // Collection prefix to ensure namespace separation
 const PREFIX = "EmailVerification" + ".";
@@ -56,6 +57,7 @@ interface EmailVerificationRecordDoc {
  */
 export default class EmailVerificationConcept {
   records: Collection<EmailVerificationRecordDoc>;
+  private emailService: SendGridEmail | null = null;
 
   constructor(private readonly db: Database) {
     this.records = this.db.collection(PREFIX + "records");
@@ -63,6 +65,20 @@ export default class EmailVerificationConcept {
     // For example, to quickly find pending records for a user/email, or to clean up expired ones.
     // this.records.createIndex({ userId: 1, email: 1, isVerified: 1, expiresAt: 1 });
     // this.records.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for automatic cleanup
+
+    // Initialize email service if SendGrid credentials are available
+    try {
+      this.emailService = createSendGridEmailFromEnv();
+      console.log("[EmailVerification] SendGrid email service initialized");
+    } catch (error) {
+      console.warn(
+        "[EmailVerification] SendGrid email service not available:",
+        error instanceof Error ? error.message : error,
+      );
+      console.warn(
+        "[EmailVerification] Email verification codes will be generated but not sent via email",
+      );
+    }
   }
 
   /**
@@ -113,6 +129,41 @@ export default class EmailVerificationConcept {
       };
 
       await this.records.insertOne(newRecord);
+
+      // Send verification email if email service is available
+      if (this.emailService) {
+        try {
+          await this.emailService.sendVerificationEmail(
+            email,
+            verificationCode,
+            {
+              appName: "RunBuddy",
+              expirationMinutes: 15,
+            },
+          );
+          console.log(
+            `[EmailVerification.requestVerification] Verification email sent to ${email}`,
+          );
+        } catch (emailError) {
+          console.error(
+            "[EmailVerification.requestVerification] Failed to send email:",
+            emailError,
+          );
+          // If email sending fails, we return an error
+          // The verification record is already stored in the database
+          // The user can retry the request, which will generate a new code and invalidate this one
+          return {
+            error:
+              "Verification code generated but email could not be sent. Please try again or contact support.",
+          };
+        }
+      } else {
+        console.warn(
+          `[EmailVerification.requestVerification] Email service not available. Code generated: ${verificationCode} for ${email}`,
+        );
+        // If email service is not configured, we still return the code
+        // This allows for manual testing or alternative delivery methods
+      }
 
       return { verificationRecordId, verificationCode };
     } catch (error) {

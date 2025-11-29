@@ -28,6 +28,7 @@
     "jsr:@std/yaml@*": "1.0.9",
     "npm:@google-cloud/storage@*": "7.17.3",
     "npm:@google/generative-ai@*": "0.24.1",
+    "npm:@sendgrid/mail@^8.1.6": "8.1.6",
     "npm:axios@^1.13.2": "1.13.2",
     "npm:mime-types@^3.0.2": "3.0.2",
     "npm:mongodb@*": "7.0.0",
@@ -166,6 +167,26 @@
         "sparse-bitfield"
       ]
     },
+    "@sendgrid/client@8.1.6": {
+      "integrity": "sha512-/BHu0hqwXNHr2aLhcXU7RmmlVqrdfrbY9KpaNj00KZHlVOVoRxRVrpOCabIB+91ISXJ6+mLM9vpaVUhK6TwBWA==",
+      "dependencies": [
+        "@sendgrid/helpers",
+        "axios"
+      ]
+    },
+    "@sendgrid/helpers@8.0.0": {
+      "integrity": "sha512-Ze7WuW2Xzy5GT5WRx+yEv89fsg/pgy3T1E3FS0QEx0/VvRmigMZ5qyVGhJz4SxomegDkzXv/i0aFPpHKN8qdAA==",
+      "dependencies": [
+        "deepmerge"
+      ]
+    },
+    "@sendgrid/mail@8.1.6": {
+      "integrity": "sha512-/ZqxUvKeEztU9drOoPC/8opEPOk+jLlB2q4+xpx6HVLq6aFu3pMpalkTpAQz8XfRfpLp8O25bh6pGPcHDCYpqg==",
+      "dependencies": [
+        "@sendgrid/client",
+        "@sendgrid/helpers"
+      ]
+    },
     "@tootallnate/once@2.0.0": {
       "integrity": "sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A=="
     },
@@ -264,6 +285,9 @@
       "dependencies": [
         "ms"
       ]
+    },
+    "deepmerge@4.3.1": {
+      "integrity": "sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A=="
     },
     "delayed-stream@1.0.0": {
       "integrity": "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ=="
@@ -748,6 +772,7 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:@sendgrid/mail@^8.1.6",
         "npm:axios@^1.13.2",
         "npm:mongodb@7"
       ]
