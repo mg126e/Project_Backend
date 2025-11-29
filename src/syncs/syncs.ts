@@ -6,6 +6,8 @@ import type { Sync } from "@engine";
 
 import * as sync_emailVerification from "./emailVerification.sync.ts";
 import * as sync_sample from "./sample.sync.ts";
+import * as sync_auth from "./auth.sync.ts";
+import * as sync_fileUploading from "./fileUploading.sync.ts";
 import * as sync_profile from "./profile.sync.ts";
 
 const allSyncs: Record<string, Sync> = {};
@@ -19,6 +21,16 @@ for (const [name, func] of Object.entries(sync_emailVerification)) {
 for (const [name, func] of Object.entries(sync_sample)) {
   if (typeof func === "function") {
     allSyncs[`sample.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_auth)) {
+  if (typeof func === "function") {
+    allSyncs[`auth.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_fileUploading)) {
+  if (typeof func === "function") {
+    allSyncs[`fileUploading.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_profile)) {

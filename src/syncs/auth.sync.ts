@@ -1,0 +1,119 @@
+import { actions, Sync } from "@engine";
+import { PasswordAuthentication, Requesting, Sessioning, UserProfile } from "@concepts";
+
+//-- User Registration --//
+export const RegisterRequest: Sync = ({ request, username, password }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PasswordAuthentication/register", username, password },
+    { request },
+  ]),
+  then: actions([PasswordAuthentication.register, { username, password }]),
+});
+
+export const RegisterSuccessCreatesSession: Sync = ({ user }) => ({
+  when: actions([PasswordAuthentication.register, {}, { user }]),
+  then: actions([Sessioning.start, { user }]),
+});
+
+export const RegisterSuccessCreatesProfile: Sync = ({ user }) => ({
+  when: actions([PasswordAuthentication.register, {}, { user }]),
+  then: actions([UserProfile.createProfile, { user }]),
+});
+
+export const RegisterResponseSuccess: Sync = ({ request, user, session }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
+    [PasswordAuthentication.register, {}, { user }],
+    [Sessioning.start, { user }, { session }],
+  ),
+  then: actions([Requesting.respond, { request, user, session }]),
+});
+
+export const RegisterResponseError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
+    [PasswordAuthentication.register, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+//-- User Login & Session Creation --//
+export const LoginRequest: Sync = ({ request, username, password }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PasswordAuthentication/authenticate", username, password },
+    { request },
+  ]),
+  then: actions([PasswordAuthentication.authenticate, { username, password }]),
+});
+
+export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
+  when: actions([PasswordAuthentication.authenticate, {}, { user }]),
+  then: actions([Sessioning.start, { user }]),
+});
+
+export const LoginResponseSuccess: Sync = ({ request, user, session }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
+    [PasswordAuthentication.authenticate, {}, { user }],
+    [Sessioning.start, { user }, { session }],
+  ),
+  then: actions([Requesting.respond, { request, user, session }]),
+});
+
+export const LoginResponseError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
+    [PasswordAuthentication.authenticate, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+//-- User Logout --//
+export const LogoutRequest: Sync = ({ request, session, user }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/logout", session },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([Sessioning.end, { session }]),
+});
+
+export const LogoutResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/logout" }, { request }],
+    [Sessioning.end, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, status: "logged_out" }]),
+});
+
+//-- Change Password --//
+export const ChangePasswordRequest: Sync = ({ request, session, user, oldPassword, newPassword }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PasswordAuthentication/changePassword", session, oldPassword, newPassword },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([PasswordAuthentication.changePassword, { user, oldPassword, newPassword }]),
+});
+
+export const ChangePasswordResponseSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/changePassword" }, { request }],
+    [PasswordAuthentication.changePassword, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request }]),
+});
+
+export const ChangePasswordResponseError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/changePassword" }, { request }],
+    [PasswordAuthentication.changePassword, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});

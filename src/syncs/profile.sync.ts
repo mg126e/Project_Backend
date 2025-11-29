@@ -1,4 +1,4 @@
-import { UserProfile, PasswordAuthentication, Requesting } from "@concepts";
+import { UserProfile, PasswordAuthentication, Requesting, Sessioning } from "@concepts";
 import { actions, Sync } from "@engine";
 
 const CREATE_PROFILE_PATH = "/UserProfile/createProfile";
@@ -13,12 +13,14 @@ const CLOSE_PROFILE_PATH = "/UserProfile/closeProfile";
 const GET_PROFILE_PATH = "/UserProfile/_getProfile";
 
 // Create Profile
-export const HandleCreateProfileRequest: Sync = ({ request, user }) => ({
+export const HandleCreateProfileRequest: Sync = ({ request, session, user }) => ({
   when: actions([
     Requesting.request,
-    { path: CREATE_PROFILE_PATH, user },
+    { path: CREATE_PROFILE_PATH, session },
     { request },
   ]),
+  where: async (frames) => 
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.createProfile, { user }]),
 });
 
@@ -39,12 +41,14 @@ export const RespondToCreateProfileError: Sync = ({ request, error }) => ({
 });
 
 // Set Name
-export const HandleSetNameRequest: Sync = ({ request, user, displayname }) => ({
+export const HandleSetNameRequest: Sync = ({ request, session, user, displayname }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_NAME_PATH, user, displayname },
+    { path: SET_NAME_PATH, displayname, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setName, { user, displayname }]),
 });
 
@@ -65,12 +69,14 @@ export const RespondToSetNameError: Sync = ({ request, error }) => ({
 });
 
 // Set Bio
-export const HandleSetBioRequest: Sync = ({ request, user, bio }) => ({
+export const HandleSetBioRequest: Sync = ({ request, session, user, bio }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_BIO_PATH, user, bio },
+    { path: SET_BIO_PATH, bio, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setBio, { user, bio }]),
 });
 
@@ -91,12 +97,14 @@ export const RespondToSetBioError: Sync = ({ request, error }) => ({
 });
 
 // Set Location
-export const HandleSetLocationRequest: Sync = ({ request, user, location }) => ({
+export const HandleSetLocationRequest: Sync = ({ request, session, user, location }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_LOCATION_PATH, user, location },
+    { path: SET_LOCATION_PATH, location, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setLocation, { user, location }]),
 });
 
@@ -117,12 +125,14 @@ export const RespondToSetLocationError: Sync = ({ request, error }) => ({
 });
 
 // Set Emergency Contact
-export const HandleSetEmergencyContactRequest: Sync = ({ request, user, name, phone }) => ({
+export const HandleSetEmergencyContactRequest: Sync = ({ request, session, user, name, phone }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_EMERGENCY_CONTACT_PATH, user, name, phone },
+    { path: SET_EMERGENCY_CONTACT_PATH, name, phone, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setEmergencyContact, { user, name, phone }]),
 });
 
@@ -143,12 +153,14 @@ export const RespondToSetEmergencyContactError: Sync = ({ request, error }) => (
 });
 
 // Set Tag
-export const HandleSetTagRequest: Sync = ({ request, user, tagType, value }) => ({
+export const HandleSetTagRequest: Sync = ({ request, session, user, tagType, value }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_TAG_PATH, user, tagType, value },
+    { path: SET_TAG_PATH, tagType, value, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setTag, { user, tagType, value }]),
 });
 
@@ -169,12 +181,14 @@ export const RespondToSetTagError: Sync = ({ request, error }) => ({
 });
 
 // Set Profile Image
-export const HandleSetProfileImageRequest: Sync = ({ request, user, image }) => ({
+export const HandleSetProfileImageRequest: Sync = ({ request, session, user, image }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_PROFILE_IMAGE_PATH, user, image },
+    { path: SET_PROFILE_IMAGE_PATH, image, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setProfileImage, { user, image }]),
 });
 
@@ -195,12 +209,14 @@ export const RespondToSetProfileImageError: Sync = ({ request, error }) => ({
 });
 
 // Set Is Active (Close Profile) - When a profile is closed, delete the user
-export const HandleSetIsActiveRequest: Sync = ({ request, user, isActive }) => ({
+export const HandleSetIsActiveRequest: Sync = ({ request, session, user, isActive }) => ({
   when: actions([
     Requesting.request,
-    { path: SET_IS_ACTIVE_PATH, user, isActive },
+    { path: SET_IS_ACTIVE_PATH, isActive, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.setIsActive, { user, isActive }]),
 });
 
@@ -229,12 +245,14 @@ export const DeleteUserOnProfileClose: Sync = ({ user }) => ({
 });
 
 // Close Account - Delete both profile and user authentication
-export const HandleCloseAccountRequest: Sync = ({ request, user }) => ({
+export const HandleCloseAccountRequest: Sync = ({ request, session, user }) => ({
   when: actions([
     Requesting.request,
-    { path: CLOSE_PROFILE_PATH, user },
+    { path: CLOSE_PROFILE_PATH, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile.closeProfile, { user }]),
 });
 
@@ -263,12 +281,14 @@ export const DeleteUserOnAccountClose: Sync = ({ user }) => ({
 });
 
 // Get Profile
-export const HandleGetProfileRequest: Sync = ({ request, user }) => ({
+export const HandleGetProfileRequest: Sync = ({ request, session, user }) => ({
   when: actions([
     Requesting.request,
-    { path: GET_PROFILE_PATH, user },
+    { path: GET_PROFILE_PATH, session },
     { request },
   ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([UserProfile._getProfile, { user }]),
 });
 
