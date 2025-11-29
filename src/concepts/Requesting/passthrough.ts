@@ -31,6 +31,8 @@ export const inclusions: Record<string, string> = {
     "read-only status check needed for support tooling",
   "/api/EmailVerification/_getVerifiedEmailsForUser":
     "read-only list used by support dashboards",
+  "/api/FileUploading/confirmUpload":
+    "public action to confirm file upload completion",
 };
 
 /**
@@ -46,4 +48,35 @@ export const inclusions: Record<string, string> = {
 export const exclusions: Array<string> = [
   "/api/EmailVerification/requestVerification",
   "/api/EmailVerification/verifyEmail",
+  "/api/UserProfile/createProfile",
+  "/api/UserProfile/setName",
+  "/api/UserProfile/setBio",
+  "/api/UserProfile/setLocation",
+  "/api/UserProfile/setEmergencyContact",
+  "/api/UserProfile/setTag",
+  "/api/UserProfile/setProfileImage",
+  "/api/UserProfile/setIsActive",
+  "/api/UserProfile/closeProfile",
+  "/api/UserProfile/_getProfile",
+  "/api/FileUploading/requestUploadURL",
+  "/api/FileUploading/delete",
+  "/api/SharedGoals/createSharedGoal",
+  "/api/SharedGoals/setDescription",
+  "/api/SharedGoals/setDate",
+  "/api/SharedGoals/setTime",
+  "/api/SharedGoals/setNotes",
+  "/api/SharedGoals/setDuration",
+  "/api/SharedGoals/setLocation",
+  "/api/SharedGoals/addParticipant",
+  "/api/SharedGoals/removeParticipant",
+  "/api/SharedGoals/addStep",
+  "/api/SharedGoals/completeStep",
+  "/api/SharedGoals/uncompleteStep",
+  "/api/SharedGoals/removeStep",
+  "/api/SharedGoals/activateGoal",
+  "/api/SharedGoals/deactivateGoal",
+  "/api/SharedGoals/_getAllGoalsForUser",
+  "/api/SharedGoals/_getSharedGoals",
+  "/api/SharedGoals/_getSharedGoalById",
+  "/api/SharedGoals/_getSharedSteps",
 ];

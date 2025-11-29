@@ -2,8 +2,7 @@ import { Collection, Database } from "@deps/mongo";
 import FileUploadingConcept from "../FileUploading/FileUploadingConcept.ts";
 import { Empty, ID } from "@utils/types.ts";
 
-// Collection prefix to ensure namespace separation
-const PREFIX = "UserProfile.";
+const PREFIX = "Userprofile.";
 
 // Generic types for this concept
 type User = ID;
@@ -60,7 +59,11 @@ export default class UserProfileConcept {
     if (!profile || !profile.profileImage) {
       return { error: "No profile image set for this user." };
     }
-    return this.fileUploading.getDownloadURL({ file: profile.profileImage });
+    const result = await this.fileUploading._getDownloadURL({ file: profile.profileImage });
+    if (result.length === 0) {
+      return { error: "Failed to get download URL for profile image." };
+    }
+    return { downloadURL: result[0].downloadURL };
   }
 
   /**
@@ -85,6 +88,25 @@ export default class UserProfileConcept {
       tags: {},
       isActive: false,
     });
+    return {};
+  }
+
+  /**
+   * setIsActive (user: User, isActive: boolean)
+   *
+   * @requires the user exists in the set of users.
+   * @effects sets the user's isActive field to the given boolean value.
+   */
+  async setIsActive(
+    { user, isActive }: { user: User; isActive: boolean },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.userProfiles.updateOne(
+      { _id: user },
+      { $set: { isActive } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
     return {};
   }
 
@@ -213,12 +235,28 @@ export default class UserProfileConcept {
   }
 
   /**
+   * closeAccount (user: User)
+   *
+   * @requires the user exists in the set of users.
+   * @effects closes the user's profile permanently.
+   */
+  async closeProfile(
+    { user }: { user: User },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.userProfiles.deleteOne({ _id: user });
+    if (result.deletedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
    * getProfile (user: User)
    *
    * @requires the user exists in the set of users.
    * @returns the user's profile document, or an error if not found.
    */
-  async getProfile(
+  async _getProfile(
     { user }: { user: User },
   ): Promise<UserProfileDoc | { error: string }> {
     const profile = await this.userProfiles.findOne({ _id: user });
