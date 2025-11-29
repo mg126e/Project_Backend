@@ -15,6 +15,7 @@ interface SharedGoalDoc {
   description: string;
   isActive: boolean;
   createdAt: Date;
+  closedAt?: Date;
 }
 
 interface SharedStepDoc {
@@ -246,7 +247,7 @@ export default class SharedGoalsConcept {
   async closeSharedGoal({ sharedGoal, user }: { sharedGoal: SharedGoal; user: User }): Promise<Empty | { error: string }> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoal, isActive: true });
     if (!goal || !goal.users.includes(user)) return { error: "Shared goal not found or user not a member." };
-    await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false } });
+    await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false, closedAt: new Date() } });
     return {};
   }
 
@@ -279,29 +280,47 @@ export default class SharedGoalsConcept {
     const profileDocs = await profilesCollection.find({ _id: { $in: allUserIds } }).toArray();
     const userMapLocal = Object.fromEntries(profileDocs.map(u => [u._id, u.displayname]));
     // Map users in each goal to { id, displayname }
-    return goals.map(g => ({
-      ...g,
-      users: g.users.map(u => ({ id: u, displayname: userMapLocal[String(u)] || String(u) }))
-    }));
+    return goals.map(g => {
+      const { _id, description, isActive, createdAt, closedAt } = g;
+      const base = {
+        _id,
+        description,
+        isActive,
+        createdAt,
+        users: g.users.map(u => ({ id: u, displayname: userMapLocal[String(u)] || String(u) }))
+      };
+      return closedAt ? { ...base, closedAt } : base;
+    });
   }
 
   /**
    * _getSharedGoals(users: User[], isActive?: Boolean)
    */
-  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; users: User[] }[]> {
+  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] }[]> {
     const query: Record<string, unknown> = { users: { $all: users, $size: users.length } };
     if (typeof isActive === "boolean") query.isActive = isActive;
     const goals = await this.sharedGoals.find(query).toArray();
-    return goals.map(g => ({ id: g._id, description: g.description, isActive: g.isActive, createdAt: g.createdAt, users: g.users }));
+    return goals.map(g => {
+      const { _id, description, isActive, createdAt, closedAt, users } = g;
+      const base = { id: _id, description, isActive, createdAt, users };
+      return closedAt ? { ...base, closedAt } : base;
+    });
   }
 
   /**
    * _getSharedGoalById(users: User[], sharedGoalId: SharedGoal)
    */
-  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; users: User[] } | null> {
+  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] } | null> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoalId, users: { $all: users, $size: users.length } });
     if (!goal) return null;
-    return { id: goal._id, description: goal.description, isActive: goal.isActive, createdAt: goal.createdAt, users: goal.users };
+    return {
+      id: goal._id,
+      description: goal.description,
+      isActive: goal.isActive,
+      createdAt: goal.createdAt,
+      closedAt: goal.closedAt,
+      users: goal.users
+    };
   }
 
   /**
