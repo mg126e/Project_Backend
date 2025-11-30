@@ -1,3 +1,19 @@
+// Respond with error if login is blocked due to missing email verification
+export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
+    [PasswordAuthentication.authenticate, {}, { user }],
+  ),
+  where: async (frames) => {
+    const userId = frames[0][user] as ID;
+    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+    if (verifiedEmails.length === 0) {
+      return frames;
+    }
+    return new Frames();
+  },
+  then: actions([Requesting.respond, { request, error: "Please verify your email before logging in." }]),
+});
 import { actions, Sync } from "@engine";
 import { PasswordAuthentication, Requesting, Sessioning } from "@concepts";
 
@@ -45,8 +61,22 @@ export const LoginRequest: Sync = ({ request, username, password }) => ({
   then: actions([PasswordAuthentication.authenticate, { username, password }]),
 });
 
+import { EmailVerification } from "@concepts";
+
+import { ID } from "@utils/types.ts";
+import { Frames } from "@engine";
+
 export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
   when: actions([PasswordAuthentication.authenticate, {}, { user }]),
+  where: async (frames) => {
+    const userId = frames[0][user] as ID;
+    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+    if (verifiedEmails.length > 0) {
+      return frames;
+    }
+    // Block session creation if not verified
+    return new Frames();
+  },
   then: actions([Sessioning.start, { user }]),
 });
 
