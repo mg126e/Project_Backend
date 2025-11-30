@@ -20,9 +20,9 @@
                - *Requires:* A User with the given user ID exists AND the old password matches the stored passwordHash.
                - *Effects:* Updates the user's password to the new password.
        - **Queries:**
-           - `_getEmail(user: User): ({ email: String } | { error: String })`
+           - `_getUsername(user: User): ({ username: String } | { error: String })`
                - *Requires:* A User with the given user ID exists.
-               - *Effects:* Returns the email address associated with the user.
+               - *Effects:* Returns the username associated with the user.
     - **Notes:**
        - deleteUser and closeProfile will work in a sync together.
        - Email verification is enforced in the login sync (auth.sync.ts), which checks EmailVerification records before creating a session. The PasswordAuthentication concept itself does not track verification status.
