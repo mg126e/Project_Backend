@@ -20,6 +20,12 @@ Gloria's critique is contained [here](design/gloria_OVAL_critique.md)
 Alpha checkpoint updated development plan is [here](design/alpha.md).\
 Screen Recording [here](https://youtu.be/H_QJMjaU02E).
 
+
+## Checkpoint: Beta (Updated Development Plan)
+
+Beta checkpoint updated development plan is [here](design/beta.md).\
+Screen Recording 
+
 ## Mentor Meetings
 
 All mentor meeting notes and deliverables are organized in the [Mentor Meetings](./mentor_meetings/) folder.
