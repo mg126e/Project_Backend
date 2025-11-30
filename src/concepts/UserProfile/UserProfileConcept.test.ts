@@ -3,6 +3,7 @@ import { assertEquals, assertNotEquals } from "@std/assert";
 import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import UserProfileConcept from "./UserProfileConcept.ts";
+import type { AllowedTag } from "./UserProfileConcept.ts";
 
 const userA = "user:Alice" as ID;
 
@@ -57,7 +58,7 @@ const userA = "user:Alice" as ID;
 			await concept.createProfile({ user: userA });
 			const allowed = await concept.setTag({ user: userA, tagType: "gender", value: "female" });
 			assertNotEquals("error" in allowed, true, "Allowed tag should succeed");
-			const disallowed = await concept.setTag({ user: userA, tagType: "notAllowed" as any, value: "x" });
+			const disallowed = await concept.setTag({ user: userA, tagType: "notAllowed" as AllowedTag, value: "x" });
 			assertEquals("error" in disallowed, true, "Disallowed tag should fail");
 			if ("error" in disallowed) {
 				console.log(`   ✓ Disallowed tag correctly rejected: ${disallowed.error}`);

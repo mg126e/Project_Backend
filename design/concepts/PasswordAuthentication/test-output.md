@@ -1,12 +1,12 @@
 Principle: User registers with unique credentials and authenticates as the same user ...
 ------- output -------
 1. Creating a new user account with username and password
-   ✓ User registered successfully with ID: 019ad641-e6c2-7da6-9ae1-088a8dd7237c
+   ✓ User registered successfully with ID: 019ad6ff-4ac4-7731-bb8f-8ccdf67edb95
 2. Authenticating with the same username and password
-   ✓ User authenticated successfully with the same ID: 019ad641-e6c2-7da6-9ae1-088a8dd7237c
+   ✓ User authenticated successfully with the same ID: 019ad6ff-4ac4-7731-bb8f-8ccdf67edb95
 3. Principle satisfied: User can register and authenticate as the same identity
 ----- output end -----
-Principle: User registers with unique credentials and authenticates as the same user ... ok (919ms)
+Principle: User registers with unique credentials and authenticates as the same user ... ok (977ms)
 Action: register enforces username uniqueness ...
 ------- output -------
 1. Testing username uniqueness requirement
@@ -16,7 +16,7 @@ Action: register enforces username uniqueness ...
    ✓ Second registration failed with error: "Username 'uniqueuser' is already taken."
 2. Username uniqueness requirement satisfied
 ----- output end -----
-Action: register enforces username uniqueness ... ok (1s)
+Action: register enforces username uniqueness ... ok (774ms)
 Action: authentication validates credentials and returns appropriate errors ...
 ------- output -------
 1. Testing authentication credential validation
@@ -28,11 +28,11 @@ Action: authentication validates credentials and returns appropriate errors ...
    ✓ Authentication correctly failed with non-existent username
 2. Authentication validation requirements satisfied
 ----- output end -----
-Action: authentication validates credentials and returns appropriate errors ... ok (2s)
+Action: authentication validates credentials and returns appropriate errors ... ok (823ms)
 Action: deleteUser permanently removes user and prevents authentication ...
 ------- output -------
 1. Creating a user to test deletion
-   ✓ User registered with ID: 019ad641-fd89-753a-bae5-ce5a39a8c7ad
+   ✓ User registered with ID: 019ad6ff-5497-78a3-8b06-85a0dfe746a7
 2. Testing authentication before deletion
    ✓ User authenticated successfully
 3. Deleting the user
@@ -40,12 +40,10 @@ Action: deleteUser permanently removes user and prevents authentication ...
 4. Verifying user cannot authenticate after deletion
    ✓ Authentication correctly failed after deletion
 5. Testing deletion of non-existent user
-   ✓ Correctly failed with error: "User 019ad641-fd89-753a-bae5-ce5a39a8c7ad not found."
+   ✓ Correctly failed with error: "User 019ad6ff-5497-78a3-8b06-85a0dfe746a7 not found."
 6. Action requirements satisfied: deleteUser removes credentials permanently
 ----- output end -----
-Action: deleteUser permanently removes user and prevents authentication ... ok (2s)
+Action: deleteUser permanently removes user and prevents authentication ... ok (984ms)
 Action: changePassword updates password and enforces old password ... ok (1s)
 
-ok | 5 passed | 0 failed (8s)
-
-(base) gloriapulido@Glorias-MacBook-Air Project_Backend % 
+ok | 5 passed | 0 failed (4s)

@@ -187,19 +187,19 @@ export default class PasswordAuthenticationConcept {
   }
 
   /**
-   * _getEmail (user: User): (email: String | { error: string })
+   * _getUsername (user: User): (username: String | { error: string })
    *
    * @requires a User with the given user ID exists
-   * @effects returns the email address associated with the user
+   * @effects returns the username associated with the user
    */
-  async _getEmail(
+  async _getUsername(
     { user }: { user: User },
-  ): Promise<{ email: string } | { error: string }> {
+  ): Promise<{ username: string } | { error: string }> {
     const userDoc = await this.users.findOne({ _id: user });
     if (!userDoc) {
       return { error: `User ${user} not found.` };
     }
-    return { email: userDoc.email };
+    return { username: userDoc.username };
   }
 }
 ```

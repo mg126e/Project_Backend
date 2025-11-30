@@ -20,7 +20,7 @@ type File = ID;
  *   tags: { gender, age, runningLevel, runningPace, personality }
  *   isActive: Boolean
  */
-type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
+export type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
 
 interface EmergencyContact {
   name: string;
