@@ -33,6 +33,8 @@ export const inclusions: Record<string, string> = {
     "read-only list used by support dashboards",
   "/api/FileUploading/confirmUpload":
     "public action to confirm file upload completion",
+  "/api/FileUploading/_getDownloadURL":
+    "read-only query to get download URL for uploaded files",
 };
 
 /**
