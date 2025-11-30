@@ -232,7 +232,7 @@ export const GetAllGoalsForUserRequest: Sync = ({ request, session, user, goals 
     const goalsArray = await SharedGoals._getAllGoalsForUser({ user: userIdFromFrame as ID });
     return new Frames({ ...originalFrame, [goals]: goalsArray });
   },
-  then: actions([Requesting.respond, { request, msg: goals }]),
+  then: actions([Requesting.respond, { request, goals }]),
 });
 
 //-- Get Shared Goals --//
@@ -251,7 +251,7 @@ export const GetSharedGoalsRequest: Sync = ({ request, session, user, users, isA
     });
     return new Frames({ ...originalFrame, [goals]: goalsArray });
   },
-  then: actions([Requesting.respond, { request, msg: goals }]),
+  then: actions([Requesting.respond, { request, goals }]),
 });
 
 //-- Get Shared Goal By Id --//
@@ -270,7 +270,7 @@ export const GetSharedGoalByIdRequest: Sync = ({ request, session, user, users, 
     });
     return new Frames({ ...originalFrame, [goal]: goalResult });
   },
-  then: actions([Requesting.respond, { request, msg: goal }]),
+  then: actions([Requesting.respond, { request, goal }]),
 });
 
 //-- Get Shared Steps --//
@@ -286,5 +286,5 @@ export const GetSharedStepsRequest: Sync = ({ request, session, user, sharedGoal
     const stepsArray = await SharedGoals._getSharedSteps({ sharedGoal: originalFrame[sharedGoal] as ID });
     return new Frames({ ...originalFrame, [steps]: stepsArray });
   },
-  then: actions([Requesting.respond, { request, msg: steps }]),
+  then: actions([Requesting.respond, { request, steps }]),
 });

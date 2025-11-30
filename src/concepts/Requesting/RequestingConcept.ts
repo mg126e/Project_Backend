@@ -200,6 +200,46 @@ export function startRequestingServer(
   );
 
   /**
+   * FILE DOWNLOAD ROUTE
+   * 
+   * Special GET endpoint to download files from Google Cloud Storage via backend proxy
+   */
+  app.get(`${REQUESTING_BASE_URL}/files/:fileId/download`, async (c) => {
+    const fileId = c.req.param("fileId");
+    
+    try {
+      const FileUploading = instances.FileUploading;
+      if (!FileUploading) {
+        return c.json({ error: "FileUploading concept not available" }, 500);
+      }
+      
+      // Get file content as buffer
+      const content = await FileUploading.getFileContent({ file: fileId });
+      
+      if (!content) {
+        return c.json({ error: "File not found or not uploaded" }, 404);
+      }
+      
+      // Get filename for Content-Disposition header
+      const filenameResult = await FileUploading._getFilename({ file: fileId });
+      const filename = filenameResult.length > 0 ? filenameResult[0].filename : "download";
+      
+      // Return the file with appropriate headers
+      return new Response(content, {
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Disposition": `inline; filename="${filename}"`,
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=31536000",
+        },
+      });
+    } catch (e) {
+      console.error(`Error downloading file ${fileId}:`, e);
+      return c.json({ error: "Failed to download file" }, 500);
+    }
+  });
+
+  /**
    * PASSTHROUGH ROUTES
    *
    * These routes register against every concept action and query.

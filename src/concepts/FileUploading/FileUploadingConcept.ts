@@ -2,8 +2,6 @@ import { Collection, Db } from "npm:mongodb";
 import { Storage } from "npm:@google-cloud/storage";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { extname } from "@std/path/extname";
-import { contentType } from "jsr:@std/media-types/content-type";
 
 // Generic types used by this concept
 type User = ID;
@@ -42,14 +40,18 @@ export default class FileUploadingConcept {
     this.files = this.db.collection<FileState>(PREFIX + "files");
 
     // Initialize Google Cloud Storage client from environment variables
-    this.bucketName = Deno.env.get("FILE_UPLOADING_GCS_BUCKET_NAME")!;
-    const projectId = Deno.env.get("FILE_UPLOADING_GCS_PROJECT_ID");
-    // The private key from the JSON file often has newlines that need to be parsed correctly
-    const privateKey = Deno.env.get("FILE_UPLOADING_GCS_PRIVATE_KEY")?.replace(
-      /\\n/g,
-      "\n",
-    );
-    const clientEmail = Deno.env.get("FILE_UPLOADING_GCS_CLIENT_EMAIL");
+    this.bucketName = Deno.env.get("GCS_BUCKET_NAME")!;
+    const projectId = Deno.env.get("GCS_PROJECT_ID");
+    let privateKey = Deno.env.get("GCS_PRIVATE_KEY");
+    const clientEmail = Deno.env.get("GCS_CLIENT_EMAIL");
+
+    // Convert escaped newlines to actual newlines
+    if (privateKey) {
+      privateKey = privateKey.replace(/\\n/g, "\n");
+      console.log("[FileUploadingConcept] Private key length after conversion:", privateKey.length);
+      console.log("[FileUploadingConcept] Private key starts with:", privateKey.substring(0, 30));
+      console.log("[FileUploadingConcept] Private key ends with:", privateKey.substring(privateKey.length - 30));
+    }
 
     if (!this.bucketName || !projectId || !privateKey || !clientEmail) {
       throw new Error(
@@ -91,17 +93,19 @@ export default class FileUploadingConcept {
     };
 
     try {
-      const extension = extname(filename);
-      const inferredContentType = contentType(extension) || "application/octet-stream";
+      console.log("[FileUploadingConcept] Generating signed URL for:", filename);
+      
       const options = {
         version: "v4" as const,
         action: "write" as const,
         expires: Date.now() + 15 * 60 * 1000, // URL is valid for 15 minutes
-        contentType: inferredContentType,
+        // DO NOT include contentType - let the client send whatever it wants
       };
 
       const [url] = await this.storage.bucket(this.bucketName).file(storagePath)
         .getSignedUrl(options);
+
+      console.log("[FileUploadingConcept] Signed URL generated successfully");
 
       await this.files.insertOne(newFile);
 
@@ -116,7 +120,7 @@ export default class FileUploadingConcept {
    * confirmUpload (file: File): () | (error: String)
    *
    * **requires**: a File `f` exists and its status is "pending".
-   * **effects**: sets the status of `f` to "uploaded". If conditions not met, returns an error.
+   * **effects**: sets the status of `f` to "uploaded" and makes the file publicly accessible.
    */
   async confirmUpload(
     { file }: { file: File },
@@ -133,15 +137,29 @@ export default class FileUploadingConcept {
       };
     }
 
-    const result = await this.files.updateOne({ _id: file }, {
-      $set: { status: "uploaded" },
-    });
+    try {
+      // Make the file publicly readable
+      const fileRef = this.storage.bucket(this.bucketName).file(fileRecord.storagePath);
+      await fileRef.setMetadata({
+        metadata: {
+          firebaseStorageDownloadTokens: crypto.randomUUID(),
+        },
+      });
 
-    if (result.modifiedCount === 0) {
+      // Update status in database
+      const result = await this.files.updateOne({ _id: file }, {
+        $set: { status: "uploaded" },
+      });
+
+      if (result.modifiedCount === 0) {
+        return { error: "Failed to confirm upload." };
+      }
+
+      return { file };
+    } catch (e) {
+      console.error("FileUploadingConcept: Error confirming upload:", e);
       return { error: "Failed to confirm upload." };
     }
-
-    return { file };
   }
 
   /**
@@ -204,36 +222,55 @@ export default class FileUploadingConcept {
    * _getDownloadURL (file: File): (downloadURL: String)
    *
    * **requires**: the given `file` exists and its status is "uploaded".
-   * **effects**: generates a short-lived, presigned GCS download URL for the file `f` and returns it.
+   * **effects**: returns a permanent public URL for the file.
    */
   async _getDownloadURL(
     { file }: { file: File },
   ): Promise<{ downloadURL: string }[]> {
+    console.log("[FileUploadingConcept._getDownloadURL] Requesting download URL for file:", file);
+    
+    const fileRecord = await this.files.findOne({
+      _id: file,
+      status: "uploaded",
+    });
+
+    console.log("[FileUploadingConcept._getDownloadURL] File record:", fileRecord);
+
+    if (!fileRecord) {
+      console.log("[FileUploadingConcept._getDownloadURL] No file record found or status is not 'uploaded'");
+      return [];
+    }
+
+    // Return permanent backend proxy URL
+    const downloadURL = `/api/files/${file}/download`;
+    console.log("[FileUploadingConcept._getDownloadURL] Download URL generated:", downloadURL);
+    
+    return [{ downloadURL }];
+  }
+
+  /**
+   * getFileContent (file: File): Uint8Array
+   *
+   * **requires**: the given `file` exists and its status is "uploaded".
+   * **effects**: downloads and returns the file content from GCS.
+   */
+  async getFileContent({ file }: { file: File }): Promise<Uint8Array | null> {
     const fileRecord = await this.files.findOne({
       _id: file,
       status: "uploaded",
     });
 
     if (!fileRecord) {
-      return [];
+      return null;
     }
 
     try {
-      const options = {
-        version: "v4" as const,
-        action: "read" as const,
-        expires: Date.now() + 15 * 60 * 1000, // URL is valid for 15 minutes
-      };
-      const [url] = await this.storage.bucket(this.bucketName).file(
-        fileRecord.storagePath,
-      ).getSignedUrl(options);
-      return [{ downloadURL: url }];
+      const fileRef = this.storage.bucket(this.bucketName).file(fileRecord.storagePath);
+      const [contents] = await fileRef.download();
+      return new Uint8Array(contents);
     } catch (e) {
-      console.error(
-        `FileUploadingConcept: Failed to generate download URL for file ${file}:`,
-        e,
-      );
-      return [];
+      console.error(`FileUploadingConcept: Failed to download file ${file}:`, e);
+      return null;
     }
   }
 

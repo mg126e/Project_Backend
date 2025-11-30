@@ -28,7 +28,7 @@ export const RespondToRequestVerificationSuccess: Sync = (
   ),
   then: actions([
     Requesting.respond,
-    { request, verificationRecordId, verificationCode },
+    { request, msg: { verificationRecordId, verificationCode } },
   ]),
 });
 
@@ -39,7 +39,7 @@ export const RespondToRequestVerificationError: Sync = (
     [Requesting.request, { path: REQUEST_VERIFICATION_PATH }, { request }],
     [EmailVerification.requestVerification, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 export const HandleVerifyEmailRequest: Sync = (
@@ -67,7 +67,7 @@ export const RespondToVerifyEmailSuccess: Sync = (
     [Requesting.request, { path: VERIFY_EMAIL_PATH }, { request }],
     [EmailVerification.verifyEmail, {}, { user, email }],
   ),
-  then: actions([Requesting.respond, { request, user, email }]),
+  then: actions([Requesting.respond, { request, msg: { user, email } }]),
 });
 
 export const RespondToVerifyEmailError: Sync = ({ request, error }) => ({
@@ -75,5 +75,5 @@ export const RespondToVerifyEmailError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: VERIFY_EMAIL_PATH }, { request }],
     [EmailVerification.verifyEmail, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });

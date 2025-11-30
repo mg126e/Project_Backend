@@ -1,5 +1,6 @@
 import { UserProfile, PasswordAuthentication, Requesting, Sessioning } from "@concepts";
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
+import { ID } from "@utils/types.ts";
 
 const CREATE_PROFILE_PATH = "/UserProfile/createProfile";
 const SET_NAME_PATH = "/UserProfile/setName";
@@ -29,7 +30,7 @@ export const RespondToCreateProfileSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: CREATE_PROFILE_PATH }, { request }],
     [UserProfile.createProfile, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToCreateProfileError: Sync = ({ request, error }) => ({
@@ -37,7 +38,7 @@ export const RespondToCreateProfileError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: CREATE_PROFILE_PATH }, { request }],
     [UserProfile.createProfile, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Name
@@ -57,7 +58,7 @@ export const RespondToSetNameSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_NAME_PATH }, { request }],
     [UserProfile.setName, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetNameError: Sync = ({ request, error }) => ({
@@ -65,7 +66,7 @@ export const RespondToSetNameError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_NAME_PATH }, { request }],
     [UserProfile.setName, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Bio
@@ -85,7 +86,7 @@ export const RespondToSetBioSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_BIO_PATH }, { request }],
     [UserProfile.setBio, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetBioError: Sync = ({ request, error }) => ({
@@ -93,7 +94,7 @@ export const RespondToSetBioError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_BIO_PATH }, { request }],
     [UserProfile.setBio, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Location
@@ -113,7 +114,7 @@ export const RespondToSetLocationSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_LOCATION_PATH }, { request }],
     [UserProfile.setLocation, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetLocationError: Sync = ({ request, error }) => ({
@@ -121,7 +122,7 @@ export const RespondToSetLocationError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_LOCATION_PATH }, { request }],
     [UserProfile.setLocation, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Emergency Contact
@@ -141,7 +142,7 @@ export const RespondToSetEmergencyContactSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_EMERGENCY_CONTACT_PATH }, { request }],
     [UserProfile.setEmergencyContact, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetEmergencyContactError: Sync = ({ request, error }) => ({
@@ -149,7 +150,7 @@ export const RespondToSetEmergencyContactError: Sync = ({ request, error }) => (
     [Requesting.request, { path: SET_EMERGENCY_CONTACT_PATH }, { request }],
     [UserProfile.setEmergencyContact, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Tag
@@ -169,7 +170,7 @@ export const RespondToSetTagSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_TAG_PATH }, { request }],
     [UserProfile.setTag, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetTagError: Sync = ({ request, error }) => ({
@@ -177,7 +178,7 @@ export const RespondToSetTagError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_TAG_PATH }, { request }],
     [UserProfile.setTag, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Profile Image
@@ -197,7 +198,7 @@ export const RespondToSetProfileImageSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_PROFILE_IMAGE_PATH }, { request }],
     [UserProfile.setProfileImage, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetProfileImageError: Sync = ({ request, error }) => ({
@@ -205,7 +206,7 @@ export const RespondToSetProfileImageError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_PROFILE_IMAGE_PATH }, { request }],
     [UserProfile.setProfileImage, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // Set Is Active (Close Profile) - When a profile is closed, delete the user
@@ -225,7 +226,7 @@ export const RespondToSetIsActiveSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: SET_IS_ACTIVE_PATH }, { request }],
     [UserProfile.setIsActive, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToSetIsActiveError: Sync = ({ request, error }) => ({
@@ -233,7 +234,7 @@ export const RespondToSetIsActiveError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: SET_IS_ACTIVE_PATH }, { request }],
     [UserProfile.setIsActive, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // When profile is closed (isActive explicitly set to false), delete the user from PasswordAuthentication
@@ -261,7 +262,7 @@ export const RespondToCloseAccountSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: CLOSE_PROFILE_PATH }, { request }],
     [UserProfile.closeProfile, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const RespondToCloseAccountError: Sync = ({ request, error }) => ({
@@ -269,7 +270,7 @@ export const RespondToCloseAccountError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: CLOSE_PROFILE_PATH }, { request }],
     [UserProfile.closeProfile, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
 
 // When account is closed, also delete the user from PasswordAuthentication
@@ -281,29 +282,40 @@ export const DeleteUserOnAccountClose: Sync = ({ user }) => ({
 });
 
 // Get Profile
-export const HandleGetProfileRequest: Sync = ({ request, session, user }) => ({
+export const HandleGetProfileRequest: Sync = ({ request, session, user, profile }) => ({
   when: actions([
     Requesting.request,
     { path: GET_PROFILE_PATH, session },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([UserProfile._getProfile, { user }]),
-});
-
-export const RespondToGetProfileSuccess: Sync = ({ request, profile }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_PROFILE_PATH }, { request }],
-    [UserProfile._getProfile, {}, { profile }],
-  ),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    const userIdFromFrame = frames[0][user];
+    const profileData = await UserProfile._getProfile({ user: userIdFromFrame as ID });
+    return new Frames({ ...originalFrame, [profile]: profileData });
+  },
   then: actions([Requesting.respond, { request, profile }]),
 });
 
-export const RespondToGetProfileError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_PROFILE_PATH }, { request }],
-    [UserProfile._getProfile, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
+// Get Profile Image Download URL
+export const HandleGetProfileImageDownloadURLRequest: Sync = ({ request, session, user, downloadURL }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserProfile/getProfileImageDownloadURL", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    const userIdFromFrame = frames[0][user];
+    const result = await UserProfile.getProfileImageDownloadURL(userIdFromFrame as ID);
+    console.log("[HandleGetProfileImageDownloadURLRequest] UserProfile.getProfileImageDownloadURL result:", result);
+    if ('error' in result) {
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: result.error });
+    }
+    console.log("[HandleGetProfileImageDownloadURLRequest] Setting downloadURL:", result.downloadURL);
+    return new Frames({ ...originalFrame, [downloadURL]: result.downloadURL });
+  },
+  then: actions([Requesting.respond, { request, downloadURL }]),
 });

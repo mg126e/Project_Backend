@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "@google-cloud/storage": "^7.17.3",
     "@sendgrid/mail": "^8.1.6",
     "axios": "^1.13.2",
+    "google-auth-library": "^9.0.0",
     "mongodb": "^7.0.0"
   }
 }

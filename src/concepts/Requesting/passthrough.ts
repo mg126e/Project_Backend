@@ -46,6 +46,10 @@ export const inclusions: Record<string, string> = {
  */
 
 export const exclusions: Array<string> = [
+  "/api/PasswordAuthentication/register",
+  "/api/PasswordAuthentication/authenticate",
+  "/api/PasswordAuthentication/changePassword",
+  "/api/logout",
   "/api/EmailVerification/requestVerification",
   "/api/EmailVerification/verifyEmail",
   "/api/UserProfile/createProfile",

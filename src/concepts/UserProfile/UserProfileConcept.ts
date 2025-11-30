@@ -86,7 +86,7 @@ export default class UserProfileConcept {
       location: undefined,
       emergencyContact: undefined,
       tags: {},
-      isActive: false,
+      isActive: true, // Set to true by default when profile is created
     });
     return {};
   }

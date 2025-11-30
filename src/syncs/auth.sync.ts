@@ -16,19 +16,26 @@ export const RegisterSuccessCreatesSession: Sync = ({ user }) => ({
   then: actions([Sessioning.start, { user }]),
 });
 
-export const RegisterSuccessCreatesProfile: Sync = ({ user }) => ({
-  when: actions([PasswordAuthentication.register, {}, { user }]),
-  then: actions([UserProfile.createProfile, { user }]),
-});
+export const RegisterSuccessCreatesProfile: Sync = ({ user }) => {
+  console.log("[RegisterSuccessCreatesProfile] Creating profile for user:", user);
+  return {
+    when: actions([PasswordAuthentication.register, {}, { user }]),
+    then: actions([UserProfile.createProfile, { user }]),
+  };
+};
 
-export const RegisterResponseSuccess: Sync = ({ request, user, session }) => ({
-  when: actions(
-    [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
-    [PasswordAuthentication.register, {}, { user }],
-    [Sessioning.start, { user }, { session }],
-  ),
-  then: actions([Requesting.respond, { request, user, session }]),
-});
+export const RegisterResponseSuccess: Sync = ({ request, user, session }) => {
+  console.log("[RegisterResponseSuccess] user:", user, "session:", session);
+  return {
+    when: actions(
+      [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
+      [PasswordAuthentication.register, {}, { user }],
+      [Sessioning.start, { user }, { session }],
+      [UserProfile.createProfile, { user }, {}],
+    ),
+    then: actions([Requesting.respond, { request, user, session }]),
+  };
+};
 
 export const RegisterResponseError: Sync = ({ request, error }) => ({
   when: actions(
@@ -53,14 +60,17 @@ export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
   then: actions([Sessioning.start, { user }]),
 });
 
-export const LoginResponseSuccess: Sync = ({ request, user, session }) => ({
-  when: actions(
-    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
-    [PasswordAuthentication.authenticate, {}, { user }],
-    [Sessioning.start, { user }, { session }],
-  ),
-  then: actions([Requesting.respond, { request, user, session }]),
-});
+export const LoginResponseSuccess: Sync = ({ request, user, session }) => {
+  console.log("[LoginResponseSuccess] user:", user, "session:", session);
+  return {
+    when: actions(
+      [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
+      [PasswordAuthentication.authenticate, {}, { user }],
+      [Sessioning.start, { user }, { session }],
+    ),
+    then: actions([Requesting.respond, { request, user, session }]),
+  };
+};
 
 export const LoginResponseError: Sync = ({ request, error }) => ({
   when: actions(
@@ -87,7 +97,7 @@ export const LogoutResponse: Sync = ({ request }) => ({
     [Requesting.request, { path: "/logout" }, { request }],
     [Sessioning.end, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, status: "logged_out" }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 //-- Change Password --//
@@ -107,7 +117,7 @@ export const ChangePasswordResponseSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: "/PasswordAuthentication/changePassword" }, { request }],
     [PasswordAuthentication.changePassword, {}, {}],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
 export const ChangePasswordResponseError: Sync = ({ request, error }) => ({
@@ -115,5 +125,5 @@ export const ChangePasswordResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/PasswordAuthentication/changePassword" }, { request }],
     [PasswordAuthentication.changePassword, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, error }]),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
