@@ -30,3 +30,4 @@ We haven't identified any huge issues right now.
 - We will continue to meet to discuss our plans and issues we are experiencing
 
 **Meeting Notes**
+- One person can complete MongoDB setup, does not require whole group
