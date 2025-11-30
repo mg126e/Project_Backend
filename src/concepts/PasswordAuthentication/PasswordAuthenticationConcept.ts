@@ -174,10 +174,12 @@ export default class PasswordAuthenticationConcept {
   async markEmailVerified(
     { user }: { user: User },
   ): Promise<Empty | { error: string }> {
+    console.log("[PasswordAuthentication.markEmailVerified] Marking user as verified:", user);
     const result = await this.users.updateOne(
       { _id: user },
       { $set: { isEmailVerified: true } },
     );
+    console.log("[PasswordAuthentication.markEmailVerified] Update result:", { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount });
     if (result.matchedCount === 0) {
       return { error: `User ${user} not found.` };
     }

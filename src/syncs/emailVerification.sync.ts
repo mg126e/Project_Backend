@@ -97,7 +97,6 @@ export const CreateProfileAfterEmailVerification: Sync = ({ user }) => {
   };
 };
 
-// Update the verify email response to include the session
 export const RespondToVerifyEmailWithSession: Sync = ({ request, user, session }) => ({
   when: actions(
     [Requesting.request, { path: VERIFY_EMAIL_PATH }, { request }],
@@ -105,5 +104,5 @@ export const RespondToVerifyEmailWithSession: Sync = ({ request, user, session }
     [Sessioning.start, { user }, { session }],
     [UserProfile.createProfile, { user }, {}],
   ),
-  then: actions([Requesting.respond, { request, user, session, verified: true }]),
+  then: actions([Requesting.respond, { request, user, session }]),
 });
