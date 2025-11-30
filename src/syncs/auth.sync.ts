@@ -15,20 +15,32 @@ export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
   then: actions([Requesting.respond, { request, error: "Please verify your email before logging in." }]),
 });
 import { actions, Sync } from "@engine";
-import { PasswordAuthentication, Requesting, Sessioning } from "@concepts";
+import { PasswordAuthentication, Requesting, Sessioning, EmailVerification } from "@concepts";
 
-//-- User Registration --//
-export const RegisterRequest: Sync = ({ request, username, password, email }) => ({
+
+//-- User Registration: Accepts verification info and only creates user if verified --//
+export const RegisterRequest: Sync = ({ request, username, password, email, verificationRecordId, verificationCode }) => ({
   when: actions([
     Requesting.request,
-    { path: "/PasswordAuthentication/register", username, password, email },
+    { path: "/PasswordAuthentication/register", username, password, email, verificationRecordId, verificationCode },
     { request },
   ]),
-  then: actions([PasswordAuthentication.register, { username, password, email }]),
+  where: async (frames) => {
+    // Extract and cast values from frames
+    const req = frames[0];
+    const vId = req[verificationRecordId] as ID;
+    const vCode = req[verificationCode] as string;
+    // Check verification
+    const verificationResult = await EmailVerification.verifyEmail({ verificationRecordId: vId, verificationCode: vCode });
+    if (verificationResult && typeof verificationResult === 'object' && !('error' in verificationResult)) {
+      return frames; // allow to proceed
+    }
+    return new Frames(); // block registration if not verified
+  },
+  then: actions([
+    PasswordAuthentication.register, { username, password, email },
+  ]),
 });
-
-// Session and profile creation moved to email verification completion
-// Users must verify their email before getting a session
 
 
 
@@ -61,7 +73,6 @@ export const LoginRequest: Sync = ({ request, username, password }) => ({
   then: actions([PasswordAuthentication.authenticate, { username, password }]),
 });
 
-import { EmailVerification } from "@concepts";
 
 import { ID } from "@utils/types.ts";
 import { Frames } from "@engine";
