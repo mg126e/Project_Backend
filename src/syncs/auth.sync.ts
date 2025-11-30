@@ -1,39 +1,29 @@
 import { actions, Sync } from "@engine";
-import { PasswordAuthentication, Requesting, Sessioning, UserProfile } from "@concepts";
+import { PasswordAuthentication, Requesting, Sessioning } from "@concepts";
 
 //-- User Registration --//
-export const RegisterRequest: Sync = ({ request, username, password }) => ({
+export const RegisterRequest: Sync = ({ request, username, password, email }) => ({
   when: actions([
     Requesting.request,
-    { path: "/PasswordAuthentication/register", username, password },
+    { path: "/PasswordAuthentication/register", username, password, email },
     { request },
   ]),
-  then: actions([PasswordAuthentication.register, { username, password }]),
+  then: actions([PasswordAuthentication.register, { username, password, email }]),
 });
 
-export const RegisterSuccessCreatesSession: Sync = ({ user }) => ({
-  when: actions([PasswordAuthentication.register, {}, { user }]),
-  then: actions([Sessioning.start, { user }]),
-});
+// Session and profile creation moved to email verification completion
+// Users must verify their email before getting a session
 
-export const RegisterSuccessCreatesProfile: Sync = ({ user }) => {
-  console.log("[RegisterSuccessCreatesProfile] Creating profile for user:", user);
-  return {
-    when: actions([PasswordAuthentication.register, {}, { user }]),
-    then: actions([UserProfile.createProfile, { user }]),
-  };
-};
 
-export const RegisterResponseSuccess: Sync = ({ request, user, session }) => {
-  console.log("[RegisterResponseSuccess] user:", user, "session:", session);
+
+export const RegisterResponseSuccess: Sync = ({ request, user }) => {
+  console.log("[RegisterResponseSuccess] user:", user);
   return {
     when: actions(
       [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
       [PasswordAuthentication.register, {}, { user }],
-      [Sessioning.start, { user }, { session }],
-      [UserProfile.createProfile, { user }, {}],
     ),
-    then: actions([Requesting.respond, { request, user, session }]),
+    then: actions([Requesting.respond, { request, user, msg: { requiresEmailVerification: true } }]),
   };
 };
 

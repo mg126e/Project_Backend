@@ -69,7 +69,6 @@ export default class EmailVerificationConcept {
     // Initialize email service if SendGrid credentials are available
     try {
       this.emailService = createSendGridEmailFromEnv();
-      console.log("[EmailVerification] SendGrid email service initialized");
     } catch (error) {
       console.warn(
         "[EmailVerification] SendGrid email service not available:",

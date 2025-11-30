@@ -48,9 +48,6 @@ export default class FileUploadingConcept {
     // Convert escaped newlines to actual newlines
     if (privateKey) {
       privateKey = privateKey.replace(/\\n/g, "\n");
-      console.log("[FileUploadingConcept] Private key length after conversion:", privateKey.length);
-      console.log("[FileUploadingConcept] Private key starts with:", privateKey.substring(0, 30));
-      console.log("[FileUploadingConcept] Private key ends with:", privateKey.substring(privateKey.length - 30));
     }
 
     if (!this.bucketName || !projectId || !privateKey || !clientEmail) {
@@ -93,8 +90,6 @@ export default class FileUploadingConcept {
     };
 
     try {
-      console.log("[FileUploadingConcept] Generating signed URL for:", filename);
-      
       const options = {
         version: "v4" as const,
         action: "write" as const,
@@ -104,8 +99,6 @@ export default class FileUploadingConcept {
 
       const [url] = await this.storage.bucket(this.bucketName).file(storagePath)
         .getSignedUrl(options);
-
-      console.log("[FileUploadingConcept] Signed URL generated successfully");
 
       await this.files.insertOne(newFile);
 
@@ -227,24 +220,18 @@ export default class FileUploadingConcept {
   async _getDownloadURL(
     { file }: { file: File },
   ): Promise<{ downloadURL: string }[]> {
-    console.log("[FileUploadingConcept._getDownloadURL] Requesting download URL for file:", file);
-    
+
     const fileRecord = await this.files.findOne({
       _id: file,
       status: "uploaded",
     });
-
-    console.log("[FileUploadingConcept._getDownloadURL] File record:", fileRecord);
-
     if (!fileRecord) {
-      console.log("[FileUploadingConcept._getDownloadURL] No file record found or status is not 'uploaded'");
       return [];
     }
 
     // Return permanent backend proxy URL
     const downloadURL = `/api/files/${file}/download`;
-    console.log("[FileUploadingConcept._getDownloadURL] Download URL generated:", downloadURL);
-    
+
     return [{ downloadURL }];
   }
 

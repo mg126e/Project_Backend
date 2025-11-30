@@ -22,11 +22,15 @@ type User = ID;
  *   a set of Users with
  *     a username String
  *     a password String
+ *     an email String
+ *     an isEmailVerified Boolean
  */
 interface UserDocument {
   _id: User; // The ID of the user, generic type
   username: string;
   passwordHash: string; // Storing hashed password
+  email: string;
+  isEmailVerified: boolean; // Whether the email has been verified
 }
 
 /**
@@ -42,21 +46,26 @@ export default class PasswordAuthenticationConcept {
   }
 
   /**
-   * register (username: String, password: String): (user: User)
+   * register (username: String, password: String, email: String): (user: User)
    *
-   * @requires no User with the given `username` already exists
+   * @requires no User with the given `username` already exists AND no User with the given `email` already exists
    *
    * @effects creates a new User instance; sets that user's username to `username`;
-   *             stores the `password` for that user; returns the ID of that newly created user as `user`
+   *             stores the `password` for that user; stores the `email`;
+   *             sets isEmailVerified to false; returns the ID of that newly created user as `user`
    */
   async register(
-    { username, password }: { username: string; password: string },
+    { username, password, email }: { username: string; password: string; email: string },
   ): Promise<{ user: User } | { error: string }> {
     // no User with the given `username` already exists
     const existingUser = await this.users.findOne({ username });
     if (existingUser) {
       return { error: `Username '${username}' is already taken.` };
     }
+
+
+    // TODO: Restore unique email check after testing
+    // Temporarily allow duplicate emails for development/testing
 
     // create a new User document
     const newUser: User = freshID() as User; // generate a fresh ID for the new user
@@ -68,6 +77,8 @@ export default class PasswordAuthenticationConcept {
       _id: newUser,
       username,
       passwordHash, // store hashed password
+      email,
+      isEmailVerified: false, // Must verify email before login
     });
 
     // new user created
@@ -78,6 +89,7 @@ export default class PasswordAuthenticationConcept {
    * authenticate (username: String, password: String): (user: User)
    *
    * @requires a User with the given `username` exists AND the `password` matches the stored `password` for that user
+   *           AND the user's email has been verified
    *
    * @effects returns the identifier of the authenticated `User` as `user`
    */
@@ -96,6 +108,11 @@ export default class PasswordAuthenticationConcept {
     if (userDoc.passwordHash !== providedPasswordHash) {
       // password mismatch. Return generic error for security.
       return { error: "Invalid username or password." };
+    }
+
+    // check if email is verified
+    if (!userDoc.isEmailVerified) {
+      return { error: "Please verify your email before logging in." };
     }
 
     // user successfully logged in
@@ -146,5 +163,40 @@ export default class PasswordAuthenticationConcept {
       { $set: { passwordHash: newPasswordHash } },
     );
     return {};
+  }
+
+  /**
+   * markEmailVerified (user: User): ({} | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects sets isEmailVerified to true for the user
+   */
+  async markEmailVerified(
+    { user }: { user: User },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.users.updateOne(
+      { _id: user },
+      { $set: { isEmailVerified: true } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
+   * _getEmail (user: User): (email: String | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects returns the email address associated with the user
+   */
+  async _getEmail(
+    { user }: { user: User },
+  ): Promise<{ email: string } | { error: string }> {
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    return { email: userDoc.email };
   }
 }

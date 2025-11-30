@@ -6,19 +6,18 @@
            - `users`: Set<User> (the group of users sharing the goal)
            - `description`: String (goal description)
            - `isActive`: Boolean (true if the goal is currently being tracked)
-       - A set of `SharedSteps`, each with:
+         - A set of `SharedSteps`, each with:
            - `sharedGoalId`: SharedGoal (reference to the parent shared goal)
            - `description`: String
-           - `start`: Date
            - `completion`: Date? (optional, when the step was completed)
        - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
    - **Actions:**
        - `createSharedGoal(users: Set<User>, description: String): (sharedGoalId: SharedGoal)`
            - *Requires:* No active `SharedGoal` for this set of users with the same description already exists. `description` is not empty. `users` must contain at least two users.
            - *Effects:* Creates a new `SharedGoal` with the given set of users and description; sets `isActive` to `true`; returns `sharedGoalId`. Multiple active shared goals are allowed for the same user group as long as each has a unique description.
-       - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
+         - `generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
            - *Requires:* `sharedGoal` exists and is active; no `SharedSteps` are currently associated with this `sharedGoal`. `user` must be a member of the shared goal's users.
-           - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps.
+           - *Effects:* Uses an internal LLM to generate step descriptions based on the shared goal's description; creates new `SharedSteps` for each; returns the array of created steps. **Note:** The number of steps is determined by the LLM and may vary; tests and clients should not assume a fixed count.
        - `regenerateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])`
            - *Requires:* `sharedGoal` exists and is active. `user` must be a member of the shared goal's users.
            - *Effects:* Deletes all existing `SharedSteps` for the shared goal, then generates new steps as above; returns the array of new steps.
@@ -43,13 +42,17 @@
            - *Effects:* Returns the shared goal with the given id for the user group, or null if not found.
        - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
            - *Effects:* Returns all steps for the given shared goal.
-   - **Notes:**
-    - Assuming that for the actions other than setInitialized, the SharedGoals instance being initialized would also be required. Initialized essentially just means if the shared goals feature is now active for the group of users
-    - We are allowing for LLM generation and manual creation of steps
+  - **Notes:**
+   - For all actions except setInitialized, the SharedGoals instance being initialized is required. Initialized means the shared goals feature is now active for the group of users.
+   - Both LLM-generated and manually created steps are supported. The number of LLM-generated steps is not fixed and may change depending on the goal description and LLM output.
+   - The `start` field previously listed for SharedStep is not present in the implementation and is omitted here for accuracy.
 
 ```typescript
-import { Collection, Db } from "mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
+import { GeminiLLM } from "@utils/gemini-llm.ts";
+
+const USER_PROFILE_COLLECTION = "Userprofile.userProfiles";
 
 // Types for this concept
 type User = ID;
@@ -61,13 +64,14 @@ interface SharedGoalDoc {
   users: User[]; // Set of users sharing the goal
   description: string;
   isActive: boolean;
+  createdAt: Date;
+  closedAt?: Date;
 }
 
 interface SharedStepDoc {
   _id: SharedStep;
   sharedGoalId: SharedGoal;
   description: string;
-  start: Date;
   completion?: Date;
 }
 
@@ -77,14 +81,61 @@ interface SharedStepDoc {
 export default class SharedGoalsConcept {
   private sharedGoals: Collection<SharedGoalDoc>;
   private sharedSteps: Collection<SharedStepDoc>;
-
-  // Now includes groupKey for deterministic group identity
   private sharedGoalsInstance: Collection<{ groupKey: string; users: User[]; isInitialized: boolean }>;
+  private llm: GeminiLLM | null = null;
+  private apiKey: string | null = null;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database, apiKey?: string) {
     this.sharedGoals = this.db.collection<SharedGoalDoc>("SharedGoals.sharedGoals");
     this.sharedSteps = this.db.collection<SharedStepDoc>("SharedGoals.sharedSteps");
     this.sharedGoalsInstance = this.db.collection<{ groupKey: string; users: User[]; isInitialized: boolean }>("SharedGoals.sharedGoalsInstance");
+    this.apiKey = apiKey || Deno.env.get("GEMINI_API_KEY") || null;
+    if (this.apiKey) {
+      this.initializeLLM(this.apiKey);
+    }
+  }
+
+  /**
+   * Helper: initializes the LLM with the provided API key
+   */
+  initializeLLM(apiKey: string): void {
+    try {
+      this.llm = new GeminiLLM({ apiKey });
+    } catch (error) {
+      console.warn("Failed to initialize LLM:", error);
+      this.llm = null;
+    }
+  }
+
+  /**
+   * Helper: validates the quality and structure of steps generated by the LLM
+   * @returns error message if validation fails, undefined if successful
+   */
+  private validateStepQuality(steps: string[]): string | undefined {
+    for (const step of steps) {
+      if (step.length < 10) {
+        return `Step too brief: "${step}". Provide more detail to clarify the action.`;
+      }
+      if (step.length > 300) {
+        return `Step too detailed: "${step}". Keep each step brief and focused on one main action.`;
+      }
+    }
+    const vagueWords = ["etc", "maybe", "possibly", "as necessary"];
+    for (const step of steps) {
+      for (const word of vagueWords) {
+        const re = new RegExp(`\\b${word.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`, "i");
+        if (re.test(step)) {
+          return `Vague step detected: "${step}". Steps must be specific and actionable.`;
+        }
+      }
+    }
+    for (const step of steps) {
+      const commaCount = (step.match(/,/g) || []).length;
+      if (commaCount > 6) {
+        return `Step too verbose: "${step}". Break into simpler steps.`;
+      }
+    }
+    return undefined;
   }
 
   // Helper to generate a deterministic group key from users
@@ -97,7 +148,7 @@ export default class SharedGoalsConcept {
    */
   async createSharedGoal({ users, description }: { users: User[]; description: string }): Promise<{ sharedGoalId: SharedGoal } | { error: string }> {
     if (!description || users.length < 2) {
-      return { error: "Description must not be empty and at least two users required." };
+      return { error: "Description must not be empty and/or at least two users required." };
     }
     // Check for existing active goal with same users and description
     const existing = await this.sharedGoals.findOne({
@@ -109,13 +160,13 @@ export default class SharedGoalsConcept {
       return { error: "Active shared goal with these users and description already exists." };
     }
     const _id = crypto.randomUUID() as SharedGoal;
-    await this.sharedGoals.insertOne({ _id, users, description, isActive: true });
+    await this.sharedGoals.insertOne({ _id, users, description, isActive: true, createdAt: new Date() });
     return { sharedGoalId: _id };
   }
 
   /**
    * generateSharedSteps(sharedGoal: SharedGoal, user: User): (steps: SharedStep[])
-   * (Stub: LLM generation not implemented)
+   * Uses Gemini LLM to generate steps for a shared goal.
    */
   async generateSharedSteps({ sharedGoal, user }: { sharedGoal: SharedGoal; user: User }): Promise<{ steps: SharedStepDoc[] } | { error: string }> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoal, isActive: true });
@@ -126,14 +177,59 @@ export default class SharedGoalsConcept {
     if (existingSteps.length > 0) {
       return { error: "Shared steps already exist for this goal." };
     }
-    // Stub: generate 3 dummy steps
-    const now = new Date();
-    const steps: SharedStepDoc[] = [
-      { _id: crypto.randomUUID() as SharedStep, sharedGoalId: sharedGoal, description: "Step 1", start: now },
-      { _id: crypto.randomUUID() as SharedStep, sharedGoalId: sharedGoal, description: "Step 2", start: now },
-      { _id: crypto.randomUUID() as SharedStep, sharedGoalId: sharedGoal, description: "Step 3", start: now },
-    ];
-    await this.sharedSteps.insertMany(steps);
+    if (!this.llm) {
+      return { error: "LLM not initialized. API key might be missing or invalid." };
+    }
+    // LLM prompt
+    const llmPrompt = [
+      'You are a helpful AI assistant that creates a recommended plan of clear steps',
+      'for a set of people working together on a shared goal.',
+      '',
+      `Shared goal description: "${goal.description}"`,
+      '',
+      'Response Requirements:',
+      '1. Return ONLY a single-line JSON array of strings',
+      '2. Each string should be a specific, complete, measurable, and actionable step',
+      '3. Steps must be relevant to the shared goal and feasible for an average group (not overly ambitious or vague)',
+      '4. Only contain necessary steps to achieve the goal, avoid filler steps and be mindful of number of steps generated',
+      '5. Steps must be in logical order',
+      '6. Do NOT use line breaks or extra whitespace',
+      '7. Properly escape any quotes in the text',
+      '8. No step numbers or prefixes',
+      '9. No comments or explanations',
+      '',
+      'Example response format:',
+      '["Define the shared objective","Break down the goal into actionable steps","Assign responsibilities among users"]',
+      '',
+      'Return ONLY the JSON array, nothing else.'
+    ].join('\n');
+    let responseText: string;
+    try {
+      responseText = await this.llm.executeLLM(llmPrompt);
+    } catch (e) {
+      return { error: `Failed to call LLM: ${e instanceof Error ? e.message : String(e)}` };
+    }
+    let stepDescriptions: string[];
+    try {
+      stepDescriptions = JSON.parse(responseText);
+    } catch (_parseError) {
+      return { error: "Failed to parse LLM response as JSON array." };
+    }
+    if (!Array.isArray(stepDescriptions) || stepDescriptions.some((d) => typeof d !== "string")) {
+      return { error: "LLM returned invalid step format. Expected a JSON array of strings." };
+    }
+    const validationError = this.validateStepQuality(stepDescriptions);
+    if (validationError) {
+      return { error: validationError };
+    }
+    const steps: SharedStepDoc[] = stepDescriptions.map((desc) => ({
+      _id: crypto.randomUUID() as SharedStep,
+      sharedGoalId: sharedGoal,
+      description: desc.trim(),
+    }));
+    if (steps.length > 0) {
+      await this.sharedSteps.insertMany(steps);
+    }
     return { steps };
   }
 
@@ -164,7 +260,6 @@ export default class SharedGoalsConcept {
       _id: crypto.randomUUID() as SharedStep,
       sharedGoalId: sharedGoal,
       description,
-      start: new Date(),
     };
     await this.sharedSteps.insertOne(step);
     return { step };
@@ -202,7 +297,7 @@ export default class SharedGoalsConcept {
   async closeSharedGoal({ sharedGoal, user }: { sharedGoal: SharedGoal; user: User }): Promise<Empty | { error: string }> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoal, isActive: true });
     if (!goal || !goal.users.includes(user)) return { error: "Shared goal not found or user not a member." };
-    await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false } });
+    await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false, closedAt: new Date() } });
     return {};
   }
 
@@ -222,30 +317,68 @@ export default class SharedGoalsConcept {
   }
 
   /**
+   * Returns all shared goals that include the given user.
+   * Accepts an object: { user: User }
+   * Returns users as objects: { id, displayname }
+   */
+  async _getAllGoalsForUser({ user }: { user: User }): Promise<Array<Omit<SharedGoalDoc, "users"> & { users: { id: User; displayname: string }[] }>> {
+    const goals = await this.sharedGoals.find({ users: user }).toArray();
+    // Gather all unique user IDs from all goals
+    const allUserIds = [...new Set(goals.flatMap(g => g.users))].map(String); // ensure string[]
+    // Fetch displaynames from UserProfile.userProfiles
+    const profilesCollection = this.db.collection<{ _id: string; displayname?: string }>(USER_PROFILE_COLLECTION);
+    const profileDocs = await profilesCollection.find({ _id: { $in: allUserIds } }).toArray();
+    const userMapLocal = Object.fromEntries(profileDocs.map(u => [u._id, u.displayname]));
+    // Map users in each goal to { id, displayname }
+    return goals.map(g => {
+      const { _id, description, isActive, createdAt, closedAt } = g;
+      const base = {
+        _id,
+        description,
+        isActive,
+        createdAt,
+        users: g.users.map(u => ({ id: u, displayname: userMapLocal[String(u)] || String(u) }))
+      };
+      return closedAt ? { ...base, closedAt } : base;
+    });
+  }
+
+  /**
    * _getSharedGoals(users: User[], isActive?: Boolean)
    */
-  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean }[]> {
-    const query: any = { users: { $all: users, $size: users.length } };
+  async _getSharedGoals({ users, isActive }: { users: User[]; isActive?: boolean }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] }[]> {
+    const query: Record<string, unknown> = { users: { $all: users, $size: users.length } };
     if (typeof isActive === "boolean") query.isActive = isActive;
     const goals = await this.sharedGoals.find(query).toArray();
-    return goals.map(g => ({ id: g._id, description: g.description, isActive: g.isActive }));
+    return goals.map(g => {
+      const { _id, description, isActive, createdAt, closedAt, users } = g;
+      const base = { id: _id, description, isActive, createdAt, users };
+      return closedAt ? { ...base, closedAt } : base;
+    });
   }
 
   /**
    * _getSharedGoalById(users: User[], sharedGoalId: SharedGoal)
    */
-  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean } | null> {
+  async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] } | null> {
     const goal = await this.sharedGoals.findOne({ _id: sharedGoalId, users: { $all: users, $size: users.length } });
     if (!goal) return null;
-    return { id: goal._id, description: goal.description, isActive: goal.isActive };
+    return {
+      id: goal._id,
+      description: goal.description,
+      isActive: goal.isActive,
+      createdAt: goal.createdAt,
+      closedAt: goal.closedAt,
+      users: goal.users
+    };
   }
 
   /**
    * _getSharedSteps(sharedGoal: SharedGoal)
    */
-  async _getSharedSteps({ sharedGoal }: { sharedGoal: SharedGoal }): Promise<{ id: SharedStep; description: string; start: Date; completion?: Date }[]> {
+  async _getSharedSteps({ sharedGoal }: { sharedGoal: SharedGoal }): Promise<{ id: SharedStep; description: string; completion?: Date }[]> {
     const steps = await this.sharedSteps.find({ sharedGoalId: sharedGoal }).toArray();
-    return steps.map(s => ({ id: s._id, description: s.description, start: s.start, completion: s.completion }));
+    return steps.map(s => ({ id: s._id, description: s.description, completion: s.completion }));
   }
 }
 ```

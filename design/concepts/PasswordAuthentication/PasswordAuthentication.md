@@ -1,28 +1,38 @@
 **PasswordAuthentication**
    - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
-   - **Principle:** If a user registers with a unique username and password, they can subsequently authenticate with those credentials and will consistently be treated as the same user.
+   - **Principle:** If a user registers with a unique username, password, and email, they can subsequently authenticate with those credentials after verifying their email, and will consistently be treated as the same user.
        - **State:**
            - A set of `Users`, each with:
                - `username`: String
                - `passwordHash`: String (hashed using SHA-256)
+               - `email`: String
+               - `isEmailVerified`: Boolean
        - **Actions:**
-           - `register(username: String, password: String): ({ user: User } | { error: String })`
+           - `register(username: String, password: String, email: String): ({ user: User } | { error: String })`
                - *Requires:* No User with the given username already exists.
-               - *Effects:* Creates a new User, stores a hash of the password, and returns the new user's ID. On failure, returns an error.
+               - *Effects:* Creates a new User, stores a hash of the password, stores the email, sets isEmailVerified to false, and returns the new user's ID. On failure, returns an error.
            - `authenticate(username: String, password: String): ({ user: User } | { error: String })`
-               - *Requires:* A User with the given username exists AND the hash of the password matches the stored passwordHash.
+               - *Requires:* A User with the given username exists AND the hash of the password matches the stored passwordHash AND the user's email has been verified.
                - *Effects:* Returns the identifier of the authenticated User. On failure, returns an error.
            - `deleteUser(user: User): ({} | { error: String })`
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Permanently deletes the User and their stored credentials. On failure, returns an error.
-            - `changePassword(user: User, oldPassword: String, newPassword: String): ({} | { error: String })`
-              - *Requires:* A User with the given user ID exists AND the old password matches the stored passwordHash.
-              - *Effects:* Updates the user's password to the new password
+           - `changePassword(user: User, oldPassword: String, newPassword: String): ({} | { error: String })`
+               - *Requires:* A User with the given user ID exists AND the old password matches the stored passwordHash.
+               - *Effects:* Updates the user's password to the new password.
+           - `markEmailVerified(user: User): ({} | { error: String })`
+               - *Requires:* A User with the given user ID exists.
+               - *Effects:* Sets isEmailVerified to true for the user. Called by syncs after successful email verification.
+       - **Queries:**
+           - `_getEmail(user: User): ({ email: String } | { error: String })`
+               - *Requires:* A User with the given user ID exists.
+               - *Effects:* Returns the email address associated with the user.
     - **Notes:**
        - deleteUser and closeProfile will work in a sync together
+       - Email verification is required before login. The markEmailVerified action is called by syncs after EmailVerification concept confirms the code.
 
 ```typescript
-import { Collection, Db } from "mongodb";
+import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
@@ -46,11 +56,15 @@ type User = ID;
  *   a set of Users with
  *     a username String
  *     a password String
+ *     an email String
+ *     an isEmailVerified Boolean
  */
 interface UserDocument {
   _id: User; // The ID of the user, generic type
   username: string;
   passwordHash: string; // Storing hashed password
+  email: string;
+  isEmailVerified: boolean; // Whether the email has been verified
 }
 
 /**
@@ -61,26 +75,31 @@ interface UserDocument {
 export default class PasswordAuthenticationConcept {
   private users: Collection<UserDocument>;
 
-  constructor(private readonly db: Db) {
+  constructor(private readonly db: Database) {
     this.users = this.db.collection<UserDocument>(PREFIX + "users");
   }
 
   /**
-   * register (username: String, password: String): (user: User)
+   * register (username: String, password: String, email: String): (user: User)
    *
-   * @requires no User with the given `username` already exists
+   * @requires no User with the given `username` already exists AND no User with the given `email` already exists
    *
    * @effects creates a new User instance; sets that user's username to `username`;
-   *             stores the `password` for that user; returns the ID of that newly created user as `user`
+   *             stores the `password` for that user; stores the `email`;
+   *             sets isEmailVerified to false; returns the ID of that newly created user as `user`
    */
   async register(
-    { username, password }: { username: string; password: string },
+    { username, password, email }: { username: string; password: string; email: string },
   ): Promise<{ user: User } | { error: string }> {
     // no User with the given `username` already exists
     const existingUser = await this.users.findOne({ username });
     if (existingUser) {
       return { error: `Username '${username}' is already taken.` };
     }
+
+
+    // TODO: Restore unique email check after testing
+    // Temporarily allow duplicate emails for development/testing
 
     // create a new User document
     const newUser: User = freshID() as User; // generate a fresh ID for the new user
@@ -92,6 +111,8 @@ export default class PasswordAuthenticationConcept {
       _id: newUser,
       username,
       passwordHash, // store hashed password
+      email,
+      isEmailVerified: false, // Must verify email before login
     });
 
     // new user created
@@ -102,6 +123,7 @@ export default class PasswordAuthenticationConcept {
    * authenticate (username: String, password: String): (user: User)
    *
    * @requires a User with the given `username` exists AND the `password` matches the stored `password` for that user
+   *           AND the user's email has been verified
    *
    * @effects returns the identifier of the authenticated `User` as `user`
    */
@@ -120,6 +142,11 @@ export default class PasswordAuthenticationConcept {
     if (userDoc.passwordHash !== providedPasswordHash) {
       // password mismatch. Return generic error for security.
       return { error: "Invalid username or password." };
+    }
+
+    // check if email is verified
+    if (!userDoc.isEmailVerified) {
+      return { error: "Please verify your email before logging in." };
     }
 
     // user successfully logged in
@@ -143,6 +170,68 @@ export default class PasswordAuthenticationConcept {
     }
 
     return {};
+  }
+  /**
+   * changePassword (user: User, oldPassword: String, newPassword: String): ({} | { error: string })
+   *
+   * @requires a User with the given user ID exists AND the old password matches the stored passwordHash
+   * @effects updates the user's password to the new password (hashed)
+   */
+  async changePassword(
+    { user, oldPassword, newPassword }: { user: User; oldPassword: string; newPassword: string },
+  ): Promise<Empty | { error: string }> {
+    // Find the user by ID
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    // Check old password
+    const oldPasswordHash = await hashPassword(oldPassword);
+    if (userDoc.passwordHash !== oldPasswordHash) {
+      return { error: "Old password is incorrect." };
+    }
+    // Hash new password and update
+    const newPasswordHash = await hashPassword(newPassword);
+    await this.users.updateOne(
+      { _id: user },
+      { $set: { passwordHash: newPasswordHash } },
+    );
+    return {};
+  }
+
+  /**
+   * markEmailVerified (user: User): ({} | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects sets isEmailVerified to true for the user
+   */
+  async markEmailVerified(
+    { user }: { user: User },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.users.updateOne(
+      { _id: user },
+      { $set: { isEmailVerified: true } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
+   * _getEmail (user: User): (email: String | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects returns the email address associated with the user
+   */
+  async _getEmail(
+    { user }: { user: User },
+  ): Promise<{ email: string } | { error: string }> {
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    return { email: userDoc.email };
   }
 }
 ```

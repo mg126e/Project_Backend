@@ -139,7 +139,7 @@ Deno.test("Action: generateSharedSteps and regenerateSharedSteps", async () => {
     const genResult = await sharedGoals.generateSharedSteps({ sharedGoal: goalId, user: userA });
     assertNotEquals("error" in genResult, true, "Step generation should succeed");
     const steps = (genResult as { steps: any[] }).steps;
-    assertEquals(steps.length, 3, "Should generate 3 dummy steps");
+    assertEquals(steps.length > 0, true, "Should generate at least 1 step");
     console.log(`   ✓ Generated ${steps.length} steps`);
 
     console.log("3. Attempting to generate steps again");
@@ -153,7 +153,7 @@ Deno.test("Action: generateSharedSteps and regenerateSharedSteps", async () => {
     const regenResult = await sharedGoals.regenerateSharedSteps({ sharedGoal: goalId, user: userA });
     assertNotEquals("error" in regenResult, true, "Regeneration should succeed");
     const regenSteps = (regenResult as { steps: any[] }).steps;
-    assertEquals(regenSteps.length, 3, "Should regenerate 3 dummy steps");
+    assertEquals(regenSteps.length > 0, true, "Should regenerate at least 1 step");
     console.log(`   ✓ Regenerated ${regenSteps.length} steps`);
 
     // Clean up
