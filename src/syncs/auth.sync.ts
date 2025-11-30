@@ -1,5 +1,6 @@
-import { actions, Sync } from "@engine";
-import { PasswordAuthentication, Requesting, Sessioning } from "@concepts";
+import { actions, Frames, Sync } from "@engine";
+import { EmailVerification, PasswordAuthentication, Requesting, Sessioning } from "@concepts";
+import { ID } from "@utils/types.ts";
 
 //-- User Registration --//
 export const RegisterRequest: Sync = ({ request, username, password, email }) => ({
@@ -47,7 +48,40 @@ export const LoginRequest: Sync = ({ request, username, password }) => ({
 
 export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
   when: actions([PasswordAuthentication.authenticate, {}, { user }]),
+  where: async (frames) => {
+    // Check if user has verified their email
+    const userId = frames[0][user] as ID;
+    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+    
+    // Only proceed if user has at least one verified email
+    if (verifiedEmails.length > 0) {
+      return frames;
+    }
+    
+    // Return empty frames to prevent this sync from executing
+    return new Frames();
+  },
   then: actions([Sessioning.start, { user }]),
+});
+
+export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
+    [PasswordAuthentication.authenticate, {}, { user }],
+  ),
+  where: async (frames) => {
+    // Check if user has NOT verified their email
+    const userId = frames[0][user] as ID;
+    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+    
+    // Only respond with error if NO verified emails
+    if (verifiedEmails.length === 0) {
+      return frames;
+    }
+    
+    return new Frames();
+  },
+  then: actions([Requesting.respond, { request, error: "Please verify your email before logging in." }]),
 });
 
 export const LoginResponseSuccess: Sync = ({ request, user, session }) => {

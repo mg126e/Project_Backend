@@ -1,4 +1,4 @@
-import { EmailVerification, PasswordAuthentication, Requesting, Sessioning, UserProfile } from "@concepts";
+import { EmailVerification, Requesting, Sessioning, UserProfile } from "@concepts";
 import { actions, Sync } from "@engine";
 
 const REQUEST_VERIFICATION_PATH = "/EmailVerification/requestVerification";
@@ -68,34 +68,21 @@ export const RespondToVerifyEmailError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-// After successful email verification, mark the user as verified in PasswordAuthentication
-export const MarkUserEmailVerifiedOnSuccess: Sync = ({ user }) => ({
-  when: actions(
-    [EmailVerification.verifyEmail, {}, { user }],
-  ),
-  then: actions([PasswordAuthentication.markEmailVerified, { user }]),
-});
-
-// After marking email as verified, create a session for the user
+// After successful email verification, create a session for the user
 export const CreateSessionAfterEmailVerification: Sync = ({ user }) => ({
   when: actions(
     [EmailVerification.verifyEmail, {}, { user }],
-    [PasswordAuthentication.markEmailVerified, { user }, {}],
   ),
   then: actions([Sessioning.start, { user }]),
 });
 
-// After marking email as verified, create a profile for the user
-export const CreateProfileAfterEmailVerification: Sync = ({ user }) => {
-  console.log("[CreateProfileAfterEmailVerification] Creating profile for user:", user);
-  return {
-    when: actions(
-      [EmailVerification.verifyEmail, {}, { user }],
-      [PasswordAuthentication.markEmailVerified, { user }, {}],
-    ),
-    then: actions([UserProfile.createProfile, { user }]),
-  };
-};
+// After email verification, create a profile for the user
+export const CreateProfileAfterEmailVerification: Sync = ({ user }) => ({
+  when: actions(
+    [EmailVerification.verifyEmail, {}, { user }],
+  ),
+  then: actions([UserProfile.createProfile, { user }]),
+});
 
 export const RespondToVerifyEmailWithSession: Sync = ({ request, user, session }) => ({
   when: actions(

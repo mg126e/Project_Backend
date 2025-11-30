@@ -23,14 +23,12 @@ type User = ID;
  *     a username String
  *     a password String
  *     an email String
- *     an isEmailVerified Boolean
  */
 interface UserDocument {
   _id: User; // The ID of the user, generic type
   username: string;
   passwordHash: string; // Storing hashed password
   email: string;
-  isEmailVerified: boolean; // Whether the email has been verified
 }
 
 /**
@@ -52,7 +50,7 @@ export default class PasswordAuthenticationConcept {
    *
    * @effects creates a new User instance; sets that user's username to `username`;
    *             stores the `password` for that user; stores the `email`;
-   *             sets isEmailVerified to false; returns the ID of that newly created user as `user`
+   *             returns the ID of that newly created user as `user`
    */
   async register(
     { username, password, email }: { username: string; password: string; email: string },
@@ -78,7 +76,6 @@ export default class PasswordAuthenticationConcept {
       username,
       passwordHash, // store hashed password
       email,
-      isEmailVerified: false, // Must verify email before login
     });
 
     // new user created
@@ -89,7 +86,6 @@ export default class PasswordAuthenticationConcept {
    * authenticate (username: String, password: String): (user: User)
    *
    * @requires a User with the given `username` exists AND the `password` matches the stored `password` for that user
-   *           AND the user's email has been verified
    *
    * @effects returns the identifier of the authenticated `User` as `user`
    */
@@ -108,11 +104,6 @@ export default class PasswordAuthenticationConcept {
     if (userDoc.passwordHash !== providedPasswordHash) {
       // password mismatch. Return generic error for security.
       return { error: "Invalid username or password." };
-    }
-
-    // check if email is verified
-    if (!userDoc.isEmailVerified) {
-      return { error: "Please verify your email before logging in." };
     }
 
     // user successfully logged in
@@ -162,27 +153,6 @@ export default class PasswordAuthenticationConcept {
       { _id: user },
       { $set: { passwordHash: newPasswordHash } },
     );
-    return {};
-  }
-
-  /**
-   * markEmailVerified (user: User): ({} | { error: string })
-   *
-   * @requires a User with the given user ID exists
-   * @effects sets isEmailVerified to true for the user
-   */
-  async markEmailVerified(
-    { user }: { user: User },
-  ): Promise<Empty | { error: string }> {
-    console.log("[PasswordAuthentication.markEmailVerified] Marking user as verified:", user);
-    const result = await this.users.updateOne(
-      { _id: user },
-      { $set: { isEmailVerified: true } },
-    );
-    console.log("[PasswordAuthentication.markEmailVerified] Update result:", { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount });
-    if (result.matchedCount === 0) {
-      return { error: `User ${user} not found.` };
-    }
     return {};
   }
 

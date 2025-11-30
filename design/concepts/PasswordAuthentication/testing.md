@@ -29,11 +29,7 @@ Deno.test("Principle: User registers with unique credentials and authenticates a
     assertExists(userId, "User ID should be returned");
     console.log(`   ✓ User registered successfully with ID: ${userId}`);
 
-    console.log("2. Verifying email before authentication");
-    await concept.markEmailVerified({ user: userId });
-    console.log("   ✓ Email verified");
-
-    console.log("3. Authenticating with the same username and password");
+    console.log("2. Authenticating with the same username and password");
     // log in with same credentials
     const authResult = await concept.authenticate({
       username,
@@ -57,7 +53,7 @@ Deno.test("Principle: User registers with unique credentials and authenticates a
       `   ✓ User authenticated successfully with the same ID: ${authUserId}`,
     );
     console.log(
-      "4. Principle satisfied: User can register and authenticate as the same identity",
+      "3. Principle satisfied: User can register and authenticate as the same identity",
     );
   } finally {
     await client.close();
@@ -148,29 +144,6 @@ Deno.test("Action: authentication validates credentials and returns appropriate 
     console.log("   ✓ Test user registered successfully");
 
     console.log(
-      "   • Attempting to authenticate without email verification",
-    );
-    const unverifiedResult = await concept.authenticate({
-      username,
-      password,
-    });
-    assertEquals(
-      "error" in unverifiedResult,
-      true,
-      "Authentication should fail without email verification",
-    );
-    assertEquals(
-      (unverifiedResult as { error: string }).error,
-      "Please verify your email before logging in.",
-      "Should return email verification required error",
-    );
-    console.log("   ✓ Authentication correctly blocked for unverified email");
-
-    console.log("   • Verifying email");
-    await concept.markEmailVerified({ user: userId });
-    console.log("   ✓ Email verified");
-
-    console.log(
       "   • Attempting to authenticate with correct username but wrong password",
     );
     // expected to fail
@@ -238,8 +211,7 @@ Deno.test("Action: deleteUser permanently removes user and prevents authenticati
     const { user: userId } = registerResult as { user: ID };
     console.log(`   ✓ User registered with ID: ${userId}`);
 
-    console.log("2. Verifying email and testing authentication before deletion");
-    await concept.markEmailVerified({ user: userId });
+    console.log("2. Testing authentication before deletion");
     const authBefore = await concept.authenticate({ username, password });
     assertNotEquals(
       "error" in authBefore,
@@ -304,9 +276,6 @@ Deno.test("Action: deleteUser permanently removes user and prevents authenticati
         "Registration should succeed",
       );
       const { user: userId } = registerResult as { user: ID };
-
-      // Verify email
-      await concept.markEmailVerified({ user: userId });
 
       // Authenticate with old password
       const authOld = await concept.authenticate({ username, password });
