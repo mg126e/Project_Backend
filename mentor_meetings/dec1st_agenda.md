@@ -9,7 +9,7 @@ Meeting Time: 5:45
 * \~5 minutes to discuss plans and action items
 
 **Progress Report**  
-We have been working on the checkpoint beta assignment. After alpha, I (Gloria) continued working on my concepts and they are now working fully (password, profile, goals). Email verification is also working!
+We have been working on the checkpoint beta assignment. After alpha, I (Gloria) continued working on my concepts and they are now working fully (password, profile, goals, though goals still need to be connected to matches). Email verification is also working!
 
 **Questions**
 
