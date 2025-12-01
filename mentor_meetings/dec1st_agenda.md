@@ -13,6 +13,7 @@ We have been working on the checkpoint beta assignment. After alpha, I (Gloria) 
 
 **Questions**
 
+* Advice on user testing? Should users complete runs?
 * Recommendations on checkpoint beta? How far should we get?
 
 **Design changes**  
@@ -29,3 +30,5 @@ We haven't identified any huge issues right now.
 - We will continue to meet to discuss our plans and issues we are experiencing
 
 **Meeting Notes**
+- Can add to our code before and after user testing is completed
+- Can decide to have user run, the 40 minute time is flexible
