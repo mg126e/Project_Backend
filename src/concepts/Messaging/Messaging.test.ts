@@ -14,8 +14,10 @@ const userCharlie = "user:Charlie" as ID;
 // --- Test Cases ---
 
 Deno.test("Messaging: Principle Lifecycle of a Resilient Chat", async () => {
+  let client: MongoClient | null = null; // Initialize client to null for safety in finally block
+  let db: Db;
   console.log("\n--- Principle Test: A Full Messaging Lifecycle ---");
-  const [db, client] = await testDb();
+  [db, client] = await testDb();
   try {
     const concept = new MessagingConcept(db);
     let threadId: ID;

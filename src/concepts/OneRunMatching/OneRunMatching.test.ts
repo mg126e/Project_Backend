@@ -41,8 +41,10 @@ const charlie = "user:charlie" as User;
 const denise = "user:denise" as User;
 
 Deno.test("OneRunMatching: Principle Lifecycle of a Successful Run", async () => {
+  let client: MongoClient | null = null; // Initialize client to null for safety in finally block
+  let db: Db;
   console.log("\n--- Principle Test: A Successful Run Matching Lifecycle ---");
-  const [db, client] = await testDb();
+  [db, client] = await testDb();
   try {
     const concept = new OneRunMatchingConcept(db);
 
