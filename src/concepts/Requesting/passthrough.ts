@@ -35,6 +35,44 @@ export const inclusions: Record<string, string> = {
     "public action to confirm file upload completion",
   "/api/FileUploading/_getDownloadURL":
     "read-only query to get download URL for uploaded files",
+  "/api/FileUploading/_getOwner":
+    "public query to get file owner (non-sensitive)",
+  "/api/FileUploading/_getFilename":
+    "public query to get file name (non-sensitive)",
+  "/api/FileUploading/getFileContent":
+    "public query to get file content (if access controlled elsewhere)",
+  "/api/FileUploading/_getFilesByOwner":
+    "public query to list files by owner (for user dashboards)",
+  "/api/PasswordAuthentication/deleteUser":
+    "admin or user-initiated account deletion (should be access controlled)",
+  "/api/PasswordAuthentication/_getUsername":
+    "public query to get username from user ID (non-sensitive)",
+  "/api/Sessioning/start":
+    "public action to start a session (login)",
+  "/api/Sessioning/end":
+    "public action to end a session (logout)",
+  "/api/Sessioning/_getUser":
+    "public query to get user from session (non-sensitive)",
+  "/api/SharedGoals/initializeLLM":
+    "public action to initialize LLM for shared goals (if safe)",
+  "/api/SharedGoals/validateStepQuality":
+    "public action to validate step quality (if safe)",
+  "/api/SharedGoals/generateSharedSteps":
+    "public action to generate shared steps (if safe)",
+  "/api/SharedGoals/regenerateSharedSteps":
+    "public action to regenerate shared steps (if safe)",
+  "/api/SharedGoals/addSharedStep":
+    "public action to add shared step (if access controlled elsewhere)",
+  "/api/SharedGoals/completeSharedStep":
+    "public action to complete shared step (if access controlled elsewhere)",
+  "/api/SharedGoals/removeSharedStep":
+    "public action to remove shared step (if access controlled elsewhere)",
+  "/api/SharedGoals/closeSharedGoal":
+    "public action to close shared goal (if access controlled elsewhere)",
+  "/api/SharedGoals/setInitialized":
+    "public action to set shared goal as initialized (if access controlled elsewhere)",
+  "/api/UserProfile/getProfileImageDownloadURL":
+    "public query to get profile image download URL (non-sensitive)",
 };
 
 /**
