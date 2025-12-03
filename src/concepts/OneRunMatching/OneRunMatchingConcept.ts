@@ -394,20 +394,52 @@ export default class OneRunMatchingConcept {
   }
 
   /**
+   * _getInvitesByRegion (region: String): (invites: InvitesDoc[])
+   *
+   * Returns all invites for a given region
+   */
+  async _getInvitesByRegion({ region }: { region: string }): Promise<InvitesDoc[]> {
+    if (!region || region.trim() === "") {
+      return [];
+    }
+    const invites = await this.invites
+      .find({ region })
+      .toArray();
+    return invites;
+  }
+
+  /**
    * _getInvitesForUser (user: User): (invites: InvitesDoc[])
    *
-   * Returns all invites for a given user (both as inviter and as invitee)
+   * Returns all invites for a given user, combining:
+   * - Created invites: invites where the user is the inviter
+   * - Received invites: invites where the user is in the invitees array and status is 'pending' (can be accepted)
    */
   async _getInvitesForUser({ user }: { user: User }): Promise<InvitesDoc[]> {
     if (!user) {
       return [];
     }
-    const invites = await this.invites
+    
+    // Get invites where user is the inviter (created invites)
+    const createdInvites = await this.invites
+      .find({ inviter: user })
+      .toArray();
+    
+    // Get invites where user is in invitees array and status is 'pending' (received invites they can accept)
+    const receivedInvites = await this.invites
       .find({
-        $or: [{ inviter: user }, { invitees: user }],
+        invitees: user,
+        acceptanceStatus: "pending",
       })
       .toArray();
-    return invites;
+    
+    // Combine both arrays and remove duplicates (in case user appears in both)
+    const allInvites = [...createdInvites, ...receivedInvites];
+    const uniqueInvites = Array.from(
+      new Map(allInvites.map(invite => [invite._id.toString(), invite])).values()
+    );
+    
+    return uniqueInvites;
   }
 
   /**
