@@ -265,4 +265,47 @@ export default class UserProfileConcept {
     }
     return profile;
   }
+
+  /**
+   * _getProfilesByLocation (location: String): (profiles: UserProfileDoc[])
+   *
+   * Returns all active profiles that match the given location.
+   * Only returns profiles where isActive is true (or undefined, which defaults to active).
+   */
+  async _getProfilesByLocation(
+    { location }: { location: string },
+  ): Promise<UserProfileDoc[]> {
+    if (!location || location.trim() === "") {
+      return [];
+    }
+    const profiles = await this.userProfiles
+      .find({
+        location,
+        $or: [
+          { isActive: true },
+          { isActive: { $exists: false } }, // Default to active if not set
+        ],
+      })
+      .toArray();
+    return profiles;
+  }
+
+  /**
+   * _getAllProfiles (): (profiles: UserProfileDoc[])
+   *
+   * Returns all active profiles in the system.
+   * Only returns profiles where isActive is true (or undefined, which defaults to active).
+   */
+  async _getAllProfiles(_input: Record<string, unknown> = {}): Promise<UserProfileDoc[]> {
+    // Input parameter is unused but required for concept method signature
+    const profiles = await this.userProfiles
+      .find({
+        $or: [
+          { isActive: true },
+          { isActive: { $exists: false } }, // Default to active if not set
+        ],
+      })
+      .toArray();
+    return profiles;
+  }
 }
