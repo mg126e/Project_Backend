@@ -80,12 +80,20 @@ export const CreateSessionAfterEmailVerification: Sync = ({ user }) => ({
   then: actions([Sessioning.start, { user }]),
 });
 
+// After successful email verification, create a user profile (runs asynchronously)
+export const CreateProfileAfterEmailVerification: Sync = ({ user }) => ({
+  when: actions(
+    [EmailVerification.verifyEmail, {}, { user }],
+  ),
+  then: actions([UserProfile.createProfile, { user }]),
+});
+
+// Respond to verify email with session (responds immediately after session creation, without waiting for profile)
 export const RespondToVerifyEmailWithSession: Sync = ({ request, user, session }) => ({
   when: actions(
     [Requesting.request, { path: VERIFY_EMAIL_PATH }, { request }],
     [EmailVerification.verifyEmail, {}, { user }],
     [Sessioning.start, { user }, { session }],
-    [UserProfile.createProfile, { user }, {}],
   ),
   then: actions([Requesting.respond, { request, user, session }]),
 });
