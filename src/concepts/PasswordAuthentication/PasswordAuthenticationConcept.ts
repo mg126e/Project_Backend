@@ -171,4 +171,20 @@ export default class PasswordAuthenticationConcept {
     }
     return { username: userDoc.username };
   }
+
+  /**
+   * _getEmail (user: User): (email: String | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects returns the email associated with the user
+   */
+  async _getEmail(
+    { user }: { user: User },
+  ): Promise<{ email: string } | { error: string }> {
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    return { email: userDoc.email };
+  }
 }

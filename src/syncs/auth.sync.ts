@@ -1,3 +1,7 @@
+import { actions, Sync, Frames } from "@engine";
+import { PasswordAuthentication, Requesting, Sessioning, EmailVerification } from "@concepts";
+import { ID } from "@utils/types.ts";
+
 // Respond with error if login is blocked due to missing email verification
 export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
   when: actions(
@@ -14,28 +18,133 @@ export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
   },
   then: actions([Requesting.respond, { request, error: "Please verify your email before logging in." }]),
 });
-import { actions, Sync } from "@engine";
-import { PasswordAuthentication, Requesting, Sessioning, EmailVerification } from "@concepts";
 
 
-//-- User Registration: Accepts verification info and only creates user if verified --//
-export const RegisterRequest: Sync = ({ request, username, password, email, verificationRecordId, verificationCode }) => ({
+//-- User Registration: Respond with error if verification info is missing --//
+export const RegisterRequestMissingVerification: Sync = ({ request, verificationRecordId, verificationCode }) => ({
   when: actions([
     Requesting.request,
-    { path: "/PasswordAuthentication/register", username, password, email, verificationRecordId, verificationCode },
+    { path: "/PasswordAuthentication/register", verificationRecordId, verificationCode },
+    { request },
+  ]),
+  where: (frames) => {
+    // Check if verification info is missing
+    const req = frames[0];
+    const vId = req[verificationRecordId];
+    const vCode = req[verificationCode];
+    // If verificationRecordId is null/undefined or verificationCode is missing, return frames to match
+    // Note: null values will be bound, but undefined/missing values won't be in the frame
+    if (vId == null || vId === undefined || vCode == null || vCode === undefined || vCode === "") {
+      return frames;
+    }
+    return new Frames(); // Don't match if verification info is present
+  },
+  then: actions([
+    Requesting.respond, { request, error: "Email verification is required. Please provide verificationRecordId and verificationCode." },
+  ]),
+});
+
+//-- User Registration: Respond with error if verification fails --//
+export const RegisterRequestVerificationFailed: Sync = ({ request, verificationRecordId, verificationCode }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PasswordAuthentication/register", verificationRecordId, verificationCode },
     { request },
   ]),
   where: async (frames) => {
-    // Extract and cast values from frames
+    console.log(`[RegisterRequestVerificationFailed] where clause called`);
+    // Extract verification info
     const req = frames[0];
     const vId = req[verificationRecordId] as ID;
     const vCode = req[verificationCode] as string;
-    // Check verification
+    console.log(`[RegisterRequestVerificationFailed] Extracted vId: ${String(vId)}, vCode: ${vCode ? '***' : 'missing'}`);
+    
+    // Skip if verification info is missing (handled by RegisterRequestMissingVerification)
+    if (vId == null || vCode == null || vCode === undefined || vCode === "") {
+      console.log(`[RegisterRequestVerificationFailed] Verification info missing, not matching`);
+      return new Frames();
+    }
+    
+    // First check if the record is already verified - if so, don't match (let RegisterRequest handle it)
+    try {
+      const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
+      console.log(`[RegisterRequestVerificationFailed] Verification record:`, verificationRecord ? `found, isVerified: ${verificationRecord.isVerified}` : 'not found');
+      if (verificationRecord && verificationRecord.isVerified === true) {
+        console.log(`[RegisterRequestVerificationFailed] Record already verified, not matching (let RegisterRequest handle it)`);
+        return new Frames(); // Don't match if already verified (handled by RegisterRequest)
+      }
+      if (!verificationRecord) {
+        console.log(`[RegisterRequestVerificationFailed] Record not found, will attempt verification (will fail)`);
+      }
+    } catch (error) {
+      console.error(`[RegisterRequestVerificationFailed] Error checking verification record:`, error);
+      // Continue to verification attempt
+    }
+    
+    // Check verification - if it fails, return frames to match this sync
+    console.log(`[RegisterRequestVerificationFailed] Attempting to verify email`);
     const verificationResult = await EmailVerification.verifyEmail({ verificationRecordId: vId, verificationCode: vCode });
     if (verificationResult && typeof verificationResult === 'object' && !('error' in verificationResult)) {
-      return frames; // allow to proceed
+      console.log(`[RegisterRequestVerificationFailed] Verification succeeded, not matching`);
+      return new Frames(); // Don't match if verification succeeds (handled by RegisterRequest)
     }
-    return new Frames(); // block registration if not verified
+    console.log(`[RegisterRequestVerificationFailed] Verification failed, matching to return error`);
+    return frames; // Match if verification failed
+  },
+  then: actions([
+    Requesting.respond, { request, error: "Email verification failed. Please check your verification code." },
+  ]),
+});
+
+//-- User Registration: Accepts verification info and only creates user if verified --//
+export const RegisterRequest: Sync = ({ request, username, password, email, verificationRecordId, verificationCode }) => ({
+    when: actions([
+      Requesting.request,
+      { path: "/PasswordAuthentication/register", username, password, email, verificationRecordId, verificationCode },
+      { request },
+    ]),
+    where: async (frames) => {
+      console.log(`[RegisterRequest] where clause called, frames length: ${frames.length}`);
+      try {
+        // Extract and cast values from frames
+        const req = frames[0];
+        const vId = req[verificationRecordId] as ID;
+        const vCode = req[verificationCode] as string;
+        console.log(`[RegisterRequest] Extracted vId: ${String(vId)}, vCode: ${vCode ? '***' : 'missing'}`);
+      
+      // Skip if verification info is missing (handled by RegisterRequestMissingVerification)
+      if (vId == null || vCode == null || vCode === undefined || vCode === "") {
+        return new Frames();
+      }
+      
+      // First, check if the verification record is already verified
+      const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
+      if (verificationRecord) {
+        if (verificationRecord.isVerified) {
+          // Email is already verified, allow registration to proceed
+          console.log(`[RegisterRequest] Verification record ${String(vId)} is already verified, allowing registration`);
+          return frames;
+        }
+        // Record exists but not verified - try to verify it
+        console.log(`[RegisterRequest] Verification record ${String(vId)} exists but not verified, attempting verification`);
+      } else {
+        // Record doesn't exist - this is an error case
+        console.log(`[RegisterRequest] Verification record ${String(vId)} not found`);
+        return new Frames(); // block registration - record doesn't exist
+      }
+      
+      // If not verified yet, try to verify it
+      const verificationResult = await EmailVerification.verifyEmail({ verificationRecordId: vId, verificationCode: vCode });
+      if (verificationResult && typeof verificationResult === 'object' && !('error' in verificationResult)) {
+        console.log(`[RegisterRequest] Verification succeeded, allowing registration`);
+        return frames; // allow to proceed
+      }
+      console.log(`[RegisterRequest] Verification failed:`, verificationResult);
+      return new Frames(); // block registration if not verified (handled by RegisterRequestVerificationFailed)
+    } catch (error) {
+      console.error(`[RegisterRequest] Error in where clause:`, error);
+      return new Frames(); // block on error
+    }
   },
   then: actions([
     PasswordAuthentication.register, { username, password, email },
@@ -44,13 +153,88 @@ export const RegisterRequest: Sync = ({ request, username, password, email, veri
 
 
 
-export const RegisterResponseSuccess: Sync = ({ request, user }) => {
+// Register response when email is already verified
+export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, verificationRecordId }) => {
+  return {
+    when: actions(
+      [Requesting.request, { path: "/PasswordAuthentication/register", email, verificationRecordId }, { request }],
+      [PasswordAuthentication.register, {}, { user }],
+    ),
+    where: async (frames) => {
+      const req = frames[0];
+      const vId = req[verificationRecordId] as ID | undefined;
+      const userId = frames[1][user] as ID;
+      
+      // Check if verification was already completed
+      if (vId) {
+        try {
+          const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
+          if (verificationRecord && verificationRecord.isVerified) {
+            // Verification record is verified - allow this sync to match
+            return frames;
+          }
+        } catch (error) {
+          console.error(`[RegisterResponseSuccessVerified] Error checking verification record:`, error);
+        }
+      }
+      
+      // Also check if the user has any verified emails
+      try {
+        const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+        if (verifiedEmails.length > 0) {
+          return frames;
+        }
+      } catch (error) {
+        console.error(`[RegisterResponseSuccessVerified] Error checking verified emails:`, error);
+      }
+      
+      // Not verified, don't match this sync
+      return new Frames();
+    },
+    then: actions([Requesting.respond, { request, user }]),
+  };
+};
+
+// Register response when email is not yet verified
+export const RegisterResponseSuccess: Sync = ({ request, user, email, verificationRecordId }) => {
   console.log("[RegisterResponseSuccess] user:", user);
   return {
     when: actions(
-      [Requesting.request, { path: "/PasswordAuthentication/register" }, { request }],
+      [Requesting.request, { path: "/PasswordAuthentication/register", email, verificationRecordId }, { request }],
       [PasswordAuthentication.register, {}, { user }],
     ),
+    where: async (frames) => {
+      const req = frames[0];
+      const vId = req[verificationRecordId] as ID | undefined;
+      const userId = frames[1][user] as ID;
+      
+      // Only match if verification is NOT completed
+      if (vId) {
+        try {
+          const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
+          if (verificationRecord && verificationRecord.isVerified) {
+            // Verification is completed, don't match this sync (let RegisterResponseSuccessVerified handle it)
+            return new Frames();
+          }
+        } catch (error) {
+          console.error(`[RegisterResponseSuccess] Error checking verification record:`, error);
+        }
+      }
+      
+      // Also check if the user has any verified emails
+      try {
+        const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+        if (verifiedEmails.length > 0) {
+          // User has verified emails, don't match this sync
+          return new Frames();
+        }
+      } catch (error) {
+        console.error(`[RegisterResponseSuccess] Error checking verified emails:`, error);
+      }
+      
+      // Verification not completed, allow this sync to match
+      return frames;
+    },
     then: actions([Requesting.respond, { request, user, msg: { requiresEmailVerification: true } }]),
   };
 };
@@ -72,10 +256,6 @@ export const LoginRequest: Sync = ({ request, username, password }) => ({
   ]),
   then: actions([PasswordAuthentication.authenticate, { username, password }]),
 });
-
-
-import { ID } from "@utils/types.ts";
-import { Frames } from "@engine";
 
 export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
   when: actions([PasswordAuthentication.authenticate, {}, { user }]),

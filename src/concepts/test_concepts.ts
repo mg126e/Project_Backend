@@ -7,29 +7,35 @@ export const Engine = new SyncConcept();
 
 import { testDb } from "@utils/database.ts";
 
-import PasswordAuthenticationConcept from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
+import EmailVerificationConcept from "./EmailVerification/EmailVerificationConcept.ts";
 import FileUploadingConcept from "./FileUploading/FileUploadingConcept.ts";
+import MessagingConcept from "./Messaging/MessagingConcept.ts";
+import OneRunMatchingConcept from "./OneRunMatching/OneRunMatchingConcept.ts";
+import PasswordAuthenticationConcept from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
 import RequestingConcept from "./Requesting/RequestingConcept.ts";
 import SessioningConcept from "./Sessioning/SessioningConcept.ts";
 import SharedGoalsConcept from "./SharedGoals/SharedGoalsConcept.ts";
 import UserProfileConcept from "./UserProfile/UserProfileConcept.ts";
-import EmailVerificationConcept from "./EmailVerification/EmailVerificationConcept.ts";
 
-export type { default as PasswordAuthenticationConcept } from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
+export type { default as EmailVerificationConcept } from "./EmailVerification/EmailVerificationConcept.ts";
 export type { default as FileUploadingConcept } from "./FileUploading/FileUploadingConcept.ts";
+export type { default as MessagingConcept } from "./Messaging/MessagingConcept.ts";
+export type { default as OneRunMatchingConcept } from "./OneRunMatching/OneRunMatchingConcept.ts";
+export type { default as PasswordAuthenticationConcept } from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
 export type { default as SessioningConcept } from "./Sessioning/SessioningConcept.ts";
 export type { default as SharedGoalsConcept } from "./SharedGoals/SharedGoalsConcept.ts";
 export type { default as UserProfileConcept } from "./UserProfile/UserProfileConcept.ts";
-export type { default as EmailVerificationConcept } from "./EmailVerification/EmailVerificationConcept.ts";
 
 // Initialize the database connection
 export const [db, client] = await testDb();
 
-export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
+export const EmailVerification = Engine.instrumentConcept(new EmailVerificationConcept(db));
 export const FileUploading = Engine.instrumentConcept(new FileUploadingConcept(db));
+export const Messaging = Engine.instrumentConcept(new MessagingConcept(db));
+export const OneRunMatching = Engine.instrumentConcept(new OneRunMatchingConcept(db));
+export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
 export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
 export const Sessioning = Engine.instrumentConcept(new SessioningConcept(db));
 export const SharedGoals = Engine.instrumentConcept(new SharedGoalsConcept(db));
 export const UserProfile = Engine.instrumentConcept(new UserProfileConcept(db));
-export const EmailVerification = Engine.instrumentConcept(new EmailVerificationConcept(db));

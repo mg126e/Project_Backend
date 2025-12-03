@@ -61,10 +61,42 @@ interface MessageState {
 export default class MessagingConcept {
   threads: Collection<ThreadState>;
   messages: Collection<MessageState>;
+  private runs: Collection<{ _id: ID; userA: User; userB: User; completed: boolean }>;
+  private sharedGoals: Collection<{ _id: ID; users: User[]; isActive: boolean }>;
 
   constructor(private readonly db: Db) {
     this.threads = this.db.collection(PREFIX + "threads");
     this.messages = this.db.collection(PREFIX + "messages");
+    this.runs = this.db.collection("OneRunMatching.runs");
+    this.sharedGoals = this.db.collection("SharedGoals.sharedGoals");
+  }
+
+  /**
+   * Helper method to check if two users have an active match.
+   * A match exists if:
+   * - They have an active (non-completed) run together, OR
+   * - They have an active shared goal together
+   */
+  private async hasMatch(userA: User, userB: User): Promise<boolean> {
+    // Check for active run (not completed)
+    const activeRun = await this.runs.findOne({
+      $or: [
+        { userA: userA, userB: userB, completed: false },
+        { userA: userB, userB: userA, completed: false },
+      ],
+    });
+
+    if (activeRun) {
+      return true;
+    }
+
+    // Check for active shared goal (users can be part of a goal with more than 2 people)
+    const activeGoal = await this.sharedGoals.findOne({
+      users: { $all: [userA, userB] },
+      isActive: true,
+    });
+
+    return !!activeGoal;
   }
 
   /**
@@ -237,20 +269,32 @@ export default class MessagingConcept {
   /**
    * _getThreadsForUser (user: User): (threads: ThreadState)[]
    *
-   * effects: returns all threads a user is a participant in, that they have not personally deleted.
+   * effects: returns all threads a user is a participant in, that they have not personally deleted,
+   * and only if there is an active match between the user and the other participant.
    */
   async _getThreadsForUser({ user }: { user: User }): Promise<ThreadState[]> {
-    return await this.threads
+    const allThreads = await this.threads
       .find({
         $and: [{ $or: [{ userA: user }, { userB: user }] }, { deletedBy: { $ne: user } }],
       })
       .toArray();
+
+    // Filter threads to only include those where there's an active match
+    const filteredThreads: ThreadState[] = [];
+    for (const thread of allThreads) {
+      const otherUser = thread.userA === user ? thread.userB : thread.userA;
+      if (await this.hasMatch(user, otherUser)) {
+        filteredThreads.push(thread);
+      }
+    }
+
+    return filteredThreads;
   }
 
   /**
    * _getMessagesInThread (thread: Thread, user: User): (messages: MessageState)[] | (error: string)
    *
-   * requires: user is a participant in the thread
+   * requires: user is a participant in the thread and there is an active match between the users
    * effects: returns all messages for a given thread, ordered by timestamp
    */
   async _getMessagesInThread(
@@ -263,6 +307,12 @@ export default class MessagingConcept {
       }
       if (existingThread.userA !== user && existingThread.userB !== user) {
         return [{ error: "User is not a participant in this thread." }];
+      }
+
+      // Check if there's an active match between the users
+      const otherUser = existingThread.userA === user ? existingThread.userB : existingThread.userA;
+      if (!(await this.hasMatch(user, otherUser))) {
+        return [{ error: "No active match found between users. Messages are only available for matched users." }];
       }
 
       return await this.messages.find({ threadId: thread }).sort({ timestamp: 1 }).toArray();

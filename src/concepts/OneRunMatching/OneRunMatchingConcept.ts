@@ -76,15 +76,65 @@ export default class OneRunMatchingConcept {
   }
 
   /**
+   * registerUser (user: User, region: String): ()
+   *
+   * @requires The user does not already exist in OneRunMatching.users
+   * @effects Creates a new user in OneRunMatching.users with the given region, empty invites and runs arrays
+   */
+  async registerUser({ user, region }: { user: User; region: string }): Promise<Empty | { error: string }> {
+    if (!region || region.trim() === "") {
+      return { error: "Region cannot be empty." };
+    }
+    const existingUser = await this.users.findOne({ _id: user });
+    if (existingUser) {
+      return { error: `User with id ${user} already exists in OneRunMatching.` };
+    }
+    await this.users.insertOne({
+      _id: user,
+      region,
+      invites: [],
+      runs: [],
+    });
+    return {};
+  }
+
+  /**
+   * setRegion (user: User, region: String): ()
+   *
+   * @requires user exists and the String is a valid region
+   * @effects sets the user's region to the given region String
+   */
+  async setRegion({ user, region }: { user: User; region: string }): Promise<Empty | { error: string }> {
+    if (!region || region.trim() === "") {
+      return { error: "Region cannot be empty." };
+    }
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User with id ${user} does not exist.` };
+    }
+    await this.users.updateOne({ _id: user }, { $set: { region } });
+    return {};
+  }
+
+  /**
    * createInvite (inviter: User, region: String, start: Time, distance: Number, location: String): (invite: Invite)
    *
    * requires: inviter exists, region and location are valid, start is a future time, and distance is greater than zero
    * effects: creates a new run Invite with given details and Sent flag set to false, and associates it with the inviter
+   * 
+   * Note: If the inviter doesn't exist, they will be auto-created with the given region.
    */
   async createInvite({ inviter, region, start, distance, location }: { inviter: User; region: string; start: Time; distance: number; location: string }): Promise<{ invite: Invite } | { error: string }> {
-    const inviterDoc = await this.users.findOne({ _id: inviter });
+    let inviterDoc = await this.users.findOne({ _id: inviter });
     if (!inviterDoc) {
-      return { error: `User with id ${inviter} does not exist.` };
+      // Auto-create user if they don't exist
+      await this.users.insertOne({
+        _id: inviter,
+        region,
+        invites: [],
+        runs: [],
+      });
+      inviterDoc = { _id: inviter, region, invites: [], runs: [] };
     }
     if (distance <= 0) {
       return { error: "Distance must be greater than zero." };
@@ -309,5 +359,67 @@ export default class OneRunMatchingConcept {
       await this.users.bulkWrite(bulkUserUpdates);
     }
     return { expiredInvites: expiredInviteIds };
+  }
+
+  /**
+   * _getNumberOfMatches (user: User): (count: Number)
+   *
+   * Returns the number of runs (matches) for a given user
+   */
+  async _getNumberOfMatches({ user }: { user: User }): Promise<number> {
+    if (!user) {
+      return 0;
+    }
+    const count = await this.runs.countDocuments({
+      $or: [{ userA: user }, { userB: user }],
+    });
+    return count;
+  }
+
+  /**
+   * _getMatches (user: User): (matches: RunsDoc[])
+   *
+   * Returns all runs (matches) for a given user
+   */
+  async _getMatches({ user }: { user: User }): Promise<RunsDoc[]> {
+    if (!user) {
+      return [];
+    }
+    const matches = await this.runs
+      .find({
+        $or: [{ userA: user }, { userB: user }],
+      })
+      .toArray();
+    return matches;
+  }
+
+  /**
+   * _getInvitesForUser (user: User): (invites: InvitesDoc[])
+   *
+   * Returns all invites for a given user (both as inviter and as invitee)
+   */
+  async _getInvitesForUser({ user }: { user: User }): Promise<InvitesDoc[]> {
+    if (!user) {
+      return [];
+    }
+    const invites = await this.invites
+      .find({
+        $or: [{ inviter: user }, { invitees: user }],
+      })
+      .toArray();
+    return invites;
+  }
+
+  /**
+   * _getInvite (invite: Invite): (invite: InvitesDoc | null)
+   *
+   * Returns a specific invite by its ID, or null if not found
+   */
+  async _getInvite({ invite }: { invite: Invite }): Promise<InvitesDoc | null> {
+    if (!invite) {
+      return null;
+    }
+    const inviteDoc = await this.invites.findOne({ _id: invite });
+    return inviteDoc || null;
   }
 }

@@ -1,5 +1,5 @@
 import { Collection, Database } from "@deps/mongo";
-import { ID } from "@utils/types.ts";
+import { ID, Empty } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 import { createSendGridEmailFromEnv, SendGridEmail } from "@utils/sendgrid-email.ts";
 
@@ -257,5 +257,146 @@ export default class EmailVerificationConcept {
     { userId }: { userId: User },
   ): Promise<EmailVerificationRecordDoc[]> {
     return await this.records.find({ userId, isVerified: true }).toArray();
+  }
+
+  /**
+   * Action: Initiates email verification for a user during registration.
+   * register (user: User, email: String): ()
+   *
+   * @requires The email domain is a valid Boston-area .edu domain. No active verification exists for this user.
+   *
+   * @effects Generates a verification code, sends it to the user's email, and stores the code and timestamp.
+   * 
+   */
+  async register(
+    { user, email }: { user: User; email: string },
+  ): Promise<Empty | { error: string }> {
+    const result = await this.requestVerification({ userId: user, email });
+    if ("error" in result) {
+      return { error: result.error };
+    }
+    // Return empty on success (design spec says register returns ())
+    return {};
+  }
+
+  /**
+   * Action: Verifies an email address using a provided verification code.
+   * verifyCode (user: User, code: String): ({ success: Boolean, error?: String })
+   *
+   * @requires A verification code was sent to the user and not expired. The code matches the stored code.
+   *
+   * @effects Sets isVerified to true if the code matches. Returns success or error.
+   *          This method finds the pending verification record for the user and verifies it.
+   */
+  async verifyCode(
+    { user, code }: { user: User; code: string },
+  ): Promise<{ success: boolean } | { success: boolean; error: string }> {
+    try {
+      // Find the latest pending verification record for this user
+      const pendingRecord = await this.records.findOne(
+        { userId: user, isVerified: false, expiresAt: { $gt: new Date() } },
+        { sort: { createdAt: -1 } }, // Get the most recent one
+      );
+
+      if (!pendingRecord) {
+        return { success: false, error: "No pending verification found for this user." };
+      }
+
+      if (pendingRecord.verificationCode !== code) {
+        return { success: false, error: "Invalid verification code." };
+      }
+
+      // Mark the record as verified
+      await this.records.updateOne(
+        { _id: pendingRecord._id },
+        { $set: { isVerified: true } },
+      );
+
+      return { success: true };
+    } catch (error) {
+      console.error("[EmailVerification.verifyCode] Database error:", error);
+      return {
+        success: false,
+        error: "Email verification service unavailable. Please try again later.",
+      };
+    }
+  }
+
+  /**
+   * Action: Resends a verification code to the user's email.
+   * resendCode (user: User): ()
+   *
+   * @requires A verification exists for the user and isVerified = false
+   *
+   * @effects Generates a new verification code, sends it to the stored email,
+   *          and updates the verificationCode and codeSentAt timestamp.
+   */
+  async resendCode(
+    { user }: { user: User },
+  ): Promise<Empty | { error: string }> {
+    try {
+      // Find the latest pending verification record for this user
+      const pendingRecord = await this.records.findOne(
+        { userId: user, isVerified: false },
+        { sort: { createdAt: -1 } }, // Get the most recent one
+      );
+
+      if (!pendingRecord) {
+        return { error: "No pending verification found for this user." };
+      }
+
+      // Generate a new verification code
+      const newVerificationCode = generateVerificationCode();
+      const newExpiresAt = getExpirationTimestamp();
+
+      // Update the record with the new code and expiration
+      await this.records.updateOne(
+        { _id: pendingRecord._id },
+        {
+          $set: {
+            verificationCode: newVerificationCode,
+            expiresAt: newExpiresAt,
+            createdAt: new Date(), // Update the creation time
+          },
+        },
+      );
+
+      // Send verification email if email service is available
+      if (this.emailService) {
+        try {
+          await this.emailService.sendVerificationEmail(
+            pendingRecord.email,
+            newVerificationCode,
+            {
+              appName: "RunBuddy",
+              expirationMinutes: 15,
+            },
+          );
+          console.log(
+            `[EmailVerification.resendCode] Verification email resent to ${pendingRecord.email}`,
+          );
+        } catch (emailError) {
+          console.error(
+            "[EmailVerification.resendCode] Failed to send email:",
+            emailError,
+          );
+          return {
+            error:
+              "Verification code generated but email could not be sent. Please try again or contact support.",
+          };
+        }
+      } else {
+        console.warn(
+          `[EmailVerification.resendCode] Email service not available. Code generated: ${newVerificationCode} for ${pendingRecord.email}`,
+        );
+      }
+
+      return {};
+    } catch (error) {
+      console.error("[EmailVerification.resendCode] Database error:", error);
+      return {
+        error: "Email verification service unavailable. Please try again later.",
+      };
+    }
   }
 }

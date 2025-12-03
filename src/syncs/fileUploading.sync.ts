@@ -14,12 +14,15 @@ export const RequestUploadURLRequest: Sync = ({ request, session, user, filename
 });
 
 export const RequestUploadURLResponseSuccess: Sync = ({ request, file, uploadURL }) => {
-  console.log("[RequestUploadURLResponseSuccess] file:", file, "uploadURL:", uploadURL);
   return {
     when: actions(
       [Requesting.request, { path: "/FileUploading/requestUploadURL" }, { request }],
       [FileUploading.requestUploadURL, {}, { file, uploadURL }],
     ),
+    where: async (frames) => {
+      console.log("[RequestUploadURLResponseSuccess] Matched! file:", frames[0][file], "uploadURL:", frames[0][uploadURL]);
+      return frames;
+    },
     then: actions([Requesting.respond, { request, file, uploadURL }]),
   };
 };

@@ -228,11 +228,39 @@ export const GetAllGoalsForUserRequest: Sync = ({ request, session, user, goals 
   where: async (frames) => {
     const originalFrame = frames[0];
     frames = await frames.query(Sessioning._getUser, { session }, { user });
+    
+    // Check if session query returned an error
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      return new Frames(); // Block the sync if session is invalid
+    }
+    
     const userIdFromFrame = frames[0][user];
+    if (!userIdFromFrame) {
+      return new Frames(); // Block the sync if user is missing
+    }
+    
     const goalsArray = await SharedGoals._getAllGoalsForUser({ user: userIdFromFrame as ID });
     return new Frames({ ...originalFrame, [goals]: goalsArray });
   },
   then: actions([Requesting.respond, { request, goals }]),
+});
+
+// Respond with error if session is invalid for GetAllGoalsForUser
+export const GetAllGoalsForUserRequestError: Sync = ({ request, session }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/SharedGoals/_getAllGoalsForUser", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Check if session query fails
+    const sessionFrames = await frames.query(Sessioning._getUser, { session }, { user: Symbol('user') });
+    if (sessionFrames.length === 0 || ('error' in sessionFrames[0] && sessionFrames[0].error)) {
+      return frames; // Match this sync to return error
+    }
+    return new Frames(); // Don't match if session is valid (handled by GetAllGoalsForUserRequest)
+  },
+  then: actions([Requesting.respond, { request, error: "Invalid or expired session. Please log in again." }]),
 });
 
 //-- Get Shared Goals --//
