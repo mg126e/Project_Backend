@@ -5,100 +5,40 @@ import { SyncConcept } from "@engine";
 
 export const Engine = new SyncConcept();
 
-import { getDb, freshID } from "@utils/database.ts";
-import { ID } from "@utils/types.ts";
+import { getDb } from "@utils/database.ts";
 
-import EmailVerificationConcept from "./EmailVerification/EmailVerificationConcept.ts";
-import FileUploadingConcept from "./FileUploading/FileUploadingConcept.ts";
-import MessagingConcept from "./Messaging/MessagingConcept.ts";
-import OneRunMatchingConcept, { RunsDoc, UsersDoc } from "./OneRunMatching/OneRunMatchingConcept.ts";
+import PartnerMatchingConcept from "./PartnerMatching/PartnerMatchingConcept.ts";
 import PasswordAuthenticationConcept from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
+import FileUploadingConcept from "./FileUploading/FileUploadingConcept.ts";
+import OneRunMatchingConcept from "./OneRunMatching/OneRunMatchingConcept.ts";
 import RequestingConcept from "./Requesting/RequestingConcept.ts";
 import SessioningConcept from "./Sessioning/SessioningConcept.ts";
 import SharedGoalsConcept from "./SharedGoals/SharedGoalsConcept.ts";
 import UserProfileConcept from "./UserProfile/UserProfileConcept.ts";
+import MessagingConcept from "./Messaging/MessagingConcept.ts";
+import EmailVerificationConcept from "./EmailVerification/EmailVerificationConcept.ts";
 
-export type { default as EmailVerificationConcept } from "./EmailVerification/EmailVerificationConcept.ts";
-export type { default as FileUploadingConcept } from "./FileUploading/FileUploadingConcept.ts";
-export type { default as MessagingConcept } from "./Messaging/MessagingConcept.ts";
-export type { default as OneRunMatchingConcept } from "./OneRunMatching/OneRunMatchingConcept.ts";
+export type { default as PartnerMatchingConcept } from "./PartnerMatching/PartnerMatchingConcept.ts";
 export type { default as PasswordAuthenticationConcept } from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
+export type { default as FileUploadingConcept } from "./FileUploading/FileUploadingConcept.ts";
+export type { default as OneRunMatchingConcept } from "./OneRunMatching/OneRunMatchingConcept.ts";
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
 export type { default as SessioningConcept } from "./Sessioning/SessioningConcept.ts";
 export type { default as SharedGoalsConcept } from "./SharedGoals/SharedGoalsConcept.ts";
 export type { default as UserProfileConcept } from "./UserProfile/UserProfileConcept.ts";
+export type { default as MessagingConcept } from "./Messaging/MessagingConcept.ts";
+export type { default as EmailVerificationConcept } from "./EmailVerification/EmailVerificationConcept.ts";
 
 // Initialize the database connection
 export const [db, client] = await getDb();
 
-export const EmailVerification = Engine.instrumentConcept(new EmailVerificationConcept(db));
-export const FileUploading = Engine.instrumentConcept(new FileUploadingConcept(db));
-export const Messaging = Engine.instrumentConcept(new MessagingConcept(db));
-export const OneRunMatching = Engine.instrumentConcept(new OneRunMatchingConcept(db));
-
-// Hard code a match for user u1234567 for testing: Marin's testing
-(async () => {
-  const TEST_USER_ID = "u1234567" as ID;
-  const MATCH_USER_ID = "u9999999" as ID; // Test match partner
-  const runsCollection = db.collection<RunsDoc>("OneRunMatching.runs");
-  const usersCollection = db.collection<UsersDoc>("OneRunMatching.users");
-  
-  // Check if match already exists
-  const existingRun = await runsCollection.findOne({
-    $or: [
-      { userA: TEST_USER_ID, userB: MATCH_USER_ID },
-      { userA: MATCH_USER_ID, userB: TEST_USER_ID },
-    ],
-    completed: false,
-  });
-  
-  if (!existingRun) {
-    // Create the run
-    const runId = freshID() as ID;
-    const newRun: RunsDoc = {
-      _id: runId,
-      userA: TEST_USER_ID,
-      userB: MATCH_USER_ID,
-      completed: false,
-    };
-    await runsCollection.insertOne(newRun);
-    
-    // Ensure users exist and add run to their runs array
-    // First, ensure user exists with initial fields
-    await usersCollection.updateOne(
-      { _id: TEST_USER_ID },
-      { 
-        $setOnInsert: { _id: TEST_USER_ID, region: "test", invites: [] }
-      },
-      { upsert: true }
-    );
-    // Then add the run to their runs array
-    await usersCollection.updateOne(
-      { _id: TEST_USER_ID },
-      { $addToSet: { runs: runId } }
-    );
-    
-    // Same for match user
-    await usersCollection.updateOne(
-      { _id: MATCH_USER_ID },
-      { 
-        $setOnInsert: { _id: MATCH_USER_ID, region: "test", invites: [] }
-      },
-      { upsert: true }
-    );
-    await usersCollection.updateOne(
-      { _id: MATCH_USER_ID },
-      { $addToSet: { runs: runId } }
-    );
-    
-    console.log(`[Hard-coded match] Created match for user ${TEST_USER_ID} with ${MATCH_USER_ID} (run: ${runId})`);
-  } else {
-    console.log(`[Hard-coded match] Match already exists for user ${TEST_USER_ID} with ${MATCH_USER_ID} (run: ${existingRun._id})`);
-  }
-})();
-
+export const PartnerMatching = Engine.instrumentConcept(new PartnerMatchingConcept(db));
 export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
+export const FileUploading = Engine.instrumentConcept(new FileUploadingConcept(db));
+export const OneRunMatching = Engine.instrumentConcept(new OneRunMatchingConcept(db));
 export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
 export const Sessioning = Engine.instrumentConcept(new SessioningConcept(db));
 export const SharedGoals = Engine.instrumentConcept(new SharedGoalsConcept(db));
 export const UserProfile = Engine.instrumentConcept(new UserProfileConcept(db));
+export const Messaging = Engine.instrumentConcept(new MessagingConcept(db));
+export const EmailVerification = Engine.instrumentConcept(new EmailVerificationConcept(db));
