@@ -24,7 +24,7 @@ Screen Recording [here](https://youtu.be/H_QJMjaU02E).
 ## Checkpoint: Beta (Updated Development Plan)
 
 Beta checkpoint updated development plan is [here](design/beta.md).\
-Screen Recording 
+Screen Recording here [here](https://youtu.be/X0wlRiG4KoE)
 
 ## Mentor Meetings
 
