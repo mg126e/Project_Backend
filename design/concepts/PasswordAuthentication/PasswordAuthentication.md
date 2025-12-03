@@ -1,6 +1,6 @@
 **PasswordAuthentication**
    - **Purpose:** Associate usernames and passwords with user identities for authentication, limiting access to known users.
-   - **Principle:** If a user registers with a unique username, password, and email, they can subsequently authenticate with those credentials after verifying their email, and will consistently be treated as the same user.
+   - **Principle:** If a user registers with a unique username, password, and email, they can subsequently authenticate with their credentials, and will consistently be treated as the same user.
        - **State:**
            - A set of `Users`, each with:
                - `username`: String
@@ -24,15 +24,15 @@
                - *Requires:* A User with the given user ID exists.
                - *Effects:* Returns the username associated with the user.
     - **Notes:**
-       - deleteUser and closeProfile will work in a sync together.
-       - Email verification is enforced in the login sync (auth.sync.ts), which checks EmailVerification records before creating a session. The PasswordAuthentication concept itself does not track verification status.
+       - deleteUser and closeProfile will be paired in a sync
+       - This concept works closely with EmailVerification through a sync
 
 ```typescript
 import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
-// A simple helper function to hash passwords using the Web Crypto API.
+// helper function to hash passwords using the Web Crypto API.
 async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -91,9 +91,11 @@ export default class PasswordAuthenticationConcept {
       return { error: `Username '${username}' is already taken.` };
     }
 
-
-    // TODO: Restore unique email check after testing
-    // Temporarily allow duplicate emails for development/testing
+    // no User with the given `email` already exists
+    const existingEmail = await this.users.findOne({ email });
+    if (existingEmail) {
+      return { error: `Email '${email}' is already registered.` };
+    }
 
     // create a new User document
     const newUser: User = freshID() as User; // generate a fresh ID for the new user
@@ -200,6 +202,22 @@ export default class PasswordAuthenticationConcept {
       return { error: `User ${user} not found.` };
     }
     return { username: userDoc.username };
+  }
+
+  /**
+   * _getEmail (user: User): (email: String | { error: string })
+   *
+   * @requires a User with the given user ID exists
+   * @effects returns the email associated with the user
+   */
+  async _getEmail(
+    { user }: { user: User },
+  ): Promise<{ email: string } | { error: string }> {
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc) {
+      return { error: `User ${user} not found.` };
+    }
+    return { email: userDoc.email };
   }
 }
 ```

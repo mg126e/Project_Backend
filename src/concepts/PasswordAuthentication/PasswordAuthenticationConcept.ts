@@ -2,7 +2,7 @@ import { Collection, Database } from "@deps/mongo";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
-// A simple helper function to hash passwords using the Web Crypto API.
+// helper function to hash passwords using the Web Crypto API.
 async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -61,9 +61,11 @@ export default class PasswordAuthenticationConcept {
       return { error: `Username '${username}' is already taken.` };
     }
 
-
-    // TODO: Restore unique email check after testing
-    // Temporarily allow duplicate emails for development/testing
+    // no User with the given `email` already exists
+    const existingEmail = await this.users.findOne({ email });
+    if (existingEmail) {
+      return { error: `Email '${email}' is already registered.` };
+    }
 
     // create a new User document
     const newUser: User = freshID() as User; // generate a fresh ID for the new user
