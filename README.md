@@ -12,7 +12,7 @@ Functional design assignment is contained [here](design/updated_functional_desig
 
 ## Peer Critique for team Oval
 Marin's critique is contained [here](design/Marin's_OVAL_Critique.md)\
-Ananya's critique is contained here\
+Ananya's critique is contained [here](design/ananya_OVAL_critique.md)\
 Gloria's critique is contained [here](design/gloria_OVAL_critique.md)
 
 ## Checkpoint: Alpha (Updated Development Plan)
