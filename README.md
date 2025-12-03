@@ -8,7 +8,7 @@ Problem framing assignment is contained [here](design/problem_framing.md).
 
 ## Functional Design
 
-Functional design assignment is contained [here](design/functional_design.md). 
+Functional design assignment is contained [here](design/updated_functional_design.md). 
 
 ## Peer Critique for team Oval
 Marin's critique is contained [here](design/Marin's_OVAL_Critique.md)\
