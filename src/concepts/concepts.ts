@@ -36,9 +36,6 @@ export const PartnerMatching = Engine.instrumentConcept(new PartnerMatchingConce
 export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
 export const FileUploading = Engine.instrumentConcept(new FileUploadingConcept(db));
 export const OneRunMatching = Engine.instrumentConcept(new OneRunMatchingConcept(db));
-
-
-export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
 export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
 export const Sessioning = Engine.instrumentConcept(new SessioningConcept(db));
 export const SharedGoals = Engine.instrumentConcept(new SharedGoalsConcept(db));
