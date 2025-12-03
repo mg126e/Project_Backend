@@ -7,7 +7,7 @@ import { createSendGridEmailFromEnv, SendGridEmail } from "@utils/sendgrid-email
 const PREFIX = "EmailVerification" + ".";
 
 // Generic types for the concept's external dependencies
-type User = ID; // Represents a user ID, linking to UserAuthConcept
+type User = ID;
 type EmailVerificationRecordID = ID; // Unique ID for each verification request
 
 /**

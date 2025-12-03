@@ -19,8 +19,7 @@ export const RequestUploadURLResponseSuccess: Sync = ({ request, file, uploadURL
       [Requesting.request, { path: "/FileUploading/requestUploadURL" }, { request }],
       [FileUploading.requestUploadURL, {}, { file, uploadURL }],
     ),
-    where: async (frames) => {
-      console.log("[RequestUploadURLResponseSuccess] Matched! file:", frames[0][file], "uploadURL:", frames[0][uploadURL]);
+    where: (frames) => {
       return frames;
     },
     then: actions([Requesting.respond, { request, file, uploadURL }]),

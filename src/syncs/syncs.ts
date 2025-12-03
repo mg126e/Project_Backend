@@ -8,7 +8,6 @@ import * as sync_cancelRun from "./cancelRun.sync.ts";
 import * as sync_goals from "./goals.sync.ts";
 import * as sync_oneRunChat from "./oneRunChat.sync.ts";
 import * as sync_emailVerification from "./emailVerification.sync.ts";
-import * as sync_sample from "./sample.sync.ts";
 import * as sync_auth from "./auth.sync.ts";
 import * as sync_fileUploading from "./fileUploading.sync.ts";
 import * as sync_profile from "./profile.sync.ts";
@@ -36,11 +35,6 @@ for (const [name, func] of Object.entries(sync_oneRunChat)) {
 for (const [name, func] of Object.entries(sync_emailVerification)) {
   if (typeof func === "function") {
     allSyncs[`emailVerification.${name}`] = func as Sync;
-  }
-}
-for (const [name, func] of Object.entries(sync_sample)) {
-  if (typeof func === "function") {
-    allSyncs[`sample.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_auth)) {

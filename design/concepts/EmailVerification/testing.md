@@ -1,4 +1,4 @@
-'''typescript
+```typescript
 import { assertEquals, assertExists, assertNotEquals, assertArrayIncludes } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
@@ -749,4 +749,4 @@ Deno.test("Query: _getVerifiedEmailsForUser distinguishes between users", async 
     await client.close();
   }
 });
-'''
+```

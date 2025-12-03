@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertExists, assertNotEquals } from "jsr:@std/assert";
+import { assert, assertEquals, assertExists } from "jsr:@std/assert";
 import { Db, MongoClient } from "npm:mongodb";
 import { testDb } from "@utils/database.ts";
 import PartnerMatchingConcept, { AcceptanceStatus, ExperienceLevel, Pace, TimeOfDay } from "./PartnerMatchingConcept.ts";
@@ -8,7 +8,6 @@ import { ID } from "@utils/types.ts";
 
 // Define generic parameter types for clarity in tests
 type User = ID;
-type Suggestion = ID;
 type Match = ID;
 
 // Define interfaces for state to be used in helper functions

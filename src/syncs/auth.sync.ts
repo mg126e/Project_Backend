@@ -52,25 +52,19 @@ export const RegisterRequestVerificationFailed: Sync = ({ request, verificationR
     { request },
   ]),
   where: async (frames) => {
-    console.log(`[RegisterRequestVerificationFailed] where clause called`);
     // Extract verification info
     const req = frames[0];
     const vId = req[verificationRecordId] as ID;
     const vCode = req[verificationCode] as string;
-    console.log(`[RegisterRequestVerificationFailed] Extracted vId: ${String(vId)}, vCode: ${vCode ? '***' : 'missing'}`);
-    
     // Skip if verification info is missing (handled by RegisterRequestMissingVerification)
     if (vId == null || vCode == null || vCode === undefined || vCode === "") {
-      console.log(`[RegisterRequestVerificationFailed] Verification info missing, not matching`);
       return new Frames();
     }
     
     // First check if the record is already verified - if so, don't match (let RegisterRequest handle it)
     try {
       const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
-      console.log(`[RegisterRequestVerificationFailed] Verification record:`, verificationRecord ? `found, isVerified: ${verificationRecord.isVerified}` : 'not found');
       if (verificationRecord && verificationRecord.isVerified === true) {
-        console.log(`[RegisterRequestVerificationFailed] Record already verified, not matching (let RegisterRequest handle it)`);
         return new Frames(); // Don't match if already verified (handled by RegisterRequest)
       }
       if (!verificationRecord) {
@@ -82,13 +76,10 @@ export const RegisterRequestVerificationFailed: Sync = ({ request, verificationR
     }
     
     // Check verification - if it fails, return frames to match this sync
-    console.log(`[RegisterRequestVerificationFailed] Attempting to verify email`);
     const verificationResult = await EmailVerification.verifyEmail({ verificationRecordId: vId, verificationCode: vCode });
     if (verificationResult && typeof verificationResult === 'object' && !('error' in verificationResult)) {
-      console.log(`[RegisterRequestVerificationFailed] Verification succeeded, not matching`);
       return new Frames(); // Don't match if verification succeeds (handled by RegisterRequest)
     }
-    console.log(`[RegisterRequestVerificationFailed] Verification failed, matching to return error`);
     return frames; // Match if verification failed
   },
   then: actions([
@@ -104,14 +95,12 @@ export const RegisterRequest: Sync = ({ request, username, password, email, veri
       { request },
     ]),
     where: async (frames) => {
-      console.log(`[RegisterRequest] where clause called, frames length: ${frames.length}`);
       try {
         // Extract and cast values from frames
         const req = frames[0];
         const vId = req[verificationRecordId] as ID;
         const vCode = req[verificationCode] as string;
-        console.log(`[RegisterRequest] Extracted vId: ${String(vId)}, vCode: ${vCode ? '***' : 'missing'}`);
-      
+
       // Skip if verification info is missing (handled by RegisterRequestMissingVerification)
       if (vId == null || vCode == null || vCode === undefined || vCode === "") {
         return new Frames();
@@ -122,24 +111,18 @@ export const RegisterRequest: Sync = ({ request, username, password, email, veri
       if (verificationRecord) {
         if (verificationRecord.isVerified) {
           // Email is already verified, allow registration to proceed
-          console.log(`[RegisterRequest] Verification record ${String(vId)} is already verified, allowing registration`);
           return frames;
         }
-        // Record exists but not verified - try to verify it
-        console.log(`[RegisterRequest] Verification record ${String(vId)} exists but not verified, attempting verification`);
       } else {
         // Record doesn't exist - this is an error case
-        console.log(`[RegisterRequest] Verification record ${String(vId)} not found`);
         return new Frames(); // block registration - record doesn't exist
       }
       
       // If not verified yet, try to verify it
       const verificationResult = await EmailVerification.verifyEmail({ verificationRecordId: vId, verificationCode: vCode });
       if (verificationResult && typeof verificationResult === 'object' && !('error' in verificationResult)) {
-        console.log(`[RegisterRequest] Verification succeeded, allowing registration`);
         return frames; // allow to proceed
       }
-      console.log(`[RegisterRequest] Verification failed:`, verificationResult);
       return new Frames(); // block registration if not verified (handled by RegisterRequestVerificationFailed)
     } catch (error) {
       console.error(`[RegisterRequest] Error in where clause:`, error);

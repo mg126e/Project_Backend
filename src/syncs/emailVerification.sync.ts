@@ -80,14 +80,6 @@ export const CreateSessionAfterEmailVerification: Sync = ({ user }) => ({
   then: actions([Sessioning.start, { user }]),
 });
 
-// After email verification, create a profile for the user
-export const CreateProfileAfterEmailVerification: Sync = ({ user }) => ({
-  when: actions(
-    [EmailVerification.verifyEmail, {}, { user }],
-  ),
-  then: actions([UserProfile.createProfile, { user }]),
-});
-
 export const RespondToVerifyEmailWithSession: Sync = ({ request, user, session }) => ({
   when: actions(
     [Requesting.request, { path: VERIFY_EMAIL_PATH }, { request }],
@@ -138,29 +130,6 @@ export const createProfileOnRegister: Sync = ({ user }) => ({
   then: actions([UserProfile.createProfile, { user }]),
 });
 
-// Create profile when verifyCode succeeds (for users who may have registered earlier)
-export const CreateProfileAfterVerifyCode: Sync = ({ user }) => ({
-  when: actions(
-    [EmailVerification.verifyCode, { user }, { success: true }],
-  ),
-  where: async (frames) => {
-    // Only create profile if one doesn't already exist
-    const userId = frames[0][user] as ID;
-    try {
-      const profile = await UserProfile._getProfile({ user: userId });
-      if ("error" in profile) {
-        // Profile doesn't exist, allow creation
-        return frames;
-      }
-      // Profile already exists, don't create
-      return new Frames();
-    } catch {
-      // On error, allow creation attempt
-      return frames;
-    }
-  },
-  then: actions([UserProfile.createProfile, { user }]),
-});
 
 // Handle requests to EmailVerification.register
 export const HandleRegisterRequest: Sync = ({ request, user, email }) => ({
