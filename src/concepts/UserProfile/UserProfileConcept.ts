@@ -30,7 +30,7 @@ interface EmergencyContact {
 interface UserProfileDoc {
   _id: User;
   displayname?: string;
-  profileImage?: Image; // Now stores a File ID
+  profileImage?: Image; // Now stores a File ID, using FileUploading concept
   bio?: string;
   location?: string;
   emergencyContact?: EmergencyContact;
@@ -86,7 +86,7 @@ export default class UserProfileConcept {
       location: undefined,
       emergencyContact: undefined,
       tags: {},
-      isActive: true, // Set to true by default when profile is created
+      isActive: false, 
     });
     return {};
   }

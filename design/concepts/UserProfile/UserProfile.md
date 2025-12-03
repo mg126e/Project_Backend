@@ -4,7 +4,7 @@
    - **State:**
        - A set of `Users`, each with:
            - `displayname`: String
-           - `profileImage`: Image ( managed by the FileUploading concept; uploaded from user's device)
+           - `profileImage`: Image (managed by the FileUploading concept; uploaded from user's device)
            - `bio`: String (a biography where users can state more about themselves and what they are looking for, including describing their personal goals)
            - `location`: String
            - `emergencyContact`: Object with fields:
@@ -44,8 +44,8 @@
            - *Requires:* The user exists in the set of users.
            - *Effects:* Permanently deletes the user's profile and all associated data.
     - **Notes:**
-        - By requiring that a user must be fully filled in, this helps users feel safer when they are looking for long-term matches
-        - A user would provide the phone number of the person. 
+        - By requiring that a user profile must be fully filled in, this helps users feel safer when they are looking for long-term matches
+        - A user would provide the phone number of the person
         - Integrating FileUploading concept from provided code from course
         - Removed removeTag since that sets expectation that these tags are optional, when we want to actually be required. That also led to us changing the requirements about tags
 
@@ -82,7 +82,7 @@ interface EmergencyContact {
 interface UserProfileDoc {
   _id: User;
   displayname?: string;
-  profileImage?: Image; // Now stores a File ID
+  profileImage?: Image; // Now stores a File ID, using FileUploading concept
   bio?: string;
   location?: string;
   emergencyContact?: EmergencyContact;
@@ -138,7 +138,7 @@ export default class UserProfileConcept {
       location: undefined,
       emergencyContact: undefined,
       tags: {},
-      isActive: true, // Set to true by default when profile is created
+      isActive: false, 
     });
     return {};
   }
