@@ -73,6 +73,10 @@ export const inclusions: Record<string, string> = {
     "public action to set shared goal as initialized (if access controlled elsewhere)",
   "/api/UserProfile/getProfileImageDownloadURL":
     "public query to get profile image download URL (non-sensitive)",
+  "/api/UserProfile/_getProfilesByLocation":
+    "public query to get profiles by location for partner discovery",
+  "/api/UserProfile/_getAllProfiles":
+    "public query to get all profiles for partner discovery and matching",
 };
 
 /**
