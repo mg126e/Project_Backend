@@ -28,5 +28,5 @@ Screen Recording here [here](https://youtu.be/X0wlRiG4KoE)
 
 ## Mentor Meetings
 
-All mentor meeting notes and deliverables are organized in the [Mentor Meetings](./mentor_meetings/) folder.
+All mentor meeting notes are organized in the [Mentor Meetings](./mentor_meetings/) folder.
 
