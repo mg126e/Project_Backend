@@ -388,4 +388,24 @@ export default class PartnerMatchingConcept {
       return { error: "An unexpected server error occurred." };
     }
   }
+
+  /**
+   * _getPartners (user: User): { partners: User[] }
+   * effects: Returns all user IDs of active match partners for a given user.
+   * This is useful for creating shared goals with matched partners.
+   */
+  async _getPartners(
+    { user }: { user: User },
+  ): Promise<{ partners: User[] } | { error: string }> {
+    try {
+      const matches = await this.matches.find({ users: user }).toArray();
+      const partners = matches.map(m => 
+        m.users[0] === user ? m.users[1] : m.users[0]
+      );
+      return { partners };
+    } catch (e) {
+      console.error("Error in _getPartners:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
 }
