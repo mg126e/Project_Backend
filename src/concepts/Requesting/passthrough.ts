@@ -77,6 +77,8 @@ export const inclusions: Record<string, string> = {
     "public query to get profiles by location for partner discovery",
   "/api/UserProfile/_getAllProfiles":
     "public query to get all profiles for partner discovery and matching",
+  "/api/UserProfile/_getDisplayName":
+    "public query to get display name for a user",
 };
 
 /**

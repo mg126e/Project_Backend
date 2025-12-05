@@ -19,7 +19,7 @@ export const CreateSharedGoalResponseSuccess: Sync = ({ request, sharedGoalId })
     [Requesting.request, { path: "/SharedGoals/createSharedGoal" }, { request }],
     [SharedGoals.createSharedGoal, {}, { sharedGoalId }],
   ),
-  then: actions([Requesting.respond, { request, msg: { sharedGoalId } }]),
+  then: actions([Requesting.respond, { request, sharedGoalId }]),
 });
 
 export const CreateSharedGoalResponseError: Sync = ({ request, error }) => ({
@@ -27,7 +27,7 @@ export const CreateSharedGoalResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/createSharedGoal" }, { request }],
     [SharedGoals.createSharedGoal, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Generate Shared Steps --//
@@ -47,7 +47,7 @@ export const GenerateSharedStepsResponseSuccess: Sync = ({ request, steps }) => 
     [Requesting.request, { path: "/SharedGoals/generateSharedSteps" }, { request }],
     [SharedGoals.generateSharedSteps, {}, { steps }],
   ),
-  then: actions([Requesting.respond, { request, msg: { steps } }]),
+  then: actions([Requesting.respond, { request, steps }]),
 });
 
 export const GenerateSharedStepsResponseError: Sync = ({ request, error }) => ({
@@ -55,7 +55,7 @@ export const GenerateSharedStepsResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/generateSharedSteps" }, { request }],
     [SharedGoals.generateSharedSteps, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Regenerate Shared Steps --//
@@ -75,7 +75,7 @@ export const RegenerateSharedStepsResponseSuccess: Sync = ({ request, steps }) =
     [Requesting.request, { path: "/SharedGoals/regenerateSharedSteps" }, { request }],
     [SharedGoals.regenerateSharedSteps, {}, { steps }],
   ),
-  then: actions([Requesting.respond, { request, msg: { steps } }]),
+  then: actions([Requesting.respond, { request, steps }]),
 });
 
 export const RegenerateSharedStepsResponseError: Sync = ({ request, error }) => ({
@@ -83,7 +83,7 @@ export const RegenerateSharedStepsResponseError: Sync = ({ request, error }) => 
     [Requesting.request, { path: "/SharedGoals/regenerateSharedSteps" }, { request }],
     [SharedGoals.regenerateSharedSteps, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Add Shared Step --//
@@ -103,7 +103,7 @@ export const AddSharedStepResponseSuccess: Sync = ({ request, step }) => ({
     [Requesting.request, { path: "/SharedGoals/addSharedStep" }, { request }],
     [SharedGoals.addSharedStep, {}, { step }],
   ),
-  then: actions([Requesting.respond, { request, msg: { step } }]),
+  then: actions([Requesting.respond, { request, step }]),
 });
 
 export const AddSharedStepResponseError: Sync = ({ request, error }) => ({
@@ -111,7 +111,7 @@ export const AddSharedStepResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/addSharedStep" }, { request }],
     [SharedGoals.addSharedStep, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Complete Shared Step --//
@@ -131,7 +131,7 @@ export const CompleteSharedStepResponseSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: "/SharedGoals/completeSharedStep" }, { request }],
     [SharedGoals.completeSharedStep, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, msg: {} }]),
+  then: actions([Requesting.respond, { request }]),
 });
 
 export const CompleteSharedStepResponseError: Sync = ({ request, error }) => ({
@@ -139,7 +139,7 @@ export const CompleteSharedStepResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/completeSharedStep" }, { request }],
     [SharedGoals.completeSharedStep, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Remove Shared Step --//
@@ -159,7 +159,7 @@ export const RemoveSharedStepResponseSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: "/SharedGoals/removeSharedStep" }, { request }],
     [SharedGoals.removeSharedStep, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, msg: {} }]),
+  then: actions([Requesting.respond, { request }]),
 });
 
 export const RemoveSharedStepResponseError: Sync = ({ request, error }) => ({
@@ -167,7 +167,7 @@ export const RemoveSharedStepResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/removeSharedStep" }, { request }],
     [SharedGoals.removeSharedStep, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Close Shared Goal --//
@@ -187,7 +187,7 @@ export const CloseSharedGoalResponseSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: "/SharedGoals/closeSharedGoal" }, { request }],
     [SharedGoals.closeSharedGoal, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, msg: {} }]),
+  then: actions([Requesting.respond, { request }]),
 });
 
 export const CloseSharedGoalResponseError: Sync = ({ request, error }) => ({
@@ -195,7 +195,7 @@ export const CloseSharedGoalResponseError: Sync = ({ request, error }) => ({
     [Requesting.request, { path: "/SharedGoals/closeSharedGoal" }, { request }],
     [SharedGoals.closeSharedGoal, {}, { error }],
   ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 //-- Set Initialized --//
@@ -215,7 +215,7 @@ export const SetInitializedResponseSuccess: Sync = ({ request }) => ({
     [Requesting.request, { path: "/SharedGoals/setInitialized" }, { request }],
     [SharedGoals.setInitialized, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, msg: {} }]),
+  then: actions([Requesting.respond, { request }]),
 });
 
 //-- Get All Goals For User --//

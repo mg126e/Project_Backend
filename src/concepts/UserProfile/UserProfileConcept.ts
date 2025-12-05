@@ -251,7 +251,7 @@ export default class UserProfileConcept {
   }
 
   /**
-   * getProfile (user: User)
+   * _getProfile (user: User)
    *
    * @requires the user exists in the set of users.
    * @returns the user's profile document, or an error if not found.
@@ -264,6 +264,22 @@ export default class UserProfileConcept {
       return { error: `User profile for ${user} not found.` };
     }
     return profile;
+  }
+
+  /**
+   * _getDisplayName (user: User): { displayname: string }
+   *
+   * Returns the display name for a given user.
+   * Public query - no authentication required.
+   */
+  async _getDisplayName(
+    { user }: { user: User },
+  ): Promise<{ displayname: string } | { error: string }> {
+    const profile = await this.userProfiles.findOne({ _id: user });
+    if (!profile) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return { displayname: profile.displayname || user.toString() };
   }
 
   /**
