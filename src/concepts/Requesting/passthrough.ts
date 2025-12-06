@@ -104,4 +104,11 @@ export const exclusions: Array<string> = [
   "/api/SharedGoals/_getSharedGoals",
   "/api/SharedGoals/_getSharedGoalById",
   "/api/SharedGoals/_getSharedSteps",
+  "/api/MilestoneMap/createMilestoneMap",
+  "/api/MilestoneMap/addMilestone",
+  "/api/MilestoneMap/removeMilestone",
+  "/api/MilestoneMap/closeMilestoneMap",
+  "/api/MilestoneMap/getMilestoneMap",
+  "/api/MilestoneMap/getMilestones",
+  "/api/MilestoneMap/getAllMapsForUser",
 ];

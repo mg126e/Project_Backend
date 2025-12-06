@@ -11,6 +11,7 @@ import * as sync_emailVerification from "./emailVerification.sync.ts";
 import * as sync_auth from "./auth.sync.ts";
 import * as sync_fileUploading from "./fileUploading.sync.ts";
 import * as sync_profile from "./profile.sync.ts";
+import * as sync_milestoneMap from "./milestoneMap.sync.ts";
 import * as sync_matchAndChat from "./matchAndChat.sync.ts";
 import * as sync_suggest from "./suggest.sync.ts";
 
@@ -50,6 +51,11 @@ for (const [name, func] of Object.entries(sync_fileUploading)) {
 for (const [name, func] of Object.entries(sync_profile)) {
   if (typeof func === "function") {
     allSyncs[`profile.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_milestoneMap)) {
+  if (typeof func === "function") {
+    allSyncs[`milestoneMap.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_matchAndChat)) {

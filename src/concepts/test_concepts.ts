@@ -7,6 +7,7 @@ export const Engine = new SyncConcept();
 
 import { testDb } from "@utils/database.ts";
 
+import MilestoneMapConcept from "./MilestoneMap/MilestoneMapConcept.ts";
 import PartnerMatchingConcept from "./PartnerMatching/PartnerMatchingConcept.ts";
 import PasswordAuthenticationConcept from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
 import FileUploadingConcept from "./FileUploading/FileUploadingConcept.ts";
@@ -18,6 +19,7 @@ import UserProfileConcept from "./UserProfile/UserProfileConcept.ts";
 import MessagingConcept from "./Messaging/MessagingConcept.ts";
 import EmailVerificationConcept from "./EmailVerification/EmailVerificationConcept.ts";
 
+export type { default as MilestoneMapConcept } from "./MilestoneMap/MilestoneMapConcept.ts";
 export type { default as PartnerMatchingConcept } from "./PartnerMatching/PartnerMatchingConcept.ts";
 export type { default as PasswordAuthenticationConcept } from "./PasswordAuthentication/PasswordAuthenticationConcept.ts";
 export type { default as FileUploadingConcept } from "./FileUploading/FileUploadingConcept.ts";
@@ -32,6 +34,7 @@ export type { default as EmailVerificationConcept } from "./EmailVerification/Em
 // Initialize the database connection
 export const [db, client] = await testDb();
 
+export const MilestoneMap = Engine.instrumentConcept(new MilestoneMapConcept(db));
 export const PartnerMatching = Engine.instrumentConcept(new PartnerMatchingConcept(db));
 export const PasswordAuthentication = Engine.instrumentConcept(new PasswordAuthenticationConcept(db));
 export const FileUploading = Engine.instrumentConcept(new FileUploadingConcept(db));
