@@ -53,24 +53,6 @@ export const inclusions: Record<string, string> = {
     "public action to end a session (logout)",
   "/api/Sessioning/_getUser":
     "public query to get user from session (non-sensitive)",
-  "/api/SharedGoals/initializeLLM":
-    "public action to initialize LLM for shared goals (if safe)",
-  "/api/SharedGoals/validateStepQuality":
-    "public action to validate step quality (if safe)",
-  "/api/SharedGoals/generateSharedSteps":
-    "public action to generate shared steps (if safe)",
-  "/api/SharedGoals/regenerateSharedSteps":
-    "public action to regenerate shared steps (if safe)",
-  "/api/SharedGoals/addSharedStep":
-    "public action to add shared step (if access controlled elsewhere)",
-  "/api/SharedGoals/completeSharedStep":
-    "public action to complete shared step (if access controlled elsewhere)",
-  "/api/SharedGoals/removeSharedStep":
-    "public action to remove shared step (if access controlled elsewhere)",
-  "/api/SharedGoals/closeSharedGoal":
-    "public action to close shared goal (if access controlled elsewhere)",
-  "/api/SharedGoals/setInitialized":
-    "public action to set shared goal as initialized (if access controlled elsewhere)",
   "/api/UserProfile/getProfileImageDownloadURL":
     "public query to get profile image download URL (non-sensitive)",
   "/api/UserProfile/_getProfilesByLocation":
@@ -111,20 +93,13 @@ export const exclusions: Array<string> = [
   "/api/FileUploading/requestUploadURL",
   "/api/FileUploading/delete",
   "/api/SharedGoals/createSharedGoal",
-  "/api/SharedGoals/setDescription",
-  "/api/SharedGoals/setDate",
-  "/api/SharedGoals/setTime",
-  "/api/SharedGoals/setNotes",
-  "/api/SharedGoals/setDuration",
-  "/api/SharedGoals/setLocation",
-  "/api/SharedGoals/addParticipant",
-  "/api/SharedGoals/removeParticipant",
-  "/api/SharedGoals/addStep",
-  "/api/SharedGoals/completeStep",
-  "/api/SharedGoals/uncompleteStep",
-  "/api/SharedGoals/removeStep",
-  "/api/SharedGoals/activateGoal",
-  "/api/SharedGoals/deactivateGoal",
+  "/api/SharedGoals/generateSharedSteps",
+  "/api/SharedGoals/regenerateSharedSteps",
+  "/api/SharedGoals/addSharedStep",
+  "/api/SharedGoals/completeSharedStep",
+  "/api/SharedGoals/removeSharedStep",
+  "/api/SharedGoals/closeSharedGoal",
+  "/api/SharedGoals/setInitialized",
   "/api/SharedGoals/_getAllGoalsForUser",
   "/api/SharedGoals/_getSharedGoals",
   "/api/SharedGoals/_getSharedGoalById",

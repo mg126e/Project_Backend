@@ -282,8 +282,10 @@ export default class SharedGoalsConcept {
    * @returns Empty object on success, or an error.
    */
   async closeSharedGoal({ sharedGoal, user }: { sharedGoal: SharedGoal; user: User }): Promise<Empty | { error: string }> {
-    const goal = await this.sharedGoals.findOne({ _id: sharedGoal, isActive: true });
+    const goal = await this.sharedGoals.findOne({ _id: sharedGoal });
     if (!goal || !goal.users.includes(user)) return { error: "Shared goal not found or user not a member." };
+    // If already closed, return success (idempotent)
+    if (!goal.isActive) return {};
     await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false, closedAt: new Date() } });
     return {};
   }
@@ -360,7 +362,11 @@ export default class SharedGoalsConcept {
    * @returns Shared goal document or null if not found.
    */
   async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] } | null> {
-    const goal = await this.sharedGoals.findOne({ _id: sharedGoalId, users: { $all: users, $size: users.length } });
+    // Find the goal by ID, and check if any of the provided users is a member
+    const goal = await this.sharedGoals.findOne({ 
+      _id: sharedGoalId, 
+      users: { $in: users } // At least one of the provided users must be in the goal
+    });
     if (!goal) return null;
     return {
       id: goal._id,
