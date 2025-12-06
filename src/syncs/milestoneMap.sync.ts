@@ -4,10 +4,10 @@ import { Frames } from "@engine";
 import { ID } from "@utils/types.ts";
 
 //-- Create MilestoneMap --//
-export const CreateMilestoneMapRequest: Sync = ({ request, session, user, userA, userB }) => ({
+export const CreateMilestoneMapRequest: Sync = ({ request, session, user, userB }) => ({
   when: actions([
     Requesting.request,
-    { path: "/MilestoneMap/createMilestoneMap", session, userA, userB },
+    { path: "/MilestoneMap/createMilestoneMap", session, userB },
     { request },
   ]),
   where: async (frames) =>
@@ -34,19 +34,19 @@ export const CreateMilestoneMapResponseError: Sync = ({ request, error }) => ({
 //-- Add Milestone --//
 export const AddMilestoneRequest: Sync = ({ 
   request, session, user, milestoneMapId, latitude, longitude, 
-  title, description, photoFileId 
+  title, description
 }) => ({
   when: actions([
     Requesting.request,
     { path: "/MilestoneMap/addMilestone", session, milestoneMapId, latitude, 
-      longitude, title, description, photoFileId },
+      longitude, title, description },
     { request },
   ]),
   where: async (frames) =>
     await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([MilestoneMap.addMilestone, { 
     milestoneMap: milestoneMapId, latitude, longitude, title, description, 
-    addedBy: user, photoFileId 
+    addedBy: user
   }]),
 });
 
@@ -81,7 +81,7 @@ export const RemoveMilestoneRequest: Sync = ({ request, session, user, milestone
 export const RemoveMilestoneResponseSuccess: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/MilestoneMap/removeMilestone" }, { request }],
-    [MilestoneMap.removeMilestone, {}],
+    [MilestoneMap.removeMilestone, {}, {}],
   ),
   then: actions([Requesting.respond, { request, data: "Milestone removed successfully" }]),
 });
@@ -109,7 +109,7 @@ export const CloseMilestoneMapRequest: Sync = ({ request, session, user, milesto
 export const CloseMilestoneMapResponseSuccess: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/MilestoneMap/closeMilestoneMap" }, { request }],
-    [MilestoneMap.closeMilestoneMap, {}],
+    [MilestoneMap.closeMilestoneMap, {}, {}],
   ),
   then: actions([Requesting.respond, { request, data: "MilestoneMap closed successfully" }]),
 });
