@@ -198,26 +198,6 @@ export const CloseSharedGoalResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-//-- Set Initialized --//
-export const SetInitializedRequest: Sync = ({ request, session, user, users, isInitialized }) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/SharedGoals/setInitialized", session, users, isInitialized },
-    { request },
-  ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([SharedGoals.setInitialized, { users, isInitialized }]),
-});
-
-export const SetInitializedResponseSuccess: Sync = ({ request }) => ({
-  when: actions(
-    [Requesting.request, { path: "/SharedGoals/setInitialized" }, { request }],
-    [SharedGoals.setInitialized, {}, {}],
-  ),
-  then: actions([Requesting.respond, { request }]),
-});
-
 //-- Get All Goals For User --//
 export const GetAllGoalsForUserRequest: Sync = ({ request, session, user, goals }) => ({
   when: actions([

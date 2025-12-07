@@ -10,7 +10,6 @@
            - `sharedGoalId`: SharedGoal (reference to the parent shared goal)
            - `description`: String
            - `completion`: Date? (optional, when the step was completed)
-       - `isInitialized`: Boolean (true if the shared goals instance has been set up for this partnership)
    - **Actions:**
        - `createSharedGoal(users: Set<User>, description: String): (sharedGoalId: SharedGoal)`
            - *Requires:* No active `SharedGoal` for this set of users with the same description already exists. `description` is not empty. `users` must contain at least two users.
@@ -33,8 +32,6 @@
        - `closeSharedGoal(sharedGoal: SharedGoal, user: User): Empty`
            - *Requires:* `sharedGoal` exists and is active. `user` must be a member of the shared goal's users.
            - *Effects:* Sets `isActive` of the shared goal to `false`.
-       - `setInitialized(sharedGoals: SharedGoals, isInitialized: Boolean): Empty`
-           - *Effects:* Sets the `isInitialized` flag of the shared goal instance (for both partners) to the provided value (`true` or `false`).
    - **Queries:**
        - `_getSharedGoals(users: Set<User>, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
            - *Effects:* If isActive is specified, returns only shared goals for the user group with that active status. If not specified, returns all shared goals (active and inactive) for the user group.
@@ -43,9 +40,7 @@
        - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
            - *Effects:* Returns all steps for the given shared goal.
   - **Notes:**
-   - For all actions except setInitialized, the SharedGoals instance being initialized is required. Initialized means the shared goals feature is now active for the group of users.
    - Both LLM-generated and manually created steps are supported. The number of LLM-generated steps is not fixed and may change depending on the goal description and LLM output.
-   - The `start` field previously listed for SharedStep is not present in the implementation and is omitted here for accuracy.
 
 ```typescript
 import { Collection, Database } from "@deps/mongo";
@@ -81,14 +76,12 @@ interface SharedStepDoc {
 export default class SharedGoalsConcept {
   private sharedGoals: Collection<SharedGoalDoc>;
   private sharedSteps: Collection<SharedStepDoc>;
-  private sharedGoalsInstance: Collection<{ groupKey: string; users: User[]; isInitialized: boolean }>;
   private llm: GeminiLLM | null = null;
   private apiKey: string | null = null;
 
   constructor(private readonly db: Database, apiKey?: string) {
     this.sharedGoals = this.db.collection<SharedGoalDoc>("SharedGoals.sharedGoals");
     this.sharedSteps = this.db.collection<SharedStepDoc>("SharedGoals.sharedSteps");
-    this.sharedGoalsInstance = this.db.collection<{ groupKey: string; users: User[]; isInitialized: boolean }>("SharedGoals.sharedGoalsInstance");
     this.apiKey = apiKey || Deno.env.get("GEMINI_API_KEY") || null;
     if (this.apiKey) {
       this.initializeLLM(this.apiKey);
@@ -143,17 +136,7 @@ export default class SharedGoalsConcept {
   }
 
   /**
-   * Generates a deterministic group key from a list of users.
-   *
-   * @param users - Array of user IDs.
-   * @returns A string key representing the group.
-   */
-  private static groupKey(users: User[]): string {
-    return users.slice().sort().join("|");
-  }
-
-  /**
-   * Creates a new shared goal for a set of users.
+   * Returns all shared goals that include the given user.
    *
    * @param users - Array of user IDs.
    * @param description - Description of the shared goal.
@@ -332,29 +315,14 @@ export default class SharedGoalsConcept {
    * @returns Empty object on success, or an error.
    */
   async closeSharedGoal({ sharedGoal, user }: { sharedGoal: SharedGoal; user: User }): Promise<Empty | { error: string }> {
-    const goal = await this.sharedGoals.findOne({ _id: sharedGoal, isActive: true });
+    const goal = await this.sharedGoals.findOne({ _id: sharedGoal });
     if (!goal || !goal.users.includes(user)) return { error: "Shared goal not found or user not a member." };
+    // If already closed, return success (idempotent)
+    if (!goal.isActive) return {};
     await this.sharedGoals.updateOne({ _id: sharedGoal }, { $set: { isActive: false, closedAt: new Date() } });
     return {};
   }
 
-
-  /**
-   * Sets the isInitialized flag for the shared goals instance (group of users).
-   *
-   * @param users - Array of user IDs.
-   * @param isInitialized - Boolean flag for initialization.
-   * @returns Empty object.
-   */
-  async setInitialized({ users, isInitialized }: { users: User[]; isInitialized: boolean }): Promise<Empty> {
-    const groupKey = SharedGoalsConcept.groupKey(users);
-    await this.sharedGoalsInstance.updateOne(
-      { groupKey },
-      { $set: { isInitialized, users, groupKey } },
-      { upsert: true },
-    );
-    return {};
-  }
 
   /**
    * Returns all shared goals that include the given user.
@@ -410,7 +378,11 @@ export default class SharedGoalsConcept {
    * @returns Shared goal document or null if not found.
    */
   async _getSharedGoalById({ users, sharedGoalId }: { users: User[]; sharedGoalId: SharedGoal }): Promise<{ id: SharedGoal; description: string; isActive: boolean; createdAt: Date; closedAt?: Date; users: User[] } | null> {
-    const goal = await this.sharedGoals.findOne({ _id: sharedGoalId, users: { $all: users, $size: users.length } });
+    // Find the goal by ID, and check if any of the provided users is a member
+    const goal = await this.sharedGoals.findOne({ 
+      _id: sharedGoalId, 
+      users: { $in: users } // At least one of the provided users must be in the goal
+    });
     if (!goal) return null;
     return {
       id: goal._id,

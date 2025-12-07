@@ -31,14 +31,12 @@ interface SharedStepDoc {
 export default class SharedGoalsConcept {
   private sharedGoals: Collection<SharedGoalDoc>;
   private sharedSteps: Collection<SharedStepDoc>;
-  private sharedGoalsInstance: Collection<{ groupKey: string; users: User[]; isInitialized: boolean }>;
   private llm: GeminiLLM | null = null;
   private apiKey: string | null = null;
 
   constructor(private readonly db: Database, apiKey?: string) {
     this.sharedGoals = this.db.collection<SharedGoalDoc>("SharedGoals.sharedGoals");
     this.sharedSteps = this.db.collection<SharedStepDoc>("SharedGoals.sharedSteps");
-    this.sharedGoalsInstance = this.db.collection<{ groupKey: string; users: User[]; isInitialized: boolean }>("SharedGoals.sharedGoalsInstance");
     this.apiKey = apiKey || Deno.env.get("GEMINI_API_KEY") || null;
     if (this.apiKey) {
       this.initializeLLM(this.apiKey);
@@ -93,17 +91,7 @@ export default class SharedGoalsConcept {
   }
 
   /**
-   * Generates a deterministic group key from a list of users.
-   *
-   * @param users - Array of user IDs.
-   * @returns A string key representing the group.
-   */
-  private static groupKey(users: User[]): string {
-    return users.slice().sort().join("|");
-  }
-
-  /**
-   * Creates a new shared goal for a set of users.
+   * Returns all shared goals that include the given user.
    *
    * @param users - Array of user IDs.
    * @param description - Description of the shared goal.
@@ -290,23 +278,6 @@ export default class SharedGoalsConcept {
     return {};
   }
 
-
-  /**
-   * Sets the isInitialized flag for the shared goals instance (group of users).
-   *
-   * @param users - Array of user IDs.
-   * @param isInitialized - Boolean flag for initialization.
-   * @returns Empty object.
-   */
-  async setInitialized({ users, isInitialized }: { users: User[]; isInitialized: boolean }): Promise<Empty> {
-    const groupKey = SharedGoalsConcept.groupKey(users);
-    await this.sharedGoalsInstance.updateOne(
-      { groupKey },
-      { $set: { isInitialized, users, groupKey } },
-      { upsert: true },
-    );
-    return {};
-  }
 
   /**
    * Returns all shared goals that include the given user.

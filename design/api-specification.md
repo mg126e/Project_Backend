@@ -1057,34 +1057,6 @@ Closes a shared goal.
 
 ---
 
-### Set Initialized
-**POST** `/SharedGoals/setInitialized`
-
-Sets the initialization status for a shared goal.
-
-**Request Body:**
-```json
-{
-  "session": "ID",
-  "users": ["ID", "ID"],
-  "isInitialized": "boolean"
-}
-```
-
-**Response (Success):**
-```json
-{}
-```
-
-**Response (Error):**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
 ### Get All Goals for User
 **POST** `/SharedGoals/_getAllGoalsForUser`
 
@@ -1285,33 +1257,6 @@ Removes a milestone from a shared map.
 
 ---
 
-### Close Milestone Map
-**POST** `/MilestoneMap/closeMilestoneMap`
-
-Closes a milestone map (sets inactive but preserves data).
-
-**Request Body:**
-```json
-{
-  "session": "ID",
-  "milestoneMapId": "ID"
-}
-```
-
-**Response (Success):**
-```json
-{}
-```
-
-**Response (Error):**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
 ### Get Milestone Map
 **POST** `/MilestoneMap/getMilestoneMap`
 
@@ -1331,8 +1276,7 @@ Retrieves a milestone map for a set of users.
   "milestoneMap": {
     "id": "ID",
     "users": ["ID", "ID"],
-    "createdAt": "Date",
-    "isActive": "boolean"
+    "createdAt": "Date"
   }
 }
 ```

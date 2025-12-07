@@ -57,10 +57,6 @@ Deno.test("Principle: MilestoneMap creation and uniqueness", async () => {
     if ("error" in singleUser) {
       console.log(`   ✓ Single user correctly rejected: ${singleUser.error}`);
     }
-
-    // Clean up
-    await milestoneMap.closeMilestoneMap({ milestoneMap: mapId1, user: userA });
-    await milestoneMap.closeMilestoneMap({ milestoneMap: mapId2, user: userA });
   } finally {
     await client.close();
   }
@@ -129,9 +125,6 @@ Deno.test("Action: Adding milestones to MilestoneMap", async () => {
     if ("error" in unauthorized) {
       console.log(`   ✓ Unauthorized add correctly rejected: ${unauthorized.error}`);
     }
-
-    // Clean up
-    await milestoneMap.closeMilestoneMap({ milestoneMap: mapId, user: userA });
   } finally {
     await client.close();
   }
@@ -202,63 +195,6 @@ Deno.test("Action: Removing milestones from MilestoneMap", async () => {
     assertEquals("error" in nonExistent, true, "Should reject removal of non-existent milestone");
     if ("error" in nonExistent) {
       console.log(`   ✓ Non-existent milestone correctly rejected: ${nonExistent.error}`);
-    }
-
-    // Clean up
-    await milestoneMap.closeMilestoneMap({ milestoneMap: mapId, user: userA });
-  } finally {
-    await client.close();
-  }
-});
-
-Deno.test("Action: Closing MilestoneMap (idempotent)", async () => {
-  const [db, client] = await testDb();
-  const milestoneMap = new MilestoneMapConcept(db);
-  
-  try {
-    console.log("1. Creating a MilestoneMap");
-    const createResult = await milestoneMap.createMilestoneMap({
-      users: [userA, userB],
-    });
-    const mapId = (createResult as { milestoneMap: ID }).milestoneMap;
-    console.log(`   ✓ MilestoneMap created`);
-
-    console.log("2. Verifying map is active");
-    const mapBefore = await milestoneMap._getMilestoneMap({ users: [userA, userB] });
-    assertNotEquals(mapBefore, null, "Map should exist");
-    assertEquals(mapBefore?.isActive, true, "Map should be active");
-    console.log(`   ✓ Map is active`);
-
-    console.log("3. Closing the MilestoneMap as userA");
-    const closeResult1 = await milestoneMap.closeMilestoneMap({
-      milestoneMap: mapId,
-      user: userA,
-    });
-    assertNotEquals("error" in closeResult1, true, "Closing should succeed");
-    console.log(`   ✓ Map closed by userA`);
-
-    console.log("4. Verifying map is inactive");
-    const mapAfter = await milestoneMap._getMilestoneMap({ users: [userA, userB] });
-    assertNotEquals(mapAfter, null, "Map should still exist");
-    assertEquals(mapAfter?.isActive, false, "Map should be inactive");
-    console.log(`   ✓ Map is inactive`);
-
-    console.log("5. Closing again (idempotent check)");
-    const closeResult2 = await milestoneMap.closeMilestoneMap({
-      milestoneMap: mapId,
-      user: userB,
-    });
-    assertNotEquals("error" in closeResult2, true, "Closing again should succeed (idempotent)");
-    console.log(`   ✓ Second close succeeded (idempotent behavior)`);
-
-    console.log("6. Attempting to close as non-member");
-    const unauthorized = await milestoneMap.closeMilestoneMap({
-      milestoneMap: mapId,
-      user: userC,
-    });
-    assertEquals("error" in unauthorized, true, "Should reject close by non-member");
-    if ("error" in unauthorized) {
-      console.log(`   ✓ Unauthorized close correctly rejected: ${unauthorized.error}`);
     }
   } finally {
     await client.close();

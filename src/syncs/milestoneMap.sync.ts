@@ -129,34 +129,6 @@ export const RemoveMilestoneResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-//-- Close MilestoneMap --//
-export const CloseMilestoneMapRequest: Sync = ({ request, session, user, milestoneMapId }) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/MilestoneMap/closeMilestoneMap", session, milestoneMapId },
-    { request },
-  ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([MilestoneMap.closeMilestoneMap, { milestoneMap: milestoneMapId, user }]),
-});
-
-export const CloseMilestoneMapResponseSuccess: Sync = ({ request }) => ({
-  when: actions(
-    [Requesting.request, { path: "/MilestoneMap/closeMilestoneMap" }, { request }],
-    [MilestoneMap.closeMilestoneMap, {}, {}],
-  ),
-  then: actions([Requesting.respond, { request, data: "MilestoneMap closed successfully" }]),
-});
-
-export const CloseMilestoneMapResponseError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: "/MilestoneMap/closeMilestoneMap" }, { request }],
-    [MilestoneMap.closeMilestoneMap, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
-});
-
 //-- Get MilestoneMap --//
 export const GetMilestoneMapRequest: Sync = ({ request, session, user, users, milestoneMap }) => ({
   when: actions([
