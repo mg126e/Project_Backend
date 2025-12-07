@@ -13,10 +13,8 @@ type File = ID;
 /**
  * State:
  * A set of MilestoneMaps, each with:
- *   userA: User (one partner)
- *   userB: User (the other partner)
+ *   users: User[] (set of users sharing the map)
  *   createdAt: Date
- *   isActive: Boolean
  * 
  * A set of Milestones, each with:
  *   milestoneMapId: MilestoneMap
@@ -24,17 +22,15 @@ type File = ID;
  *   longitude: Number
  *   title: String
  *   description: String
- *   addedBy: User (which partner added this milestone)
+ *   addedBy: User (which user added this milestone)
  *   photoFileId: File (optional, reference to FileUploading concept)
  *   createdAt: Date
  */
 
 interface MilestoneMapDoc {
   _id: MilestoneMap;
-  userA: User;
-  userB: User;
+  users: User[];
   createdAt: Date;
-  isActive: boolean;
 }
 
 interface MilestoneDoc {
@@ -64,33 +60,32 @@ export default class MilestoneMapConcept {
   }
 
   /**
-   * createMilestoneMap (userA: User, userB: User): (milestoneMap: MilestoneMap)
+   * createMilestoneMap (users: User[]): (milestoneMap: MilestoneMap)
    *
-   * @requires no existing MilestoneMap for this user pair
-   * @effects creates a new shared MilestoneMap for the two users
+   * @requires no existing MilestoneMap for this set of users, at least 2 users
+   * @effects creates a new shared MilestoneMap for the users
    */
   async createMilestoneMap(
-    { userA, userB }: { userA: User; userB: User }
+    { users }: { users: User[] }
   ): Promise<{ milestoneMap: MilestoneMap } | { error: string }> {
-    // Check if a map already exists for this pair
+    if (users.length < 2) {
+      return { error: "At least two users required for a MilestoneMap." };
+    }
+
+    // Check if a map already exists for this set of users
     const existing = await this.milestoneMaps.findOne({
-      $or: [
-        { userA, userB },
-        { userA: userB, userB: userA }
-      ]
+      users: { $all: users, $size: users.length }
     });
 
     if (existing) {
-      return { error: "MilestoneMap already exists for this user pair." };
+      return { error: "MilestoneMap already exists for this set of users." };
     }
 
     const milestoneMapId = freshID() as MilestoneMap;
     await this.milestoneMaps.insertOne({
       _id: milestoneMapId,
-      userA,
-      userB,
-      createdAt: new Date(),
-      isActive: true
+      users,
+      createdAt: new Date()
     });
 
     return { milestoneMap: milestoneMapId };
@@ -101,7 +96,7 @@ export default class MilestoneMapConcept {
    *              title: String, description: String, addedBy: User, photoFileId?: File): 
    *              (milestone: Milestone)
    *
-   * @requires milestoneMap exists and addedBy is one of the two users
+   * @requires milestoneMap exists and addedBy is a member of the map
    * @effects adds a new milestone pin to the shared map
    */
   async addMilestone(
@@ -110,13 +105,12 @@ export default class MilestoneMapConcept {
       title: string; description: string; addedBy: User; photoFileId?: File }
   ): Promise<{ milestone: Milestone } | { error: string }> {
     // Verify the map exists and user is a member
-    const map = await this.milestoneMaps.findOne({ _id: milestoneMap, isActive: true });
+    const map = await this.milestoneMaps.findOne({ _id: milestoneMap });
     if (!map) {
-      return { error: "MilestoneMap not found or inactive." };
+      return { error: "MilestoneMap not found." };
     }
 
-    if (map.userA.toString() !== addedBy.toString() && 
-        map.userB.toString() !== addedBy.toString()) {
+    if (!map.users.some(u => u.toString() === addedBy.toString())) {
       return { error: "User is not a member of this MilestoneMap." };
     }
 
@@ -157,8 +151,7 @@ export default class MilestoneMapConcept {
       return { error: "Associated MilestoneMap not found." };
     }
 
-    if (map.userA.toString() !== user.toString() && 
-        map.userB.toString() !== user.toString()) {
+    if (!map.users.some(u => u.toString() === user.toString())) {
       return { error: "User is not a member of this MilestoneMap." };
     }
 
@@ -167,57 +160,24 @@ export default class MilestoneMapConcept {
   }
 
   /**
-   * closeMilestoneMap (milestoneMap: MilestoneMap, user: User): ()
+   * _getMilestoneMap (users: User[]): 
+   *   (milestoneMap: {id: MilestoneMap, users: User[], createdAt: Date})?
    *
-   * @requires milestoneMap exists and user is one of the two users
-   * @effects closes the MilestoneMap reference for the two users (map data is preserved)
-   */
-  async closeMilestoneMap(
-    { milestoneMap, user }: { milestoneMap: MilestoneMap; user: User }
-  ): Promise<Empty | { error: string }> {
-    const map = await this.milestoneMaps.findOne({ _id: milestoneMap });
-    if (!map) {
-      return { error: "MilestoneMap not found." };
-    }
-
-    if (map.userA.toString() !== user.toString() && 
-        map.userB.toString() !== user.toString()) {
-      return { error: "User is not a member of this MilestoneMap." };
-    }
-
-    // If already closed, return success (idempotent)
-    if (!map.isActive) return {};
-
-    await this.milestoneMaps.updateOne(
-      { _id: milestoneMap },
-      { $set: { isActive: false } }
-    );
-
-    return {};
-  }
-
-  /**
-   * _getMilestoneMap (userA: User, userB: User): 
-   *   (milestoneMap: {id: MilestoneMap, createdAt: Date, isActive: Boolean})?
-   *
-   * @effects returns the MilestoneMap reference for the user pair, or null if none exists
+   * @effects returns the MilestoneMap reference for the set of users, or null if none exists
    */
   async _getMilestoneMap(
-    { userA, userB }: { userA: User; userB: User }
-  ): Promise<{ id: MilestoneMap; createdAt: Date; isActive: boolean } | null> {
+    { users }: { users: User[] }
+  ): Promise<{ id: MilestoneMap; users: User[]; createdAt: Date } | null> {
     const map = await this.milestoneMaps.findOne({
-      $or: [
-        { userA, userB },
-        { userA: userB, userB: userA }
-      ]
+      users: { $all: users, $size: users.length }
     });
 
     if (!map) return null;
 
     return {
       id: map._id,
-      createdAt: map.createdAt,
-      isActive: map.isActive
+      users: map.users,
+      createdAt: map.createdAt
     };
   }
 
@@ -256,7 +216,7 @@ export default class MilestoneMapConcept {
 
   /**
    * _getAllMapsForUser (user: User): 
-   *   (maps: {id: MilestoneMap, partnerA: User, partnerB: User, createdAt: Date, isActive: Boolean}[])
+   *   (maps: {id: MilestoneMap, users: User[], createdAt: Date}[])
    *
    * @effects returns all milestone maps where user is a member
    */
@@ -264,25 +224,18 @@ export default class MilestoneMapConcept {
     { user }: { user: User }
   ): Promise<Array<{
     id: MilestoneMap;
-    partnerA: User;
-    partnerB: User;
+    users: User[];
     createdAt: Date;
-    isActive: boolean;
   }>> {
     const maps = await this.milestoneMaps.find({
-      $or: [
-        { userA: user },
-        { userB: user }
-      ]
+      users: user
     }).toArray();
 
     return maps.map((m) => {
       return {
         id: m._id,
-        partnerA: m.userA,
-        partnerB: m.userB,
+        users: m.users,
         createdAt: m.createdAt,
-        isActive: m.isActive,
       };
     });
   }

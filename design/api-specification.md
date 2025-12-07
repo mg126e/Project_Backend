@@ -1057,34 +1057,6 @@ Closes a shared goal.
 
 ---
 
-### Set Initialized
-**POST** `/SharedGoals/setInitialized`
-
-Sets the initialization status for a shared goal.
-
-**Request Body:**
-```json
-{
-  "session": "ID",
-  "users": ["ID", "ID"],
-  "isInitialized": "boolean"
-}
-```
-
-**Response (Success):**
-```json
-{}
-```
-
-**Response (Error):**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
 ### Get All Goals for User
 **POST** `/SharedGoals/_getAllGoalsForUser`
 
@@ -1207,13 +1179,13 @@ Retrieves all steps for a shared goal.
 ### Create Milestone Map
 **POST** `/MilestoneMap/createMilestoneMap`
 
-Creates a shared milestone map for two partners.
+Creates a shared milestone map for a set of users (typically two partners).
 
 **Request Body:**
 ```json
 {
   "session": "ID",
-  "userB": "ID"
+  "users": ["ID", "ID"]
 }
 ```
 
@@ -1225,7 +1197,9 @@ Creates a shared milestone map for two partners.
 ```
 
 **Notes:**
-- Authenticated user becomes userA, userB is the partner
+- Requires at least 2 users
+- Authenticated user must be included in the users array
+- Frontend typically uses 2 users, but the backend supports any number of users for modularity
 
 ---
 
@@ -1283,43 +1257,16 @@ Removes a milestone from a shared map.
 
 ---
 
-### Close Milestone Map
-**POST** `/MilestoneMap/closeMilestoneMap`
-
-Closes a milestone map (sets inactive but preserves data).
-
-**Request Body:**
-```json
-{
-  "session": "ID",
-  "milestoneMapId": "ID"
-}
-```
-
-**Response (Success):**
-```json
-{}
-```
-
-**Response (Error):**
-```json
-{
-  "error": "string"
-}
-```
-
----
-
 ### Get Milestone Map
 **POST** `/MilestoneMap/getMilestoneMap`
 
-Retrieves a milestone map for the authenticated user and their partner.
+Retrieves a milestone map for a set of users.
 
 **Request Body:**
 ```json
 {
   "session": "ID",
-  "partnerUserId": "ID"
+  "users": ["ID", "ID"]
 }
 ```
 
@@ -1328,8 +1275,8 @@ Retrieves a milestone map for the authenticated user and their partner.
 {
   "milestoneMap": {
     "id": "ID",
-    "createdAt": "Date",
-    "isActive": "boolean"
+    "users": ["ID", "ID"],
+    "createdAt": "Date"
   }
 }
 ```
@@ -1387,8 +1334,7 @@ Retrieves all milestone maps for the authenticated user.
   "maps": [
     {
       "id": "ID",
-      "partnerA": "ID",
-      "partnerB": "ID",
+      "users": ["ID", "ID"],
       "createdAt": "Date",
       "isActive": "boolean"
     }

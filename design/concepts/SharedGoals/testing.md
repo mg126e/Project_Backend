@@ -235,31 +235,4 @@ Deno.test("Action: error handling for invalid inputs and states", async () => {
     await client.close();
   }
 });
-
-
-Deno.test("Action: setInitialized sets and updates group initialization", async () => {
-  const [db, client] = await testDb();
-  const sharedGoals = new SharedGoalsConcept(db);
-  try {
-    const group = [userA, userB];
-    // Set initialized to true
-    await sharedGoals.setInitialized({ users: group, isInitialized: true });
-    // Directly query the collection to verify
-    const found = await db.collection("SharedGoals.sharedGoalsInstance").findOne({ users: { $all: group, $size: group.length } });
-    assertEquals(found?.isInitialized, true, "isInitialized should be true after setting");
-
-    // Set initialized to false
-    await sharedGoals.setInitialized({ users: group, isInitialized: false });
-    const found2 = await db.collection("SharedGoals.sharedGoalsInstance").findOne({ users: { $all: group, $size: group.length } });
-    assertEquals(found2?.isInitialized, false, "isInitialized should be false after updating");
-
-    // Set initialized for a different group
-    const group2 = [userA, userC];
-    await sharedGoals.setInitialized({ users: group2, isInitialized: true });
-    const found3 = await db.collection("SharedGoals.sharedGoalsInstance").findOne({ users: { $all: group2, $size: group2.length } });
-    assertEquals(found3?.isInitialized, true, "isInitialized should be true for different group");
-  } finally {
-    await client.close();
-  }
-});
 ```
