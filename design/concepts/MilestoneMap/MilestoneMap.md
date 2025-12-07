@@ -1,10 +1,9 @@
 **MilestoneMap** [User, User]
-   - **Purpose:** Provide a private, shared map for two running partners to commemorate milestones by dropping pins at specific locations with descriptions and optional photos.
-   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the two partners can view and edit their shared map.
+   - **Purpose:** Provide a private, shared map for a set of users (two running partners) to commemorate milestones by dropping pins at specific locations with descriptions and optional photos.
+   - **Principle:** After becoming running partners, users can mark locations where they achieved milestones together (e.g., first 5K), add descriptions, and upload photos (e.g., a selfie at the milestone spot). Only the members of the map can view and edit their shared map.
    - **State:**
        - A set of `MilestoneMaps`, each with:
-           - `userA`: User (one partner)
-           - `userB`: User (the other partner)
+           - `users`: User[] (set of users sharing the map)
            - `createdAt`: Date
            - `isActive`: Boolean
        - A set of `Milestones`, each with:
@@ -13,25 +12,26 @@
            - `longitude`: Number (geographic coordinate)
            - `title`: String (milestone name)
            - `description`: String (milestone details)
-           - `addedBy`: User (which partner added this milestone)
+           - `addedBy`: User (which user added this milestone)
            - `photoFileId`: File (optional, reference to FileUploading concept)
            - `createdAt`: Date
    - **Actions:**
-       - `createMilestoneMap(userA: User, userB: User): (milestoneMap: MilestoneMap)`
-           - *Requires:* No existing MilestoneMap for this user pair.
-           - *Effects:* Creates a new shared MilestoneMap for the two users; returns the map's ID.
+       - `createMilestoneMap(users: User[]): (milestoneMap: MilestoneMap)`
+           - *Requires:* No existing MilestoneMap for this set of users, at least 2 users.
+           - *Effects:* Creates a new shared MilestoneMap for the users; returns the map's ID.
        - `addMilestone(milestoneMap: MilestoneMap, latitude: Number, longitude: Number, title: String, description: String, addedBy: User, photoFileId?: File): (milestone: Milestone)`
-           - *Requires:* `milestoneMap` exists and `addedBy` is one of the two users.
+           - *Requires:* `milestoneMap` exists and `addedBy` is a member of the map.
            - *Effects:* Adds a new milestone pin to the shared map.
        - `removeMilestone(milestone: Milestone, user: User): ()`
            - *Requires:* `milestone` exists and `user` is a member of the associated map.
            - *Effects:* Removes the milestone from the map.
        - `closeMilestoneMap(milestoneMap: MilestoneMap, user: User): ()`
-           - *Requires:* `milestoneMap` exists and `user` is one of the two users.
+           - *Requires:* `milestoneMap` exists and `user` is a member of the map.
            - *Effects:* Closes the MilestoneMap (sets `isActive` to false); map data is preserved for archive.
 
    - **Notes:**
        - Milestone data (pins, photos, descriptions) is stored in the database, Leaflet will be used for the frontend side
+       - The concept supports a set of users for modularity (following the same pattern as SharedGoals), though the frontend is designed for two users (running partners). 
 
 ```typescript
 import { Collection, Database } from "@deps/mongo";

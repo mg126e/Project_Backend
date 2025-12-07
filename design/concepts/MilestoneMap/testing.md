@@ -17,17 +17,15 @@ Deno.test("Principle: MilestoneMap creation and uniqueness", async () => {
   try {
     console.log("1. Creating a MilestoneMap for two users");
     const result1 = await milestoneMap.createMilestoneMap({
-      userA,
-      userB,
+      users: [userA, userB],
     });
     assertNotEquals("error" in result1, true, "Should create MilestoneMap for two users");
     const mapId1 = (result1 as { milestoneMap: ID }).milestoneMap;
     console.log(`   ✓ MilestoneMap created with ID: ${mapId1}`);
 
-    console.log("2. Attempting to create duplicate MilestoneMap for same user pair");
+    console.log("2. Attempting to create duplicate MilestoneMap for same user set");
     const duplicate = await milestoneMap.createMilestoneMap({
-      userA,
-      userB,
+      users: [userA, userB],
     });
     assertEquals("error" in duplicate, true, "Should not allow duplicate MilestoneMap");
     if ("error" in duplicate) {
@@ -36,22 +34,29 @@ Deno.test("Principle: MilestoneMap creation and uniqueness", async () => {
 
     console.log("3. Attempting to create MilestoneMap with reversed user order");
     const reversed = await milestoneMap.createMilestoneMap({
-      userA: userB,
-      userB: userA,
+      users: [userB, userA],
     });
     assertEquals("error" in reversed, true, "Should not allow duplicate even with reversed users");
     if ("error" in reversed) {
       console.log(`   ✓ Reversed pair correctly rejected: ${reversed.error}`);
     }
 
-    console.log("4. Creating MilestoneMap for a different user pair");
+    console.log("4. Creating MilestoneMap for a different user set");
     const result2 = await milestoneMap.createMilestoneMap({
-      userA,
-      userB: userC,
+      users: [userA, userC],
     });
-    assertNotEquals("error" in result2, true, "Should create MilestoneMap for different pair");
+    assertNotEquals("error" in result2, true, "Should create MilestoneMap for different set");
     const mapId2 = (result2 as { milestoneMap: ID }).milestoneMap;
     console.log(`   ✓ Second MilestoneMap created with ID: ${mapId2}`);
+
+    console.log("5. Attempting to create MilestoneMap with only one user");
+    const singleUser = await milestoneMap.createMilestoneMap({
+      users: [userA],
+    });
+    assertEquals("error" in singleUser, true, "Should reject single user");
+    if ("error" in singleUser) {
+      console.log(`   ✓ Single user correctly rejected: ${singleUser.error}`);
+    }
 
     // Clean up
     await milestoneMap.closeMilestoneMap({ milestoneMap: mapId1, user: userA });
@@ -68,8 +73,7 @@ Deno.test("Action: Adding milestones to MilestoneMap", async () => {
   try {
     console.log("1. Creating a MilestoneMap");
     const createResult = await milestoneMap.createMilestoneMap({
-      userA,
-      userB,
+      users: [userA, userB],
     });
     assertNotEquals("error" in createResult, true, "MilestoneMap creation should succeed");
     const mapId = (createResult as { milestoneMap: ID }).milestoneMap;
@@ -140,8 +144,7 @@ Deno.test("Action: Removing milestones from MilestoneMap", async () => {
   try {
     console.log("1. Creating a MilestoneMap with milestones");
     const createResult = await milestoneMap.createMilestoneMap({
-      userA,
-      userB,
+      users: [userA, userB],
     });
     const mapId = (createResult as { milestoneMap: ID }).milestoneMap;
     
@@ -215,14 +218,13 @@ Deno.test("Action: Closing MilestoneMap (idempotent)", async () => {
   try {
     console.log("1. Creating a MilestoneMap");
     const createResult = await milestoneMap.createMilestoneMap({
-      userA,
-      userB,
+      users: [userA, userB],
     });
     const mapId = (createResult as { milestoneMap: ID }).milestoneMap;
     console.log(`   ✓ MilestoneMap created`);
 
     console.log("2. Verifying map is active");
-    const mapBefore = await milestoneMap._getMilestoneMap({ userA, userB });
+    const mapBefore = await milestoneMap._getMilestoneMap({ users: [userA, userB] });
     assertNotEquals(mapBefore, null, "Map should exist");
     assertEquals(mapBefore?.isActive, true, "Map should be active");
     console.log(`   ✓ Map is active`);
@@ -236,7 +238,7 @@ Deno.test("Action: Closing MilestoneMap (idempotent)", async () => {
     console.log(`   ✓ Map closed by userA`);
 
     console.log("4. Verifying map is inactive");
-    const mapAfter = await milestoneMap._getMilestoneMap({ userA, userB });
+    const mapAfter = await milestoneMap._getMilestoneMap({ users: [userA, userB] });
     assertNotEquals(mapAfter, null, "Map should still exist");
     assertEquals(mapAfter?.isActive, false, "Map should be inactive");
     console.log(`   ✓ Map is inactive`);

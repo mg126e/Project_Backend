@@ -4,15 +4,31 @@ import { Frames } from "@engine";
 import { ID } from "@utils/types.ts";
 
 //-- Create MilestoneMap --//
-export const CreateMilestoneMapRequest: Sync = ({ request, session, user, userB }) => ({
+export const CreateMilestoneMapRequest: Sync = ({ request, session, user, users }) => ({
   when: actions([
     Requesting.request,
-    { path: "/MilestoneMap/createMilestoneMap", session, userB },
+    { path: "/MilestoneMap/createMilestoneMap", session, users },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([MilestoneMap.createMilestoneMap, { userA: user, userB }]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      return new Frames();
+    }
+    
+    const userIdFromFrame = frames[0][user];
+    const usersFromFrame = originalFrame[users] as ID[];
+    
+    // Ensure the authenticated user is included in the users array
+    if (!usersFromFrame || !usersFromFrame.includes(userIdFromFrame as ID)) {
+      return new Frames();
+    }
+    
+    return new Frames({ ...originalFrame, [user]: userIdFromFrame, [users]: usersFromFrame });
+  },
+  then: actions([MilestoneMap.createMilestoneMap, { users }]),
 });
 
 export const CreateMilestoneMapResponseSuccess: Sync = ({ request, milestoneMap }) => ({
@@ -142,10 +158,10 @@ export const CloseMilestoneMapResponseError: Sync = ({ request, error }) => ({
 });
 
 //-- Get MilestoneMap --//
-export const GetMilestoneMapRequest: Sync = ({ request, session, user, partnerUserId, milestoneMap }) => ({
+export const GetMilestoneMapRequest: Sync = ({ request, session, user, users, milestoneMap }) => ({
   when: actions([
     Requesting.request,
-    { path: "/MilestoneMap/getMilestoneMap", session, partnerUserId },
+    { path: "/MilestoneMap/getMilestoneMap", session, users },
     { request },
   ]),
   where: async (frames) => {
@@ -156,16 +172,12 @@ export const GetMilestoneMapRequest: Sync = ({ request, session, user, partnerUs
       return new Frames();
     }
     
-    const userIdFromFrame = frames[0][user];
-    const partnerIdFromFrame = frames[0][partnerUserId];
-    if (!userIdFromFrame || !partnerIdFromFrame) {
+    const usersFromFrame = frames[0][users] as ID[];
+    if (!usersFromFrame) {
       return new Frames();
     }
     
-    const mapData = await MilestoneMap._getMilestoneMap({ 
-      userA: userIdFromFrame as ID, 
-      userB: partnerIdFromFrame as ID 
-    });
+    const mapData = await MilestoneMap._getMilestoneMap({ users: usersFromFrame });
     return new Frames({ ...originalFrame, [milestoneMap]: mapData });
   },
   then: actions([Requesting.respond, { request, milestoneMap }]),

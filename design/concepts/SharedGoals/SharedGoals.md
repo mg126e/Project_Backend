@@ -1,5 +1,5 @@
 **SharedGoals** [User, User]
-    - **Purpose:** Allow a group of users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
+    - **Purpose:** Allow a set (pair) of users to collaboratively monitor and achieve a shared running goal by breaking it into actionable steps.
     - **Principle:** After a set of users agree on a shared goal, one of them can either have an LLM generate recommended steps or input their own. Any user can mark steps as complete, view progress, and see which steps remain.
    - **State:**
        - A set of `SharedGoals`, each with:
