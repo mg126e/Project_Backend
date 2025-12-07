@@ -8,6 +8,7 @@ const SET_BIO_PATH = "/UserProfile/setBio";
 const SET_LOCATION_PATH = "/UserProfile/setLocation";
 const SET_EMERGENCY_CONTACT_PATH = "/UserProfile/setEmergencyContact";
 const SET_TAG_PATH = "/UserProfile/setTag";
+const SET_TIME_OF_DAY_CATEGORY_PATH = "/UserProfile/setTimeOfDayCategory";
 const SET_PROFILE_IMAGE_PATH = "/UserProfile/setProfileImage";
 const SET_IS_ACTIVE_PATH = "/UserProfile/setIsActive";
 const CLOSE_PROFILE_PATH = "/UserProfile/closeProfile";
@@ -223,6 +224,34 @@ export const RespondToSetTagError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: SET_TAG_PATH }, { request }],
     [UserProfile.setTag, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
+});
+
+// Set Time of Day Category
+export const HandleSetTimeOfDayCategoryRequest: Sync = ({ request, session, user, timeOfDayCategory }) => ({
+  when: actions([
+    Requesting.request,
+    { path: SET_TIME_OF_DAY_CATEGORY_PATH, timeOfDayCategory, session },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([UserProfile.setTimeOfDayCategory, { user, timeOfDayCategory }]),
+});
+
+export const RespondToSetTimeOfDayCategorySuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: SET_TIME_OF_DAY_CATEGORY_PATH }, { request }],
+    [UserProfile.setTimeOfDayCategory, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, msg: {} }]),
+});
+
+export const RespondToSetTimeOfDayCategoryError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: SET_TIME_OF_DAY_CATEGORY_PATH }, { request }],
+    [UserProfile.setTimeOfDayCategory, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, msg: { error } }]),
 });

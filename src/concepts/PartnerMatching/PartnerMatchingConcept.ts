@@ -229,7 +229,7 @@ export default class PartnerMatchingConcept {
    *
    * requires: a Suggestion exists with recipient user being Recipient and candidate user being Candidate
    *
-   * effects: set Status of suggestion to ‘declined’ and deletes it from recipient’s set of suggestions
+   * effects: set Status of suggestion to 'declined' and deletes it from recipient's set of suggestions
    */
   async declineSuggestion(
     { suggestion, recipient, candidate }: {
@@ -259,6 +259,66 @@ export default class PartnerMatchingConcept {
       return {};
     } catch (e) {
       console.error("Error in declineSuggestion:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
+
+  /**
+   * checkAndCreateMatchFromMutualRequests (recipient: User, candidate: User): (match: Match) | Empty
+   *
+   * requires: both users exist and are distinct
+   *
+   * effects: if both users have sent pending requests to each other (mutual requests),
+   * creates a new Match between them and deletes both suggestions. Otherwise returns Empty.
+   */
+  async checkAndCreateMatchFromMutualRequests(
+    { recipient, candidate }: { recipient: User; candidate: User },
+  ): Promise<{ match: Match } | Empty | { error: string }> {
+    try {
+      if (recipient === candidate) {
+        return { error: "Recipient and candidate cannot be the same user." };
+      }
+
+      // Check if both users have sent requests to each other
+      const suggestionAB = await this.suggestions.findOne({
+        recipient,
+        candidate,
+        status: AcceptanceStatus.Pending,
+      });
+
+      const suggestionBA = await this.suggestions.findOne({
+        recipient: candidate,
+        candidate: recipient,
+        status: AcceptanceStatus.Pending,
+      });
+
+      // If both suggestions exist and are pending, create a match
+      if (suggestionAB && suggestionBA) {
+        const sortedUsers: [User, User] = recipient < candidate
+          ? [recipient, candidate]
+          : [candidate, recipient];
+
+        // Check if a match already exists
+        const existingMatch = await this.matches.findOne({ users: sortedUsers });
+        if (existingMatch) {
+          return { error: "A match already exists between these users." };
+        }
+
+        // Create the match
+        const newMatchId = freshID() as Match;
+        await this.matches.insertOne({ _id: newMatchId, users: sortedUsers });
+
+        // Delete both suggestions
+        await this.suggestions.deleteMany({
+          $or: [{ _id: suggestionAB._id }, { _id: suggestionBA._id }],
+        });
+
+        return { match: newMatchId };
+      }
+
+      return {};
+    } catch (e) {
+      console.error("Error in checkAndCreateMatchFromMutualRequests:", e);
       return { error: "An unexpected server error occurred." };
     }
   }

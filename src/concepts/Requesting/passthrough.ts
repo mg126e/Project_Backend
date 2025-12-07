@@ -86,6 +86,7 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/setLocation",
   "/api/UserProfile/setEmergencyContact",
   "/api/UserProfile/setTag",
+  "/api/UserProfile/setTimeOfDayCategory",
   "/api/UserProfile/setProfileImage",
   "/api/UserProfile/setIsActive",
   "/api/UserProfile/closeProfile",

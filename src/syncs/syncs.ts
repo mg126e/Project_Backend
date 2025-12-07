@@ -5,6 +5,7 @@
 import type { Sync } from "@engine";
 
 import * as sync_auth from "./auth.sync.ts";
+import * as sync_autoMatchMutualRequests from "./autoMatchMutualRequests.sync.ts";
 import * as sync_cancelRun from "./cancelRun.sync.ts";
 import * as sync_emailVerification from "./emailVerification.sync.ts";
 import * as sync_fileUploading from "./fileUploading.sync.ts";
@@ -22,6 +23,11 @@ const allSyncs: Record<string, Sync> = {};
 for (const [name, func] of Object.entries(sync_auth)) {
   if (typeof func === "function") {
     allSyncs[`auth.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_autoMatchMutualRequests)) {
+  if (typeof func === "function") {
+    allSyncs[`autoMatchMutualRequests.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_cancelRun)) {

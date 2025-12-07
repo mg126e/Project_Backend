@@ -18,9 +18,12 @@ type File = ID;
  *   location: String
  *   emergencyContact: String
  *   tags: { gender, age, runningLevel, runningPace, personality }
+ *   timeOfDayCategory: TimeOfDayCategory (required: one of "All Times", "Morning (5am - 12pm)", "Afternoon (12pm - 5pm)", "Evening (5pm - 9pm)", "Night (9pm - 5am)")
  *   isActive: Boolean
  */
 export type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
+
+export type TimeOfDayCategory = "All Times" | "Morning (5am - 12pm)" | "Afternoon (12pm - 5pm)" | "Evening (5pm - 9pm)" | "Night (9pm - 5am)";
 
 interface EmergencyContact {
   name: string;
@@ -35,6 +38,7 @@ interface UserProfileDoc {
   location?: string;
   emergencyContact?: EmergencyContact;
   tags?: Partial<Record<AllowedTag, string | number>>;
+  timeOfDayCategory?: TimeOfDayCategory;
   isActive?: boolean;
 }
 
@@ -86,6 +90,7 @@ export default class UserProfileConcept {
       location: undefined,
       emergencyContact: undefined,
       tags: {},
+      timeOfDayCategory: undefined,
       isActive: false, 
     });
     return {};
@@ -227,6 +232,35 @@ export default class UserProfileConcept {
     const result = await this.userProfiles.updateOne(
       { _id: user },
       { $set: { tags } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
+   * setTimeOfDayCategory (user: User, timeOfDayCategory: TimeOfDayCategory)
+   *
+   * @requires the user exists in the set of users. timeOfDayCategory must be one of the allowed values.
+   * @effects sets or updates the time of day category for the user's profile.
+   */
+  async setTimeOfDayCategory(
+    { user, timeOfDayCategory }: { user: User; timeOfDayCategory: TimeOfDayCategory },
+  ): Promise<Empty | { error: string }> {
+    const allowedCategories: TimeOfDayCategory[] = [
+      "All Times",
+      "Morning (5am - 12pm)",
+      "Afternoon (12pm - 5pm)",
+      "Evening (5pm - 9pm)",
+      "Night (9pm - 5am)",
+    ];
+    if (!allowedCategories.includes(timeOfDayCategory)) {
+      return { error: `Time of day category '${timeOfDayCategory}' is not allowed.` };
+    }
+    const result = await this.userProfiles.updateOne(
+      { _id: user },
+      { $set: { timeOfDayCategory } },
     );
     if (result.matchedCount === 0) {
       return { error: `User profile for ${user} not found.` };
