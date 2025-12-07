@@ -55,7 +55,7 @@ export const AddMilestoneRequest: Sync = ({
   when: actions([
     Requesting.request,
     { path: "/MilestoneMap/addMilestone", session, milestoneMapId, latitude, 
-      longitude, title, description },
+      longitude, title, description, photoFileId: undefined },
     { request },
   ]),
   where: async (frames) =>
