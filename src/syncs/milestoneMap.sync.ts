@@ -34,6 +34,25 @@ export const CreateMilestoneMapResponseError: Sync = ({ request, error }) => ({
 //-- Add Milestone --//
 export const AddMilestoneRequest: Sync = ({ 
   request, session, user, milestoneMapId, latitude, longitude, 
+  title, description
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MilestoneMap/addMilestone", session, milestoneMapId, latitude, 
+      longitude, title, description },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([MilestoneMap.addMilestone, { 
+    milestoneMap: milestoneMapId, latitude, longitude, title, description, 
+    addedBy: user
+  }]),
+});
+
+// Sync for adding milestone WITH photo
+export const AddMilestoneWithPhotoRequest: Sync = ({ 
+  request, session, user, milestoneMapId, latitude, longitude, 
   title, description, photoFileId
 }) => ({
   when: actions([

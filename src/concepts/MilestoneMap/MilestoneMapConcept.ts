@@ -249,7 +249,7 @@ export default class MilestoneMapConcept {
       title: m.title,
       description: m.description,
       addedBy: m.addedBy,
-      photoFileId: m.photoFileId,
+      ...(m.photoFileId && { photoFileId: m.photoFileId }),
       createdAt: m.createdAt
     }));
   }
