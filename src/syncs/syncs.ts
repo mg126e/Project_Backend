@@ -4,33 +4,29 @@
 
 import type { Sync } from "@engine";
 
-import * as sync_cancelRun from "./cancelRun.sync.ts";
-import * as sync_goals from "./goals.sync.ts";
-import * as sync_oneRunChat from "./oneRunChat.sync.ts";
-import * as sync_emailVerification from "./emailVerification.sync.ts";
 import * as sync_auth from "./auth.sync.ts";
+import * as sync_cancelRun from "./cancelRun.sync.ts";
+import * as sync_emailVerification from "./emailVerification.sync.ts";
 import * as sync_fileUploading from "./fileUploading.sync.ts";
-import * as sync_profile from "./profile.sync.ts";
-import * as sync_milestoneMap from "./milestoneMap.sync.ts";
+import * as sync_goals from "./goals.sync.ts";
 import * as sync_matchAndChat from "./matchAndChat.sync.ts";
+import * as sync_milestoneMap from "./milestoneMap.sync.ts";
+import * as sync_oneRunChat from "./oneRunChat.sync.ts";
+import * as sync_oneRunMatching from "./oneRunMatching.sync.ts";
+import * as sync_profile from "./profile.sync.ts";
 import * as sync_suggest from "./suggest.sync.ts";
 
 const allSyncs: Record<string, Sync> = {};
 
 
+for (const [name, func] of Object.entries(sync_auth)) {
+  if (typeof func === "function") {
+    allSyncs[`auth.${name}`] = func as Sync;
+  }
+}
 for (const [name, func] of Object.entries(sync_cancelRun)) {
   if (typeof func === "function") {
     allSyncs[`cancelRun.${name}`] = func as Sync;
-  }
-}
-for (const [name, func] of Object.entries(sync_goals)) {
-  if (typeof func === "function") {
-    allSyncs[`goals.${name}`] = func as Sync;
-  }
-}
-for (const [name, func] of Object.entries(sync_oneRunChat)) {
-  if (typeof func === "function") {
-    allSyncs[`oneRunChat.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_emailVerification)) {
@@ -38,19 +34,19 @@ for (const [name, func] of Object.entries(sync_emailVerification)) {
     allSyncs[`emailVerification.${name}`] = func as Sync;
   }
 }
-for (const [name, func] of Object.entries(sync_auth)) {
-  if (typeof func === "function") {
-    allSyncs[`auth.${name}`] = func as Sync;
-  }
-}
 for (const [name, func] of Object.entries(sync_fileUploading)) {
   if (typeof func === "function") {
     allSyncs[`fileUploading.${name}`] = func as Sync;
   }
 }
-for (const [name, func] of Object.entries(sync_profile)) {
+for (const [name, func] of Object.entries(sync_goals)) {
   if (typeof func === "function") {
-    allSyncs[`profile.${name}`] = func as Sync;
+    allSyncs[`goals.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_matchAndChat)) {
+  if (typeof func === "function") {
+    allSyncs[`matchAndChat.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_milestoneMap)) {
@@ -58,9 +54,19 @@ for (const [name, func] of Object.entries(sync_milestoneMap)) {
     allSyncs[`milestoneMap.${name}`] = func as Sync;
   }
 }
-for (const [name, func] of Object.entries(sync_matchAndChat)) {
+for (const [name, func] of Object.entries(sync_oneRunChat)) {
   if (typeof func === "function") {
-    allSyncs[`matchAndChat.${name}`] = func as Sync;
+    allSyncs[`oneRunChat.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_oneRunMatching)) {
+  if (typeof func === "function") {
+    allSyncs[`oneRunMatching.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_profile)) {
+  if (typeof func === "function") {
+    allSyncs[`profile.${name}`] = func as Sync;
   }
 }
 for (const [name, func] of Object.entries(sync_suggest)) {

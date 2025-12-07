@@ -1,4 +1,4 @@
-import { UserProfile, PasswordAuthentication, Requesting, Sessioning } from "@concepts";
+import { UserProfile, PasswordAuthentication, Requesting, Sessioning, OneRunMatching } from "@concepts";
 import { actions, Frames, Sync } from "@engine";
 import { ID } from "@utils/types.ts";
 
@@ -109,11 +109,57 @@ export const HandleSetLocationRequest: Sync = ({ request, session, user, locatio
   then: actions([UserProfile.setLocation, { user, location }]),
 });
 
-export const RespondToSetLocationSuccess: Sync = ({ request }) => ({
+export const RespondToSetLocationSuccess: Sync = ({ request, user, location, session }) => ({
   when: actions(
-    [Requesting.request, { path: SET_LOCATION_PATH }, { request }],
-    [UserProfile.setLocation, {}, {}],
+    [Requesting.request, { path: SET_LOCATION_PATH, location, session }, { request }],
+    [UserProfile.setLocation, { user }, {}],
   ),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    // Query user from session since UserProfile.setLocation doesn't output the user
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      console.error(`[RespondToSetLocationSuccess] Could not get user from session`);
+      return new Frames(originalFrame);
+    }
+    const userId = frames[0][user] as ID;
+    const locationValue = originalFrame[location] as string;
+    // Auto-register or update user in OneRunMatching when they set their location
+    // Extract state from location (e.g., "Wellesley, MA" -> "MA")
+    const extractState = (loc: string): string => {
+      if (!loc) return "";
+      // Split by comma and take the last part (state), trim whitespace
+      const parts = loc.split(",").map(p => p.trim());
+      return parts.length > 1 ? parts[parts.length - 1] : loc;
+    };
+    
+    const region = extractState(locationValue);
+    
+    if (!region) {
+      console.warn(`[RespondToSetLocationSuccess] Could not extract state from location: ${locationValue}`);
+      return frames;
+    }
+    
+    try {
+      const existingUser = await OneRunMatching._getUser({ user: userId });
+      if (!existingUser) {
+        // User doesn't exist in OneRunMatching, register them
+        const result = await OneRunMatching.registerUser({ user: userId, region });
+        if ('error' in result) {
+          console.error(`[RespondToSetLocationSuccess] Error registering user: ${result.error}`);
+        }
+      } else {
+        // User exists, update their region
+        const result = await OneRunMatching.setRegion({ user: userId, region });
+        if ('error' in result) {
+          console.error(`[RespondToSetLocationSuccess] Error setting region: ${result.error}`);
+        }
+      }
+    } catch (error) {
+      console.error(`[RespondToSetLocationSuccess] Error in where clause:`, error);
+    }
+    return frames;
+  },
   then: actions([Requesting.respond, { request, msg: {} }]),
 });
 

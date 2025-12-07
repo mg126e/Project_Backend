@@ -111,4 +111,8 @@ export const exclusions: Array<string> = [
   "/api/MilestoneMap/getMilestoneMap",
   "/api/MilestoneMap/getMilestones",
   "/api/MilestoneMap/getAllMapsForUser",
+  "/api/OneRunMatching/getActiveInvitesForUser",
+  "/api/OneRunMatching/cancelRun",
+  "/api/OneRunMatching/_getRun",
+  "/api/OneRunMatching/_getInviteForRun",
 ];

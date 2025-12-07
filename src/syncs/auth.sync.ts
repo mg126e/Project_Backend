@@ -1,5 +1,5 @@
 import { actions, Sync, Frames } from "@engine";
-import { PasswordAuthentication, Requesting, Sessioning, EmailVerification } from "@concepts";
+import { PasswordAuthentication, Requesting, Sessioning, EmailVerification, OneRunMatching } from "@concepts";
 import { ID } from "@utils/types.ts";
 
 // Respond with error if login is blocked due to missing email verification
@@ -137,13 +137,14 @@ export const RegisterRequest: Sync = ({ request, username, password, email, veri
 
 
 // Register response when email is already verified
-export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, verificationRecordId }) => {
+export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, verificationRecordId, activeInvites }) => {
   return {
     when: actions(
       [Requesting.request, { path: "/PasswordAuthentication/register", email, verificationRecordId }, { request }],
       [PasswordAuthentication.register, {}, { user }],
     ),
     where: async (frames) => {
+      const originalFrame = frames[0];
       const req = frames[0];
       const vId = req[verificationRecordId] as ID | undefined;
       const userId = frames[1][user] as ID;
@@ -154,7 +155,9 @@ export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, ve
           const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
           if (verificationRecord && verificationRecord.isVerified) {
             // Verification record is verified - allow this sync to match
-            return frames;
+            // Fetch active invites to include in response
+            const invites = await OneRunMatching._getActiveInvites();
+            return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
           }
         } catch (error) {
           console.error(`[RegisterResponseSuccessVerified] Error checking verification record:`, error);
@@ -165,7 +168,9 @@ export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, ve
       try {
         const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
         if (verifiedEmails.length > 0) {
-          return frames;
+          // Fetch active invites to include in response
+          const invites = await OneRunMatching._getActiveInvites();
+          return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
         }
       } catch (error) {
         console.error(`[RegisterResponseSuccessVerified] Error checking verified emails:`, error);
@@ -174,12 +179,12 @@ export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, ve
       // Not verified, don't match this sync
       return new Frames();
     },
-    then: actions([Requesting.respond, { request, user }]),
+    then: actions([Requesting.respond, { request, user, activeInvites }]),
   };
 };
 
 // Register response when email is not yet verified
-export const RegisterResponseSuccess: Sync = ({ request, user, email, verificationRecordId }) => {
+export const RegisterResponseSuccess: Sync = ({ request, user, email, verificationRecordId, activeInvites }) => {
   console.log("[RegisterResponseSuccess] user:", user);
   return {
     when: actions(
@@ -187,6 +192,7 @@ export const RegisterResponseSuccess: Sync = ({ request, user, email, verificati
       [PasswordAuthentication.register, {}, { user }],
     ),
     where: async (frames) => {
+      const originalFrame = frames[0];
       const req = frames[0];
       const vId = req[verificationRecordId] as ID | undefined;
       const userId = frames[1][user] as ID;
@@ -216,9 +222,11 @@ export const RegisterResponseSuccess: Sync = ({ request, user, email, verificati
       }
       
       // Verification not completed, allow this sync to match
-      return frames;
+      // Fetch active invites to include in response
+      const invites = await OneRunMatching._getActiveInvites();
+      return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
     },
-    then: actions([Requesting.respond, { request, user, msg: { requiresEmailVerification: true } }]),
+    then: actions([Requesting.respond, { request, user, msg: { requiresEmailVerification: true }, activeInvites }]),
   };
 };
 

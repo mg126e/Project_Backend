@@ -238,8 +238,13 @@ export default class OneRunMatchingConcept {
     if (inviteDoc.inviter === accepter) {
       return { error: "Users cannot accept their own invites." };
     }
-    if (!inviteDoc.invitees.includes(accepter)) {
-      return { error: `User ${accepter} was not invited to this run.` };
+    // Check if user's region matches invite's region (allows new users to accept existing invites)
+    const accepterDoc = await this.users.findOne({ _id: accepter });
+    if (!accepterDoc) {
+      return { error: `User ${accepter} does not exist in OneRunMatching. Please set your region first.` };
+    }
+    if (accepterDoc.region !== inviteDoc.region) {
+      return { error: `User ${accepter} is not in the same region as this invite.` };
     }
     const newRunId = freshID() as Run;
     const newRun: RunsDoc = {
@@ -272,8 +277,16 @@ export default class OneRunMatchingConcept {
     if (inviteDoc.acceptanceStatus !== "pending") {
       return { error: `Invite ${invite} is not pending acceptance. Current status: ${inviteDoc.acceptanceStatus}.` };
     }
-    if (!inviteDoc.invitees.includes(decliner)) {
-      return { error: `User ${decliner} was not invited to this run.` };
+    if (inviteDoc.inviter === decliner) {
+      return { error: "Users cannot decline their own invites." };
+    }
+    // Check if user's region matches invite's region (allows new users to decline existing invites)
+    const declinerDoc = await this.users.findOne({ _id: decliner });
+    if (!declinerDoc) {
+      return { error: `User ${decliner} does not exist in OneRunMatching. Please set your region first.` };
+    }
+    if (declinerDoc.region !== inviteDoc.region) {
+      return { error: `User ${decliner} is not in the same region as this invite.` };
     }
     await this.invites.updateOne({ _id: invite }, { $set: { acceptanceStatus: "declined" } });
     return {};
@@ -315,6 +328,27 @@ export default class OneRunMatchingConcept {
     if (userA !== initiator && userB !== initiator) {
       return { error: `User ${initiator} is not a participant and cannot cancel run ${run}.` };
     }
+    
+    // Find the invite associated with this run and set it back to pending
+    // The invite's inviter should be userA (the original inviter)
+    // Find the most recently accepted invite for this inviter that hasn't expired
+    const now = new Date().toISOString();
+    const associatedInvite = await this.invites.findOne({
+      inviter: userA,
+      acceptanceStatus: "accepted",
+      start: { $gt: now }, // Not expired
+    }, {
+      sort: { _id: -1 }, // Most recent first
+    });
+    
+    if (associatedInvite) {
+      // Set the invite back to pending so it can be accepted again
+      await this.invites.updateOne(
+        { _id: associatedInvite._id },
+        { $set: { acceptanceStatus: "pending" } }
+      );
+    }
+    
     await this.runs.deleteOne({ _id: run });
     await this.users.updateOne({ _id: userA }, { $pull: { runs: run } });
     await this.users.updateOne({ _id: userB }, { $pull: { runs: run } });
@@ -394,6 +428,59 @@ export default class OneRunMatchingConcept {
   }
 
   /**
+   * _getRun (run: Run): (runDoc: RunsDoc | null)
+   *
+   * Returns a specific run by its ID, or null if not found
+   */
+  async _getRun({ run }: { run: Run }): Promise<RunsDoc | null> {
+    if (!run) {
+      return null;
+    }
+    const runDoc = await this.runs.findOne({ _id: run });
+    return runDoc || null;
+  }
+
+  /**
+   * _getInviteForRun (run: Run): (invite: InvitesDoc | null)
+   *
+   * Returns the invite associated with a specific run, or null if not found
+   * The invite is found by matching the run's userA (inviter) and checking for accepted invites
+   */
+  async _getInviteForRun({ run }: { run: Run }): Promise<InvitesDoc | null> {
+    if (!run) {
+      return null;
+    }
+    const runDoc = await this.runs.findOne({ _id: run });
+    if (!runDoc) {
+      return null;
+    }
+    // Find the invite where the inviter matches userA and status is accepted
+    // Get the most recent accepted invite for this inviter that hasn't expired
+    const now = new Date().toISOString();
+    const invite = await this.invites.findOne({
+      inviter: runDoc.userA,
+      acceptanceStatus: "accepted",
+      start: { $gt: now }, // Not expired
+    }, {
+      sort: { _id: -1 }, // Most recent first
+    });
+    return invite || null;
+  }
+
+  /**
+   * _getUser (user: User): (userDoc: UsersDoc | null)
+   *
+   * Returns the user document if it exists, or null if not found
+   */
+  async _getUser({ user }: { user: User }): Promise<UsersDoc | null> {
+    if (!user) {
+      return null;
+    }
+    const userDoc = await this.users.findOne({ _id: user });
+    return userDoc || null;
+  }
+
+  /**
    * _getInvitesByRegion (region: String): (invites: InvitesDoc[])
    *
    * Returns all invites for a given region
@@ -453,5 +540,84 @@ export default class OneRunMatchingConcept {
     }
     const inviteDoc = await this.invites.findOne({ _id: invite });
     return inviteDoc || null;
+  }
+
+  /**
+   * _getActiveInvites (): (invites: InvitesDoc[])
+   *
+   * Returns all invites that have been sent out and are not yet expired
+   * - sent: true (invites that have been sent)
+   * - acceptanceStatus: "pending" (invites that can still be accepted)
+   * - start > now (invites that haven't expired yet)
+   */
+  async _getActiveInvites(): Promise<InvitesDoc[]> {
+    const now = new Date().toISOString();
+    const activeInvites = await this.invites
+      .find({
+        sent: true,
+        acceptanceStatus: "pending",
+        start: { $gt: now },
+      })
+      .toArray();
+    return activeInvites;
+  }
+
+  /**
+   * _getActiveInvitesForUser (user: User): (invites: InvitesDoc[])
+   *
+   * Returns all active invites for a specific user, filtered by their region
+   * - Gets the user's region from OneRunMatching
+   * - Returns active invites (sent, pending, not expired) that match the user's region
+   * - Updates invitees array for each invite to include all current users in the region
+   * - Returns empty array if user doesn't exist or has no region set
+   */
+  async _getActiveInvitesForUser({ user }: { user: User }): Promise<InvitesDoc[]> {
+    if (!user) {
+      return [];
+    }
+    const userDoc = await this.users.findOne({ _id: user });
+    if (!userDoc || !userDoc.region) {
+      return [];
+    }
+    const now = new Date().toISOString();
+    const activeInvites = await this.invites
+      .find({
+        sent: true,
+        acceptanceStatus: "pending",
+        start: { $gt: now },
+        region: userDoc.region,
+      })
+      .toArray();
+    
+    // Update invitees array for each invite to include all current users in the region
+    const currentInvitees = await this.users
+      .find({
+        region: userDoc.region,
+      })
+      .map((u) => u._id)
+      .toArray();
+    
+    // Update each invite's invitees array in the database and return updated invites
+    const updatedInvites: InvitesDoc[] = [];
+    for (const invite of activeInvites) {
+      // Get all users in the region except the inviter
+      const inviteesForThisInvite = currentInvitees.filter((uid) => uid !== invite.inviter);
+      
+      // Update the invite in the database if the invitees list has changed
+      if (JSON.stringify(invite.invitees.sort()) !== JSON.stringify(inviteesForThisInvite.sort())) {
+        await this.invites.updateOne(
+          { _id: invite._id },
+          { $set: { invitees: inviteesForThisInvite } }
+        );
+      }
+      
+      // Return the invite with updated invitees array
+      updatedInvites.push({
+        ...invite,
+        invitees: inviteesForThisInvite,
+      });
+    }
+    
+    return updatedInvites;
   }
 }
