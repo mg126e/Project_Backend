@@ -61,6 +61,18 @@ export const inclusions: Record<string, string> = {
     "public query to get all profiles for partner discovery and matching",
   "/api/UserProfile/_getDisplayName":
     "public query to get display name for a user",
+  "/api/PartnerMatching/suggestMatch":
+    "public action to send a request (thumbs-up) to another user",
+  "/api/PartnerMatching/_getThumbsUpsSent":
+    "public query to get which users the current user has sent requests to",
+  "/api/PartnerMatching/_getThumbsUpsReceived":
+    "public query to get which users have sent requests to the current user",
+  "/api/PartnerMatching/_hasMutualMatch":
+    "public query to check if two users have mutually sent requests to each other",
+  "/api/PartnerMatching/_getSuggestions":
+    "public query to get pending suggestions for a user",
+  "/api/PartnerMatching/_getActiveMatches":
+    "public query to get active matches for a user",
 };
 
 /**

@@ -468,4 +468,87 @@ export default class PartnerMatchingConcept {
       return { error: "An unexpected server error occurred." };
     }
   }
+
+  /**
+   * _getThumbsUpsSent (user: User): { userIds: User[] }
+   * effects: Returns all user IDs that the given user has sent requests to (thumbs-upped).
+   * A request is sent when suggestMatch is called with candidate = user.
+   */
+  async _getThumbsUpsSent(
+    { user }: { user: User },
+  ): Promise<{ userIds: User[] } | { error: string }> {
+    try {
+      const suggestions = await this.suggestions.find({
+        candidate: user,
+        status: AcceptanceStatus.Pending,
+      }).toArray();
+      const userIds = suggestions.map(s => s.recipient);
+      return { userIds };
+    } catch (e) {
+      console.error("Error in _getThumbsUpsSent:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
+
+  /**
+   * _getThumbsUpsReceived (user: User): { userIds: User[] }
+   * effects: Returns all user IDs that have sent requests to the given user (thumbs-upped them).
+   * A request is received when suggestMatch is called with recipient = user.
+   */
+  async _getThumbsUpsReceived(
+    { user }: { user: User },
+  ): Promise<{ userIds: User[] } | { error: string }> {
+    try {
+      const suggestions = await this.suggestions.find({
+        recipient: user,
+        status: AcceptanceStatus.Pending,
+      }).toArray();
+      const userIds = suggestions.map(s => s.candidate);
+      return { userIds };
+    } catch (e) {
+      console.error("Error in _getThumbsUpsReceived:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
+
+  /**
+   * _hasMutualMatch (userA: User, userB: User): { hasMutualMatch: boolean }
+   * effects: Returns true if both users have sent requests to each other (mutual match).
+   * This checks if there are pending suggestions in both directions.
+   */
+  async _hasMutualMatch(
+    { userA, userB }: { userA: User; userB: User },
+  ): Promise<{ hasMutualMatch: boolean } | { error: string }> {
+    try {
+      if (userA === userB) {
+        return { hasMutualMatch: false };
+      }
+
+      // Check if userA sent a request to userB
+      const suggestionAB = await this.suggestions.findOne({
+        recipient: userB,
+        candidate: userA,
+        status: AcceptanceStatus.Pending,
+      });
+
+      // Check if userB sent a request to userA
+      const suggestionBA = await this.suggestions.findOne({
+        recipient: userA,
+        candidate: userB,
+        status: AcceptanceStatus.Pending,
+      });
+
+      // Also check if they're already matched
+      const sortedUsers: [User, User] = userA < userB
+        ? [userA, userB]
+        : [userB, userA];
+      const existingMatch = await this.matches.findOne({ users: sortedUsers });
+
+      const hasMutualMatch = !!(suggestionAB && suggestionBA) || !!existingMatch;
+      return { hasMutualMatch };
+    } catch (e) {
+      console.error("Error in _hasMutualMatch:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
 }
