@@ -80,10 +80,26 @@ export const CreateSessionAfterEmailVerification: Sync = ({ user }) => ({
   then: actions([Sessioning.start, { user }]),
 });
 
+// After successful email verification via verifyCode, create a session for the user
+export const CreateSessionAfterVerifyCode: Sync = ({ user }) => ({
+  when: actions(
+    [EmailVerification.verifyCode, { user }, { success: true }],
+  ),
+  then: actions([Sessioning.start, { user }]),
+});
+
 // After successful email verification, create a user profile (runs asynchronously)
 export const CreateProfileAfterEmailVerification: Sync = ({ user }) => ({
   when: actions(
     [EmailVerification.verifyEmail, {}, { user }],
+  ),
+  then: actions([UserProfile.createProfile, { user }]),
+});
+
+// After successful email verification via verifyCode, create a user profile (runs asynchronously)
+export const CreateProfileAfterVerifyCode: Sync = ({ user }) => ({
+  when: actions(
+    [EmailVerification.verifyCode, { user }, { success: true }],
   ),
   then: actions([UserProfile.createProfile, { user }]),
 });
@@ -150,10 +166,11 @@ export const HandleRegisterRequest: Sync = ({ request, user, email }) => ({
 });
 
 // Respond to EmailVerification.register success
-export const RespondToRegisterSuccess: Sync = ({ request }) => ({
+// Only matches when there's an actual HTTP request to /EmailVerification/register
+export const RespondToRegisterSuccess: Sync = ({ request, user, email }) => ({
   when: actions(
-    [Requesting.request, { path: REGISTER_PATH }, { request }],
-    [EmailVerification.register, {}, {}],
+    [Requesting.request, { path: REGISTER_PATH, user, email }, { request }],
+    [EmailVerification.register, { user, email }, {}],
   ),
   then: actions([Requesting.respond, { request, msg: {} }]),
 });
@@ -177,13 +194,14 @@ export const HandleVerifyCodeRequest: Sync = ({ request, user, code }) => ({
   then: actions([EmailVerification.verifyCode, { user, code }]),
 });
 
-// Respond to EmailVerification.verifyCode success
-export const RespondToVerifyCodeSuccess: Sync = ({ request }) => ({
+// Respond to EmailVerification.verifyCode success with session
+export const RespondToVerifyCodeSuccess: Sync = ({ request, user, session }) => ({
   when: actions(
-    [Requesting.request, { path: VERIFY_CODE_PATH }, { request }],
-    [EmailVerification.verifyCode, {}, { success: true }],
+    [Requesting.request, { path: VERIFY_CODE_PATH, user }, { request }],
+    [EmailVerification.verifyCode, { user }, { success: true }],
+    [Sessioning.start, { user }, { session }],
   ),
-  then: actions([Requesting.respond, { request, success: true }]),
+  then: actions([Requesting.respond, { request, success: true, user, session }]),
 });
 
 // Respond to EmailVerification.verifyCode error
