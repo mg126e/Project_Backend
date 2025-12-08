@@ -167,26 +167,76 @@ export const HandleRegisterRequest: Sync = ({ request, user, email }) => ({
 
 // Respond to EmailVerification.register success
 // Only matches when there's an actual HTTP request to /EmailVerification/register
+// NOTE: This sync should rarely/never match since /EmailVerification/register is typically
+// called internally from emailVerificationOnRegister sync, not as a direct HTTP request
 export const RespondToRegisterSuccess: Sync = ({ request, user, email }) => ({
   when: actions(
     [Requesting.request, { path: REGISTER_PATH, user, email }, { request }],
     [EmailVerification.register, { user, email }, {}],
   ),
   where: (frames) => {
-    // Only match if we have all required bindings in the frame (i.e., this was called from an HTTP request, not a sync)
-    // The frame should have both the Requesting.request (with request, user, email) and EmailVerification.register
-    if (frames.length >= 2) {
-      const requestFrame = frames[0];
-      const registerFrame = frames[1];
-      // Check that we have request, user, and email in the frames
-      if (requestFrame[request] !== undefined && 
-          (requestFrame[user] !== undefined || registerFrame[user] !== undefined) &&
-          (requestFrame[email] !== undefined || registerFrame[email] !== undefined)) {
-        return frames;
+    try {
+      console.log("[RespondToRegisterSuccess.where] Called with frames:", frames);
+      console.log("[RespondToRegisterSuccess.where] Frames length:", frames?.length);
+      
+      // Defensive check: ensure frames exist and have the expected structure
+      if (!frames || frames.length === 0) {
+        console.log("[RespondToRegisterSuccess.where] No frames or empty frames, returning empty");
+        return new Frames();
       }
+      
+      // The sync requires 2 actions: Requesting.request and EmailVerification.register
+      // If matchWhen couldn't find both, frames will be empty or incomplete
+      // We need to verify that we actually have both actions matched
+      
+      // Check each frame to ensure it has the request binding
+      // If the Requesting.request for /EmailVerification/register wasn't in the flow,
+      // the frame won't have the request binding
+      for (let i = 0; i < frames.length; i++) {
+        const frame = frames[i];
+        console.log(`[RespondToRegisterSuccess.where] Processing frame ${i}:`, frame);
+        
+        if (!frame) {
+          console.log(`[RespondToRegisterSuccess.where] Frame ${i} is null/undefined, returning empty`);
+          return new Frames();
+        }
+        
+        // Log what symbols are in the frame
+        const frameSymbols = Object.getOwnPropertySymbols(frame);
+        console.log(`[RespondToRegisterSuccess.where] Frame ${i} has symbols:`, frameSymbols.map(s => s.description || String(s)));
+        
+        // Critical check: the request binding MUST exist in the frame
+        // If it doesn't, this means Requesting.request for /EmailVerification/register
+        // was not found in the flow (i.e., this was called from a sync, not an HTTP request)
+        console.log(`[RespondToRegisterSuccess.where] Checking frame[request]:`, frame[request]);
+        if (frame[request] === undefined) {
+          console.log(`[RespondToRegisterSuccess.where] Frame ${i} missing request binding, returning empty`);
+          return new Frames();
+        }
+        
+        // Also verify user and email are present
+        console.log(`[RespondToRegisterSuccess.where] Checking frame[user]:`, frame[user]);
+        console.log(`[RespondToRegisterSuccess.where] Checking frame[email]:`, frame[email]);
+        const hasUser = frame[user] !== undefined;
+        const hasEmail = frame[email] !== undefined;
+        
+        if (!hasUser || !hasEmail) {
+          console.log(`[RespondToRegisterSuccess.where] Frame ${i} missing user or email, returning empty`);
+          return new Frames();
+        }
+        
+        console.log(`[RespondToRegisterSuccess.where] Frame ${i} passed all checks`);
+      }
+      
+      // All frames passed validation - this is a valid HTTP request
+      console.log("[RespondToRegisterSuccess.where] All frames passed validation, returning frames");
+      return frames;
+    } catch (error) {
+      // If any error occurs, don't match
+      console.error("[RespondToRegisterSuccess.where] Error in where clause:", error);
+      console.error("[RespondToRegisterSuccess.where] Error stack:", error instanceof Error ? error.stack : "No stack");
+      return new Frames();
     }
-    // Don't match if called from a sync (no Requesting.request in the flow)
-    return new Frames();
   },
   then: actions([Requesting.respond, { request, msg: {} }]),
 });

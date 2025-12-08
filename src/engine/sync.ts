@@ -77,21 +77,26 @@ export class SyncConcept {
     }
   }
   async synchronize(record: ActionRecord) {
+    const boundAction = (record.action as InstrumentedAction).action;
+    const constructorName = record.concept.constructor.name;
+    let conceptName = constructorName;
+    if (constructorName.endsWith("Concept")) {
+      conceptName = constructorName.slice(0, -"Concept".length);
+    }
+    const boundName = boundAction
+      ? boundAction.name.slice("bound ".length)
+      : "UNDEFINED";
+    console.log(`[SyncEngine.synchronize] Action: ${conceptName}.${boundName}`);
+    console.log(`[SyncEngine.synchronize] Input:`, record.input);
+    console.log(`[SyncEngine.synchronize] Output:`, record.output);
+    console.log(`[SyncEngine.synchronize] Flow:`, record.flow);
+    
     if (this.logging === Logging.VERBOSE) {
       const { concept, ...rec } = record;
       const conceptName = concept.constructor.name;
       console.log("Synchronizing action:", { concept: conceptName, ...rec });
     }
     if (this.logging === Logging.TRACE) {
-      const boundAction = (record.action as InstrumentedAction).action;
-      const constructorName = record.concept.constructor.name;
-      let conceptName = constructorName;
-      if (constructorName.endsWith("Concept")) {
-        conceptName = constructorName.slice(0, -"Concept".length);
-      }
-      const boundName = boundAction
-        ? boundAction.name.slice("bound ".length)
-        : "UNDEFINED";
       console.log(
         `\n${conceptName}.${boundName} ${inspect(record.input)} => ${
           inspect(record.output)
@@ -110,14 +115,23 @@ export class SyncConcept {
             `Matched \`sync\`: ${sync.sync} with \`when\`:`,
             frames,
           );
+          console.log(`[SyncEngine] Sync '${sync.sync}' matched with ${frames.length} frames`);
           if (sync.where !== undefined) {
+            console.log(`[SyncEngine] Sync '${sync.sync}' has where clause, processing...`);
             const maybeFrames = sync.where(frames);
             frames = maybeFrames instanceof Promise
               ? await maybeFrames
               : maybeFrames;
             this.logFrames(`After processing \`where\`:`, frames);
+            console.log(`[SyncEngine] Sync '${sync.sync}' after where clause: ${frames.length} frames`);
           }
-          await this.addThen(frames, sync, actionSymbols);
+          // Only call addThen if we still have frames after the where clause
+          if (frames.length > 0) {
+            console.log(`[SyncEngine] Sync '${sync.sync}' calling addThen with ${frames.length} frames`);
+            await this.addThen(frames, sync, actionSymbols);
+          } else {
+            console.log(`[SyncEngine] Sync '${sync.sync}' has no frames after where clause, skipping addThen`);
+          }
         }
       }
     }
@@ -131,14 +145,21 @@ export class SyncConcept {
     record: ActionRecord,
     sync: Synchronization,
   ): Promise<[Frames<Frame>, symbol[]]> {
+    console.log(`[SyncEngine.matchWhen] Starting match for sync '${sync.sync}'`);
     let frames = new Frames();
     const whens = sync.when;
+    console.log(`[SyncEngine.matchWhen] Sync '${sync.sync}' has ${whens.length} when patterns`);
     const flowActions = await this.Action._getByFlow(record.flow);
-    if (flowActions === undefined) return [frames, []];
+    console.log(`[SyncEngine.matchWhen] Found ${flowActions?.length || 0} actions in flow`);
+    if (flowActions === undefined) {
+      console.log(`[SyncEngine.matchWhen] No flow actions, returning empty frames`);
+      return [frames, []];
+    }
     let i = 0;
     const actionSymbols: symbol[] = [];
     frames.push({ [flow]: record.flow });
     for (const when of whens) {
+      console.log(`[SyncEngine.matchWhen] Processing when pattern ${i}:`, when.action.name, when.concept.constructor.name);
       const actionSymbol = Symbol(`action_${i}`);
       actionSymbols.push(actionSymbol);
       i++;
@@ -157,11 +178,14 @@ export class SyncConcept {
             actionSymbol,
           );
           if (matched === undefined) continue;
+          console.log(`[SyncEngine.matchWhen] Matched when pattern ${i} with action record`);
           newFrames.push(matched);
         }
       }
       frames = newFrames;
+      console.log(`[SyncEngine.matchWhen] After when pattern ${i}: ${frames.length} frames`);
     }
+    console.log(`[SyncEngine.matchWhen] Final result: ${frames.length} frames, ${actionSymbols.length} action symbols`);
     return [frames, actionSymbols];
   }
   async addThen(
@@ -169,29 +193,45 @@ export class SyncConcept {
     sync: Synchronization,
     actionSymbols: symbol[],
   ) {
+    console.log(`[SyncEngine.addThen] Called for sync '${sync.sync}' with ${frames.length} frames`);
     const thens: [InstrumentedAction, ActionArguments][] = [];
-    for (const frame of frames) {
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      console.log(`[SyncEngine.addThen] Processing frame ${i} for sync '${sync.sync}':`, frame);
+      
+      if (!frame) {
+        console.error(`[SyncEngine.addThen] Frame ${i} is null/undefined!`);
+        throw new Error(`Frame ${i} is null/undefined in sync '${sync.sync}'`);
+      }
+      
       // Collect when actions for marking after executing thens
       const whenActions: ActionRecord[] = [];
       for (const actionSymbol of actionSymbols) {
+        console.log(`[SyncEngine.addThen] Looking for actionSymbol in frame:`, String(actionSymbol));
         const actionId = frame[actionSymbol];
+        console.log(`[SyncEngine.addThen] Found actionId:`, actionId);
         if (actionId === undefined || typeof actionId !== "string") {
+          console.error(`[SyncEngine.addThen] Missing actionId for symbol ${String(actionSymbol)} in frame ${i}`);
           throw new Error("Missing actionId in `then` clause.");
         }
         const action = this.Action._getById(actionId);
         if (action?.synced) {
           whenActions.push(action);
         } else {
+          console.error(`[SyncEngine.addThen] Action ${action} missing or missing synced Map`);
           throw new Error(
             `Action ${action} missing or missing synced Map.`,
           );
         }
       }
       for (const then of sync.then) {
+        console.log(`[SyncEngine.addThen] Matching then clause for sync '${sync.sync}':`, then);
         const matched = this.matchThen(then, frame);
+        console.log(`[SyncEngine.addThen] Matched result:`, matched);
         const id = matched[actionId];
 
         if (id === undefined || typeof id !== "string") {
+          console.error(`[SyncEngine.addThen] Action produced from then is missing an id`);
           throw new Error(
             "Action produced from \`then\` is missing an id.",
           );
@@ -211,11 +251,20 @@ export class SyncConcept {
     }
   }
   matchThen(then: ActionPattern, frame: Frame) {
+    console.log(`[SyncEngine.matchThen] Called with then:`, then, "frame:", frame);
+    if (!frame) {
+      console.error(`[SyncEngine.matchThen] Frame is null/undefined!`);
+      throw new Error("Frame is null/undefined in matchThen");
+    }
     const bound = Object.entries(then.input).map(([key, value]) => {
       let matchedValue = value;
       if (typeof value === "symbol") {
+        console.log(`[SyncEngine.matchThen] Looking for symbol ${String(value)} in frame`);
         matchedValue = frame[value];
+        console.log(`[SyncEngine.matchThen] Found value:`, matchedValue);
         if (matchedValue === undefined) {
+          console.error(`[SyncEngine.matchThen] Missing binding: ${String(value)} in frame:`, frame);
+          console.error(`[SyncEngine.matchThen] Frame symbols:`, Object.getOwnPropertySymbols(frame).map(s => s.description || String(s)));
           throw new Error(
             `Missing binding: ${String(value)} in frame: ${frame}`,
           );
