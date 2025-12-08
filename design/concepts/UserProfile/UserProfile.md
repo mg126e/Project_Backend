@@ -11,14 +11,15 @@
                - `name`: String (contact person's name)
                - `phone`: String (contact's phone number)
            - `tags`: Object with keys: "gender", "age", "runningLevel", "runningPace", "personality" (e.g., "introvert"/"extrovert"). Each key maps to a single value.
+           - `timeOfDayCategory`: TimeOfDayCategory (one of "All Times", "Morning (5am - 12pm)", "Afternoon (12pm - 5pm)", "Evening (5pm - 9pm)", "Night (9pm - 5am)")
            - `isActive`: Boolean
    - **Actions:**
        - `createProfile(user: User): ()`
            - *Requires:* No profile for the given user already exists.
            - *Effects:* Creates a new user profile record for the given user with no initial display name, profile image, location, bio, or tags. The profile is not active (not visible to others) until all required fields are filled out.
-       - `setActive(user: User): ()`
-           - *Requires:* The user exists in the set of users. All required fields (displayname, profileImage, bio, location, and all required tags) must be filled out.
-           - *Effects:* Sets the user's profile to active (visible to others).
+       - `setIsActive(user: User, isActive: Boolean): ()`
+           - *Requires:* The user exists in the set of users.
+           - *Effects:* Sets the user's isActive field to the given boolean value (controls visibility to others).
        - `setLocation(user: User, location: String): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Updates the user's location.
@@ -37,12 +38,26 @@
          - `setTag(user: User, tagType: String, value: String|Number): ()`
            - *Requires:* The user exists in the set of users
            - *Effects:* Sets or updates the tag of the specified type for the user's profile. Only one value per tag type is allowed per user.
-         - `getProfile(user: User): UserProfileDoc | { error: string }`
-           - *Requires:* The user exists in the set of users.
-           - *Returns:* The user's profile document, or an error if not found.
+         - `setTimeOfDayCategory(user: User, timeOfDayCategory: TimeOfDayCategory): ()`
+           - *Requires:* The user exists in the set of users. timeOfDayCategory must be one of the allowed values.
+           - *Effects:* Sets or updates the time of day category for the user's profile.
          - `closeProfile(user: User): ()`
            - *Requires:* The user exists in the set of users.
            - *Effects:* Permanently deletes the user's profile and all associated data.
+   - **Queries:**
+         - `_getProfile(user: User): UserProfileDoc | { error: string }`
+           - *Requires:* The user exists in the set of users.
+           - *Returns:* The user's profile document, or an error if not found.
+         - `_getDisplayName(user: User): { displayname: string } | { error: string }`
+           - *Requires:* The user exists in the set of users.
+           - *Returns:* The display name for the given user, or an error if not found.
+         - `_getProfilesByLocation(location: String): UserProfileDoc[]`
+           - *Returns:* All active profiles that match the given location.
+         - `_getAllProfiles(): UserProfileDoc[]`
+           - *Returns:* All active profiles in the system.
+         - `getProfileImageDownloadURL(user: User): { downloadURL: string } | { error: string }`
+           - *Requires:* The user exists and has a profile image set.
+           - *Returns:* A download URL for the user's profile image using the FileUploading concept.
     - **Notes:**
         - By requiring that a user profile must be fully filled in, this helps users feel safer when they are looking for long-term matches
         - A user would provide the phone number of the person
@@ -70,9 +85,12 @@ type File = ID;
  *   location: String
  *   emergencyContact: String
  *   tags: { gender, age, runningLevel, runningPace, personality }
+ *   timeOfDayCategory: TimeOfDayCategory (required: one of "All Times", "Morning (5am - 12pm)", "Afternoon (12pm - 5pm)", "Evening (5pm - 9pm)", "Night (9pm - 5am)")
  *   isActive: Boolean
  */
 export type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
+
+export type TimeOfDayCategory = "All Times" | "Morning (5am - 12pm)" | "Afternoon (12pm - 5pm)" | "Evening (5pm - 9pm)" | "Night (9pm - 5am)";
 
 interface EmergencyContact {
   name: string;
@@ -87,6 +105,7 @@ interface UserProfileDoc {
   location?: string;
   emergencyContact?: EmergencyContact;
   tags?: Partial<Record<AllowedTag, string | number>>;
+  timeOfDayCategory?: TimeOfDayCategory;
   isActive?: boolean;
 }
 
@@ -138,6 +157,7 @@ export default class UserProfileConcept {
       location: undefined,
       emergencyContact: undefined,
       tags: {},
+      timeOfDayCategory: undefined,
       isActive: false, 
     });
     return {};
@@ -287,6 +307,35 @@ export default class UserProfileConcept {
   }
 
   /**
+   * setTimeOfDayCategory (user: User, timeOfDayCategory: TimeOfDayCategory)
+   *
+   * @requires the user exists in the set of users. timeOfDayCategory must be one of the allowed values.
+   * @effects sets or updates the time of day category for the user's profile.
+   */
+  async setTimeOfDayCategory(
+    { user, timeOfDayCategory }: { user: User; timeOfDayCategory: TimeOfDayCategory },
+  ): Promise<Empty | { error: string }> {
+    const allowedCategories: TimeOfDayCategory[] = [
+      "All Times",
+      "Morning (5am - 12pm)",
+      "Afternoon (12pm - 5pm)",
+      "Evening (5pm - 9pm)",
+      "Night (9pm - 5am)",
+    ];
+    if (!allowedCategories.includes(timeOfDayCategory)) {
+      return { error: `Time of day category '${timeOfDayCategory}' is not allowed.` };
+    }
+    const result = await this.userProfiles.updateOne(
+      { _id: user },
+      { $set: { timeOfDayCategory } },
+    );
+    if (result.matchedCount === 0) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return {};
+  }
+
+  /**
    * closeAccount (user: User)
    *
    * @requires the user exists in the set of users.
@@ -303,7 +352,7 @@ export default class UserProfileConcept {
   }
 
   /**
-   * getProfile (user: User)
+   * _getProfile (user: User)
    *
    * @requires the user exists in the set of users.
    * @returns the user's profile document, or an error if not found.
@@ -316,6 +365,65 @@ export default class UserProfileConcept {
       return { error: `User profile for ${user} not found.` };
     }
     return profile;
+  }
+
+  /**
+   * _getDisplayName (user: User): { displayname: string }
+   *
+   * Returns the display name for a given user.
+   * Public query - no authentication required.
+   */
+  async _getDisplayName(
+    { user }: { user: User },
+  ): Promise<{ displayname: string } | { error: string }> {
+    const profile = await this.userProfiles.findOne({ _id: user });
+    if (!profile) {
+      return { error: `User profile for ${user} not found.` };
+    }
+    return { displayname: profile.displayname || user.toString() };
+  }
+
+  /**
+   * _getProfilesByLocation (location: String): (profiles: UserProfileDoc[])
+   *
+   * Returns all active profiles that match the given location.
+   * Only returns profiles where isActive is true (or undefined, which defaults to active).
+   */
+  async _getProfilesByLocation(
+    { location }: { location: string },
+  ): Promise<UserProfileDoc[]> {
+    if (!location || location.trim() === "") {
+      return [];
+    }
+    const profiles = await this.userProfiles
+      .find({
+        location,
+        $or: [
+          { isActive: true },
+          { isActive: { $exists: false } }, // Default to active if not set
+        ],
+      })
+      .toArray();
+    return profiles;
+  }
+
+  /**
+   * _getAllProfiles (): (profiles: UserProfileDoc[])
+   *
+   * Returns all active profiles in the system.
+   * Only returns profiles where isActive is true (or undefined, which defaults to active).
+   */
+  async _getAllProfiles(_input: Record<string, unknown> = {}): Promise<UserProfileDoc[]> {
+    // Input parameter is unused but required for concept method signature
+    const profiles = await this.userProfiles
+      .find({
+        $or: [
+          { isActive: true },
+          { isActive: { $exists: false } }, // Default to active if not set
+        ],
+      })
+      .toArray();
+    return profiles;
   }
 }
 ```

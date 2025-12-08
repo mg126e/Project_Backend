@@ -1,32 +1,32 @@
 Principle: MilestoneMap creation and uniqueness ...
 ------- output -------
 1. Creating a MilestoneMap for two users
-   ✓ MilestoneMap created with ID: 019af9ed-6dd9-722d-9dd6-4373b5fa9e79
+   ✓ MilestoneMap created with ID: 019aff86-a188-70bc-816c-0085baebdd1d
 2. Attempting to create duplicate MilestoneMap for same user set
    ✓ Duplicate correctly rejected: MilestoneMap already exists for this set of users.
 3. Attempting to create MilestoneMap with reversed user order
    ✓ Reversed pair correctly rejected: MilestoneMap already exists for this set of users.
 4. Creating MilestoneMap for a different user set
-   ✓ Second MilestoneMap created with ID: 019af9ed-6e3d-7c2f-ad29-29c59acb23be
+   ✓ Second MilestoneMap created with ID: 019aff86-a1f0-7b43-afa8-a236448e5049
 5. Attempting to create MilestoneMap with only one user
    ✓ Single user correctly rejected: At least two users required for a MilestoneMap.
 ----- output end -----
-Principle: MilestoneMap creation and uniqueness ... ok (774ms)
+Principle: MilestoneMap creation and uniqueness ... ok (770ms)
 Action: Adding milestones to MilestoneMap ...
 ------- output -------
 1. Creating a MilestoneMap
-   ✓ MilestoneMap created with ID: 019af9ed-7073-7cc5-b398-4df53752fda7
+   ✓ MilestoneMap created with ID: 019aff86-a42b-7364-970c-c364a6965686
 2. Adding a milestone without photo
-   ✓ Milestone added with ID: 019af9ed-70ab-7b42-8fd3-5cd4940d10f8
+   ✓ Milestone added with ID: 019aff86-a462-7aa3-8d15-53b41f77717c
 3. Adding a milestone with photo
-   ✓ Milestone with photo added with ID: 019af9ed-70e1-7826-8eff-d45f23d808c9
+   ✓ Milestone with photo added with ID: 019aff86-a4a1-70d5-8ad7-f005347d51e6
 4. Verifying milestones are stored correctly
    ✓ Found 2 milestones
    ✓ Milestone with photo verified
 5. Attempting to add milestone as non-member
    ✓ Unauthorized add correctly rejected: User is not a member of this MilestoneMap.
 ----- output end -----
-Action: Adding milestones to MilestoneMap ... ok (713ms)
+Action: Adding milestones to MilestoneMap ... ok (755ms)
 Action: Removing milestones from MilestoneMap ...
 ------- output -------
 1. Creating a MilestoneMap with milestones
@@ -40,6 +40,6 @@ Action: Removing milestones from MilestoneMap ...
 5. Attempting to remove non-existent milestone
    ✓ Non-existent milestone correctly rejected: Milestone not found.
 ----- output end -----
-Action: Removing milestones from MilestoneMap ... ok (1s)
+Action: Removing milestones from MilestoneMap ... ok (829ms)
 
 ok | 3 passed | 0 failed (2s)
