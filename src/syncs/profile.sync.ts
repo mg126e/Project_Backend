@@ -1,4 +1,4 @@
-import { UserProfile, PasswordAuthentication, Requesting, Sessioning, OneRunMatching, PartnerMatching } from "@concepts";
+import { UserProfile, PasswordAuthentication, Requesting, Sessioning, OneRunMatching, PartnerMatching, Messaging } from "@concepts";
 import { actions, Frames, Sync } from "@engine";
 import { ID } from "@utils/types.ts";
 
@@ -17,6 +17,7 @@ const SUGGEST_MATCH_PATH = "/UserProfile/suggestMatch";
 const HAS_MUTUAL_MATCH_PATH = "/UserProfile/_hasMutualMatch";
 const GET_THUMBS_UPS_SENT_PATH = "/UserProfile/_getThumbsUpsSent";
 const GET_THUMBS_UPS_RECEIVED_PATH = "/UserProfile/_getThumbsUpsReceived";
+const GET_OR_CREATE_THREAD_PATH = "/UserProfile/_getOrCreateThreadForMatchedUser";
 
 // Create Profile
 export const HandleCreateProfileRequest: Sync = ({ request, session, user }) => ({
@@ -498,4 +499,29 @@ export const HandleGetThumbsUpsReceivedRequest: Sync = ({ request, session, user
     return new Frames({ ...originalFrame, [userIds]: result.userIds });
   },
   then: actions([Requesting.respond, { request, userIds }]),
+});
+
+// Get or Create Thread for Matched User
+export const HandleGetOrCreateThreadRequest: Sync = ({ request, session, user, otherUser, thread }) => ({
+  when: actions([
+    Requesting.request,
+    { path: GET_OR_CREATE_THREAD_PATH, session, otherUser },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      console.error(`[HandleGetOrCreateThreadRequest] Could not get user from session`);
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: 'Could not get user from session' });
+    }
+    const userIdFromFrame = frames[0][user] as ID;
+    const otherUserId = originalFrame[otherUser] as ID;
+    const result = await Messaging._getOrCreateThreadForMatchedUser({ userA: userIdFromFrame, userB: otherUserId });
+    if ('error' in result) {
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: result.error });
+    }
+    return new Frames({ ...originalFrame, [thread]: result.thread });
+  },
+  then: actions([Requesting.respond, { request, thread }]),
 });

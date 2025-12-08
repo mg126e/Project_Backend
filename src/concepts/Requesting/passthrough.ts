@@ -107,6 +107,7 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/_hasMutualMatch",
   "/api/UserProfile/_getThumbsUpsSent",
   "/api/UserProfile/_getThumbsUpsReceived",
+  "/api/UserProfile/_getOrCreateThreadForMatchedUser",
   "/api/FileUploading/requestUploadURL",
   "/api/FileUploading/delete",
   "/api/SharedGoals/createSharedGoal",

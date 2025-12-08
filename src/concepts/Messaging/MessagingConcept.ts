@@ -63,19 +63,22 @@ export default class MessagingConcept {
   messages: Collection<MessageState>;
   private runs: Collection<{ _id: ID; userA: User; userB: User; completed: boolean }>;
   private sharedGoals: Collection<{ _id: ID; users: User[]; isActive: boolean }>;
+  private partnerMatches: Collection<{ _id: ID; users: [User, User] }>;
 
   constructor(private readonly db: Db) {
     this.threads = this.db.collection(PREFIX + "threads");
     this.messages = this.db.collection(PREFIX + "messages");
     this.runs = this.db.collection("OneRunMatching.runs");
     this.sharedGoals = this.db.collection("SharedGoals.sharedGoals");
+    this.partnerMatches = this.db.collection("PartnerMatching.matches");
   }
 
   /**
    * Helper method to check if two users have an active match.
    * A match exists if:
    * - They have an active (non-completed) run together, OR
-   * - They have an active shared goal together
+   * - They have an active shared goal together, OR
+   * - They have an active PartnerMatching match
    */
   private async hasMatch(userA: User, userB: User): Promise<boolean> {
     // Check for active run (not completed)
@@ -96,7 +99,15 @@ export default class MessagingConcept {
       isActive: true,
     });
 
-    return !!activeGoal;
+    if (activeGoal) {
+      return true;
+    }
+
+    // Check for active PartnerMatching match
+    const sortedUsers: [User, User] = userA < userB ? [userA, userB] : [userB, userA];
+    const partnerMatch = await this.partnerMatches.findOne({ users: sortedUsers });
+
+    return !!partnerMatch;
   }
 
   /**
@@ -319,6 +330,58 @@ export default class MessagingConcept {
     } catch (e) {
       const message = e instanceof Error ? e.message : "An unknown error occurred fetching messages";
       return [{ error: message }];
+    }
+  }
+
+  /**
+   * _getOrCreateThreadForMatchedUser (userA: User, userB: User): (thread: Thread) | (error: string)
+   *
+   * requires: userA and userB exist and are distinct; there is an active match between them
+   * effects: returns an existing thread between the users, or creates a new one if it doesn't exist
+   */
+  async _getOrCreateThreadForMatchedUser(
+    { userA, userB }: { userA: User; userB: User },
+  ): Promise<{ thread: Thread } | { error: string }> {
+    try {
+      if (userA === userB) {
+        return { error: "Cannot create a thread with oneself." };
+      }
+
+      // Check if there's an active match
+      if (!(await this.hasMatch(userA, userB))) {
+        return { error: "Users must have an active match to create a chat thread." };
+      }
+
+      // Check for an existing thread
+      const existingThread = await this.threads.findOne({
+        $or: [
+          { userA: userA, userB: userB },
+          { userA: userB, userB: userA },
+        ],
+      });
+
+      if (existingThread) {
+        // If the thread exists but was deleted by either user, "undelete" it for both
+        if (existingThread.deletedBy.length > 0) {
+          await this.threads.updateOne({ _id: existingThread._id }, { $set: { deletedBy: [] } });
+        }
+        return { thread: existingThread._id };
+      }
+
+      // Create a new thread
+      const newThreadId = freshID() as Thread;
+      const newThread: ThreadState = {
+        _id: newThreadId,
+        userA: userA,
+        userB: userB,
+        messages: [],
+        deletedBy: [],
+      };
+
+      await this.threads.insertOne(newThread);
+      return { thread: newThreadId };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "An unknown error occurred" };
     }
   }
 }
