@@ -86,10 +86,6 @@ export class SyncConcept {
     const boundName = boundAction
       ? boundAction.name.slice("bound ".length)
       : "UNDEFINED";
-    console.log(`[SyncEngine.synchronize] Action: ${conceptName}.${boundName}`);
-    console.log(`[SyncEngine.synchronize] Input:`, record.input);
-    console.log(`[SyncEngine.synchronize] Output:`, record.output);
-    console.log(`[SyncEngine.synchronize] Flow:`, record.flow);
     
     if (this.logging === Logging.VERBOSE) {
       const { concept, ...rec } = record;
@@ -145,21 +141,16 @@ export class SyncConcept {
     record: ActionRecord,
     sync: Synchronization,
   ): Promise<[Frames<Frame>, symbol[]]> {
-    console.log(`[SyncEngine.matchWhen] Starting match for sync '${sync.sync}'`);
     let frames = new Frames();
     const whens = sync.when;
-    console.log(`[SyncEngine.matchWhen] Sync '${sync.sync}' has ${whens.length} when patterns`);
     const flowActions = await this.Action._getByFlow(record.flow);
-    console.log(`[SyncEngine.matchWhen] Found ${flowActions?.length || 0} actions in flow`);
     if (flowActions === undefined) {
-      console.log(`[SyncEngine.matchWhen] No flow actions, returning empty frames`);
       return [frames, []];
     }
     let i = 0;
     const actionSymbols: symbol[] = [];
     frames.push({ [flow]: record.flow });
     for (const when of whens) {
-      console.log(`[SyncEngine.matchWhen] Processing when pattern ${i}:`, when.action.name, when.concept.constructor.name);
       const actionSymbol = Symbol(`action_${i}`);
       actionSymbols.push(actionSymbol);
       i++;
@@ -178,14 +169,11 @@ export class SyncConcept {
             actionSymbol,
           );
           if (matched === undefined) continue;
-          console.log(`[SyncEngine.matchWhen] Matched when pattern ${i} with action record`);
           newFrames.push(matched);
         }
       }
       frames = newFrames;
-      console.log(`[SyncEngine.matchWhen] After when pattern ${i}: ${frames.length} frames`);
     }
-    console.log(`[SyncEngine.matchWhen] Final result: ${frames.length} frames, ${actionSymbols.length} action symbols`);
     return [frames, actionSymbols];
   }
   async addThen(

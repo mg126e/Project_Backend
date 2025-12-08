@@ -614,6 +614,51 @@ export default class PartnerMatchingConcept {
   }
 
   /**
+   * _getThumbsUpsSentWithIds (user: User): { suggestions: Array<{ suggestionId: Suggestion, recipientId: User }> }
+   * effects: Returns all suggestions that the given user has sent (thumbs-upped), including suggestion IDs.
+   * This is useful for canceling requests, as the suggestion ID is needed for declineSuggestion.
+   */
+  async _getThumbsUpsSentWithIds(
+    { user }: { user: User },
+  ): Promise<{ suggestions: Array<{ suggestionId: Suggestion; recipientId: User }> } | { error: string }> {
+    try {
+      const suggestions = await this.suggestions.find({
+        candidate: user,
+        status: AcceptanceStatus.Pending,
+      }).toArray();
+      const result = suggestions.map(s => ({
+        suggestionId: s._id,
+        recipientId: s.recipient,
+      }));
+      return { suggestions: result };
+    } catch (e) {
+      console.error("Error in _getThumbsUpsSentWithIds:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
+
+  /**
+   * _getSuggestionIdForUser (candidate: User, recipient: User): { suggestionId: Suggestion | null }
+   * effects: Returns the suggestion ID for a pending suggestion from candidate to recipient, if it exists.
+   * This is useful for canceling a specific request.
+   */
+  async _getSuggestionIdForUser(
+    { candidate, recipient }: { candidate: User; recipient: User },
+  ): Promise<{ suggestionId: Suggestion | null } | { error: string }> {
+    try {
+      const suggestion = await this.suggestions.findOne({
+        candidate,
+        recipient,
+        status: AcceptanceStatus.Pending,
+      });
+      return { suggestionId: suggestion?._id || null };
+    } catch (e) {
+      console.error("Error in _getSuggestionIdForUser:", e);
+      return { error: "An unexpected server error occurred." };
+    }
+  }
+
+  /**
    * _getThumbsUpsReceived (user: User): { userIds: User[] }
    * effects: Returns all user IDs that have sent requests to the given user (thumbs-upped them).
    * A request is received when suggestMatch is called with recipient = user.
