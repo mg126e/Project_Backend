@@ -25,6 +25,10 @@ Screen Recording [here](https://youtu.be/H_QJMjaU02E).
 Beta checkpoint updated development plan is [here](design/beta.md).\
 Screen Recording here [here](https://youtu.be/X0wlRiG4KoE)
 
+## User Testing
+
+User testing is contained [here](design/user_testing.md). 
+
 ## Mentor Meetings
 
 All mentor meeting notes are organized in the [Mentor Meetings](./mentor_meetings/) folder.

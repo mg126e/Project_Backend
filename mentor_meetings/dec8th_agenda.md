@@ -9,11 +9,11 @@ Meeting Time: 2:30
 * \~5 minutes to discuss plans and action items
 
 **Progress Report**  
-We have been working on the user testing and final submission. We are on track to complete our project.
+We completed user testing and are working on our final submission. We are on track to complete our project. We are at a point where we have completed our major features, such as one-time matching, partner matching, goals, and milestone maps. 
 
 **Questions**
 
-* How should we go about the overlap between UserProfile and PartnerMatching? Both involve some type of profile, how should we make the concepts more separate?
+* Issues with GSC key on Render? The key is working locally, I checked on my GSC console and the permissions are correct. 
 
 **Design changes**  
 
@@ -21,12 +21,11 @@ No major design changes at the moment!
 
 **Issues**  
  
-We need guidance on navigating the UserProfile and matching! 
+We had an issue navigating the matching side of things, but we have resolved it. 
 
 **Plans and Decisions**
 
 - We will complete the screen recording for tomorrow's deadline
 
 **Meeting Notes**
-- Can add to our code before and after user testing is completed
-- Can decide to have user run, the 40 minute time is flexible
+
