@@ -428,85 +428,74 @@ export const RespondToSuggestMatchError: Sync = ({ request, error }) => ({
 });
 
 // Has Mutual Match
-export const HandleHasMutualMatchRequest: Sync = ({ request, session, user, otherUser }) => ({
+export const HandleHasMutualMatchRequest: Sync = ({ request, session, user, otherUser, hasMutualMatch }) => ({
   when: actions([
     Requesting.request,
     { path: HAS_MUTUAL_MATCH_PATH, session, otherUser },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([PartnerMatching._hasMutualMatch, { userA: user, userB: otherUser }]),
-});
-
-export const RespondToHasMutualMatchSuccess: Sync = ({ request, hasMutualMatch }) => ({
-  when: actions(
-    [Requesting.request, { path: HAS_MUTUAL_MATCH_PATH }, { request }],
-    [PartnerMatching._hasMutualMatch, {}, { hasMutualMatch }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { hasMutualMatch } }]),
-});
-
-export const RespondToHasMutualMatchError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: HAS_MUTUAL_MATCH_PATH }, { request }],
-    [PartnerMatching._hasMutualMatch, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      console.error(`[HandleHasMutualMatchRequest] Could not get user from session`);
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: 'Could not get user from session' });
+    }
+    const userIdFromFrame = frames[0][user] as ID;
+    const otherUserId = originalFrame[otherUser] as ID;
+    const result = await PartnerMatching._hasMutualMatch({ userA: userIdFromFrame, userB: otherUserId });
+    if ('error' in result) {
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: result.error });
+    }
+    return new Frames({ ...originalFrame, [hasMutualMatch]: result.hasMutualMatch });
+  },
+  then: actions([Requesting.respond, { request, hasMutualMatch }]),
 });
 
 // Get Thumbs Ups Sent
-export const HandleGetThumbsUpsSentRequest: Sync = ({ request, session, user }) => ({
+export const HandleGetThumbsUpsSentRequest: Sync = ({ request, session, user, userIds }) => ({
   when: actions([
     Requesting.request,
     { path: GET_THUMBS_UPS_SENT_PATH, session },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([PartnerMatching._getThumbsUpsSent, { user }]),
-});
-
-export const RespondToGetThumbsUpsSentSuccess: Sync = ({ request, userIds }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_THUMBS_UPS_SENT_PATH }, { request }],
-    [PartnerMatching._getThumbsUpsSent, {}, { userIds }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { userIds } }]),
-});
-
-export const RespondToGetThumbsUpsSentError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_THUMBS_UPS_SENT_PATH }, { request }],
-    [PartnerMatching._getThumbsUpsSent, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      console.error(`[HandleGetThumbsUpsSentRequest] Could not get user from session`);
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: 'Could not get user from session' });
+    }
+    const userIdFromFrame = frames[0][user] as ID;
+    const result = await PartnerMatching._getThumbsUpsSent({ user: userIdFromFrame });
+    if ('error' in result) {
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: result.error });
+    }
+    return new Frames({ ...originalFrame, [userIds]: result.userIds });
+  },
+  then: actions([Requesting.respond, { request, userIds }]),
 });
 
 // Get Thumbs Ups Received
-export const HandleGetThumbsUpsReceivedRequest: Sync = ({ request, session, user }) => ({
+export const HandleGetThumbsUpsReceivedRequest: Sync = ({ request, session, user, userIds }) => ({
   when: actions([
     Requesting.request,
     { path: GET_THUMBS_UPS_RECEIVED_PATH, session },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([PartnerMatching._getThumbsUpsReceived, { user }]),
-});
-
-export const RespondToGetThumbsUpsReceivedSuccess: Sync = ({ request, userIds }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_THUMBS_UPS_RECEIVED_PATH }, { request }],
-    [PartnerMatching._getThumbsUpsReceived, {}, { userIds }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { userIds } }]),
-});
-
-export const RespondToGetThumbsUpsReceivedError: Sync = ({ request, error }) => ({
-  when: actions(
-    [Requesting.request, { path: GET_THUMBS_UPS_RECEIVED_PATH }, { request }],
-    [PartnerMatching._getThumbsUpsReceived, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, msg: { error } }]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0 || ('error' in frames[0] && frames[0].error)) {
+      console.error(`[HandleGetThumbsUpsReceivedRequest] Could not get user from session`);
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: 'Could not get user from session' });
+    }
+    const userIdFromFrame = frames[0][user] as ID;
+    const result = await PartnerMatching._getThumbsUpsReceived({ user: userIdFromFrame });
+    if ('error' in result) {
+      return new Frames({ ...originalFrame, error: Symbol('error'), [Symbol('error')]: result.error });
+    }
+    return new Frames({ ...originalFrame, [userIds]: result.userIds });
+  },
+  then: actions([Requesting.respond, { request, userIds }]),
 });
