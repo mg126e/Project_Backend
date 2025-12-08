@@ -4,6 +4,7 @@ import { freshID } from "@utils/database.ts";
 
 // Collection prefix to ensure isolation within the database
 const PREFIX = "PartnerMatching" + ".";
+const USER_PROFILE_COLLECTION = "Userprofile.userProfiles";
 
 // Generic type parameters
 type User = ID;
@@ -81,15 +82,118 @@ interface MatchState {
  * a user can accept or decline a match and a match only turns active when both users accept the other;
  * users can have multiple long-term running partner matches at the same time
  */
+// UserProfile types for accessing UserProfile collection
+type TimeOfDayCategory = "All Times" | "Morning (5am - 12pm)" | "Afternoon (12pm - 5pm)" | "Evening (5pm - 9pm)" | "Night (9pm - 5am)";
+type AllowedTag = "runningPace" | "gender" | "age" | "runningLevel" | "personality";
+interface UserProfileDoc {
+  _id: User;
+  tags?: Partial<Record<AllowedTag, string | number>>;
+  timeOfDayCategory?: TimeOfDayCategory;
+}
+
 export default class PartnerMatchingConcept {
   profiles: Collection<ProfileState>;
   suggestions: Collection<SuggestionState>;
   matches: Collection<MatchState>;
+  private userProfiles: Collection<UserProfileDoc>;
 
   constructor(private readonly db: Db) {
     this.profiles = this.db.collection(PREFIX + "profiles");
     this.suggestions = this.db.collection(PREFIX + "suggestions");
     this.matches = this.db.collection(PREFIX + "matches");
+    this.userProfiles = this.db.collection(USER_PROFILE_COLLECTION);
+  }
+
+  /**
+   * Helper function to convert UserProfile data to PartnerMatching preferences
+   */
+  private convertUserProfileToPreferences(userProfile: UserProfileDoc): Preferences | null {
+    const tags = userProfile.tags || {};
+    const runningPace = tags.runningPace as string | undefined;
+    const runningLevel = tags.runningLevel as string | undefined;
+    const timeOfDayCategory = userProfile.timeOfDayCategory;
+
+    // Map runningPace to Pace enum
+    let pace: Pace | undefined;
+    if (runningPace) {
+      const paceLower = runningPace.toLowerCase();
+      if (paceLower.includes("under 8") || paceLower.includes("< 8")) {
+        pace = Pace.Under_8_min_mile;
+      } else if (paceLower.includes("8-10") || paceLower.includes("8 to 10")) {
+        pace = Pace._8_10_min_mile;
+      } else if (paceLower.includes("10-12") || paceLower.includes("10 to 12")) {
+        pace = Pace._10_12_min_mile;
+      } else if (paceLower.includes("over 12") || paceLower.includes("> 12")) {
+        pace = Pace.Over_12_min_mile;
+      }
+    }
+
+    // Map runningLevel to ExperienceLevel enum
+    let experience: ExperienceLevel | undefined;
+    if (runningLevel) {
+      const levelLower = runningLevel.toLowerCase();
+      if (levelLower.includes("beginner")) {
+        experience = ExperienceLevel.Beginner;
+      } else if (levelLower.includes("intermediate")) {
+        experience = ExperienceLevel.Intermediate;
+      } else if (levelLower.includes("advanced")) {
+        experience = ExperienceLevel.Advanced;
+      }
+    }
+
+    // Map timeOfDayCategory to TimeOfDay enum
+    let timeOfDay: TimeOfDay | undefined;
+    if (timeOfDayCategory) {
+      if (timeOfDayCategory.includes("Morning")) {
+        timeOfDay = TimeOfDay.Morning;
+      } else if (timeOfDayCategory.includes("Afternoon")) {
+        timeOfDay = TimeOfDay.Afternoon;
+      } else if (timeOfDayCategory.includes("Evening")) {
+        timeOfDay = TimeOfDay.Evening;
+      }
+    }
+
+    // Check if we have all required fields (distance defaults to 5 if not provided)
+    if (pace && experience && timeOfDay) {
+      return {
+        pace,
+        distance: 5, // Default distance if not in UserProfile
+        experience,
+        timeOfDay,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Helper function to create PartnerMatching profile from UserProfile if it doesn't exist
+   */
+  private async ensurePartnerMatchingProfile(user: User): Promise<ProfileState | null> {
+    // Check if profile already exists
+    let profile = await this.profiles.findOne({ _id: user });
+    if (profile) {
+      return profile;
+    }
+
+    // Try to create from UserProfile
+    const userProfile = await this.userProfiles.findOne({ _id: user });
+    if (!userProfile) {
+      return null;
+    }
+
+    const preferences = this.convertUserProfileToPreferences(userProfile);
+    if (!preferences) {
+      return null;
+    }
+
+    // Create the PartnerMatching profile
+    profile = {
+      _id: user,
+      preferences,
+    };
+    await this.profiles.insertOne(profile);
+    return profile;
   }
 
   /**
@@ -110,16 +214,37 @@ export default class PartnerMatchingConcept {
         return { error: "Recipient and candidate cannot be the same user." };
       }
 
-      const recipientProfile = await this.profiles.findOne({ _id: recipient });
-      const candidateProfile = await this.profiles.findOne({ _id: candidate });
-      if (!recipientProfile && !candidateProfile) {
-        return { error: "Both users must have a PartnerMatching profile with preferences set to be matched." };
+      // Try to get or create PartnerMatching profiles from UserProfile data
+      const recipientProfile = await this.ensurePartnerMatchingProfile(recipient);
+      const candidateProfile = await this.ensurePartnerMatchingProfile(candidate);
+      
+      // Debug logging
+      console.log(`[suggestMatch] Checking profiles for recipient: ${recipient}, candidate: ${candidate}`);
+      console.log(`[suggestMatch] Recipient profile exists: ${!!recipientProfile}, has preferences: ${!!recipientProfile?.preferences}`);
+      console.log(`[suggestMatch] Candidate profile exists: ${!!candidateProfile}, has preferences: ${!!candidateProfile?.preferences}`);
+      
+      // Check if profiles exist and have valid preferences
+      if (!recipientProfile || !recipientProfile.preferences) {
+        if (!candidateProfile || !candidateProfile.preferences) {
+          console.log(`[suggestMatch] Both users missing profiles or preferences`);
+          return { error: "Both users must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set to be matched." };
+        }
+        console.log(`[suggestMatch] Recipient missing profile or preferences`);
+        return { error: `Recipient user ${recipient} must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set.` };
       }
-      if (!recipientProfile) {
-        return { error: `Recipient user ${recipient} must have a PartnerMatching profile with preferences set.` };
+      if (!candidateProfile || !candidateProfile.preferences) {
+        console.log(`[suggestMatch] Candidate missing profile or preferences`);
+        return { error: `Candidate user ${candidate} must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set.` };
       }
-      if (!candidateProfile) {
-        return { error: `Candidate user ${candidate} must have a PartnerMatching profile with preferences set.` };
+      
+      // Validate that preferences have all required fields
+      const recipientPrefs = recipientProfile.preferences;
+      const candidatePrefs = candidateProfile.preferences;
+      if (!recipientPrefs.pace || !recipientPrefs.distance || !recipientPrefs.experience || !recipientPrefs.timeOfDay) {
+        return { error: `Recipient user ${recipient} has incomplete preferences. All fields (pace, distance, experience, timeOfDay) must be set.` };
+      }
+      if (!candidatePrefs.pace || !candidatePrefs.distance || !candidatePrefs.experience || !candidatePrefs.timeOfDay) {
+        return { error: `Candidate user ${candidate} has incomplete preferences. All fields (pace, distance, experience, timeOfDay) must be set.` };
       }
 
       const sortedUsers: [User, User] = recipient < candidate
