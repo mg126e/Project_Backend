@@ -55,11 +55,16 @@ export const AddMilestoneRequest: Sync = ({
   when: actions([
     Requesting.request,
     { path: "/MilestoneMap/addMilestone", session, milestoneMapId, latitude, 
-      longitude, title, description, photoFileId: undefined },
+      longitude, title, description },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: async (frames) => {
+    // Only match if photoFileId is not present
+    if (frames[0].photoFileId !== undefined) {
+      return new Frames();
+    }
+    return await frames.query(Sessioning._getUser, { session }, { user });
+  },
   then: actions([MilestoneMap.addMilestone, { 
     milestoneMap: milestoneMapId, latitude, longitude, title, description, 
     addedBy: user

@@ -23,7 +23,7 @@ The most significant change was our shift from a run club-based application to a
 
 **SharedGoals:**
 - Similar to MilestoneMaps, we switched our concept parameters to be a set of users
-- Removed unnecessary actions such as setInitialized since the creation of a shared goals already implies the goal was initialized, so it was repetitive
+- Removed unnecessary actions such as setInitialized since the creation of a shared goal already implies the goal was initialized, so it was repetitive
 
 ### Key Learnings
 
