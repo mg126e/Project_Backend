@@ -33,11 +33,13 @@
            - *Requires:* `sharedGoal` exists and is active. `user` must be a member of the shared goal's users.
            - *Effects:* Sets `isActive` of the shared goal to `false`.
    - **Queries:**
-       - `_getSharedGoals(users: Set<User>, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})[]`
+       - `_getAllGoalsForUser(user: User): (sharedGoal: {_id: SharedGoal, description: String, isActive: Boolean, createdAt: Date, closedAt?: Date, users: {id: User, displayname: String}[]})[]`
+           - *Effects:* Returns all shared goals that include the given user, with user display names populated from UserProfile.
+       - `_getSharedGoals(users: Set<User>, isActive?: Boolean): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean, createdAt: Date, closedAt?: Date, users: User[]})[]`
            - *Effects:* If isActive is specified, returns only shared goals for the user group with that active status. If not specified, returns all shared goals (active and inactive) for the user group.
-       - `_getSharedGoalById(users: Set<User>, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean})?`
-           - *Effects:* Returns the shared goal with the given id for the user group, or null if not found.
-       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, start: Date, completion: Date?})[]`
+       - `_getSharedGoalById(users: Set<User>, sharedGoalId: SharedGoal): (sharedGoal: {id: SharedGoal, description: String, isActive: Boolean, createdAt: Date, closedAt?: Date, users: User[]})?`
+           - *Effects:* Returns the shared goal with the given id if any of the provided users is a member, or null if not found.
+       - `_getSharedSteps(sharedGoal: SharedGoal): (step: {id: SharedStep, description: String, completion: Date?})[]`
            - *Effects:* Returns all steps for the given shared goal.
   - **Notes:**
    - Both LLM-generated and manually created steps are supported. The number of LLM-generated steps is not fixed and may change depending on the goal description and LLM output.
