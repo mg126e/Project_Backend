@@ -112,8 +112,14 @@ export default class PartnerMatchingConcept {
 
       const recipientProfile = await this.profiles.findOne({ _id: recipient });
       const candidateProfile = await this.profiles.findOne({ _id: candidate });
-      if (!recipientProfile || !candidateProfile) {
-        return { error: "Both users must have a profile to be matched." };
+      if (!recipientProfile && !candidateProfile) {
+        return { error: "Both users must have a PartnerMatching profile with preferences set to be matched." };
+      }
+      if (!recipientProfile) {
+        return { error: `Recipient user ${recipient} must have a PartnerMatching profile with preferences set.` };
+      }
+      if (!candidateProfile) {
+        return { error: `Candidate user ${candidate} must have a PartnerMatching profile with preferences set.` };
       }
 
       const sortedUsers: [User, User] = recipient < candidate
@@ -364,32 +370,27 @@ export default class PartnerMatchingConcept {
   /**
    * updateProfilePreferences (user: User, preferences: Preferences): { profile: ProfileState }
    * (Action implied by principle: "a user creates a profile with their personal details and preferences")
-   * This action only handles updating preferences on an existing profile. Profile creation is assumed to be handled by another concept.
+   * This action creates a profile if it doesn't exist, or updates preferences if it does.
    *
-   * requires: A profile for the given user ID must already exist.
-   * effects: Updates the preferences of the user's existing profile.
+   * requires: None (profile will be created if it doesn't exist)
+   * effects: Creates or updates the preferences of the user's profile.
    */
   async updateProfilePreferences(
     { user, preferences }: { user: User; preferences: Preferences },
   ): Promise<{ profile: ProfileState } | { error: string }> {
     try {
-      const result = await this.profiles.updateOne(
+      // Use upsert to create profile if it doesn't exist, or update if it does
+      await this.profiles.updateOne(
         { _id: user },
         { $set: { preferences } },
+        { upsert: true },
       );
 
-      if (result.matchedCount === 0) {
-        return {
-          error:
-            "Profile not found for the given user. Cannot update preferences.",
-        };
-      }
-
-      const updatedProfile = await this.profiles.findOne({ _id: user });
-      if (!updatedProfile) {
+      const profile = await this.profiles.findOne({ _id: user });
+      if (!profile) {
         return { error: "Failed to retrieve profile after update." };
       }
-      return { profile: updatedProfile };
+      return { profile };
     } catch (e) {
       console.error("Error in updateProfilePreferences:", e);
       return { error: "An unexpected server error occurred." };
