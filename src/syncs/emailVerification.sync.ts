@@ -172,6 +172,22 @@ export const RespondToRegisterSuccess: Sync = ({ request, user, email }) => ({
     [Requesting.request, { path: REGISTER_PATH, user, email }, { request }],
     [EmailVerification.register, { user, email }, {}],
   ),
+  where: (frames) => {
+    // Only match if we have all required bindings in the frame (i.e., this was called from an HTTP request, not a sync)
+    // The frame should have both the Requesting.request (with request, user, email) and EmailVerification.register
+    if (frames.length >= 2) {
+      const requestFrame = frames[0];
+      const registerFrame = frames[1];
+      // Check that we have request, user, and email in the frames
+      if (requestFrame[request] !== undefined && 
+          (requestFrame[user] !== undefined || registerFrame[user] !== undefined) &&
+          (requestFrame[email] !== undefined || registerFrame[email] !== undefined)) {
+        return frames;
+      }
+    }
+    // Don't match if called from a sync (no Requesting.request in the flow)
+    return new Frames();
+  },
   then: actions([Requesting.respond, { request, msg: {} }]),
 });
 
