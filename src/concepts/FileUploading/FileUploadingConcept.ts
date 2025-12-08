@@ -50,6 +50,18 @@ export default class FileUploadingConcept {
       privateKey = privateKey.replace(/\\n/g, "\n");
     }
 
+    // Temporary logging for debugging on Render
+    console.log("GCS_BUCKET_NAME:", this.bucketName);
+    console.log("GCS_PROJECT_ID:", projectId);
+    console.log("GCS_CLIENT_EMAIL:", clientEmail);
+    if (privateKey) {
+      console.log("GCS_PRIVATE_KEY length:", privateKey.length);
+      console.log("GCS_PRIVATE_KEY start:", privateKey.substring(0, 100));
+      console.log("GCS_PRIVATE_KEY end:", privateKey.substring(privateKey.length - 30));
+    } else {
+      console.log("GCS_PRIVATE_KEY is undefined/null");
+    }
+
     if (!this.bucketName || !projectId || !privateKey || !clientEmail) {
       throw new Error(
         "Missing required GCS environment variables for FileUploadingConcept. Please check your .env file.",
@@ -105,6 +117,12 @@ export default class FileUploadingConcept {
       return { file: newFileId, uploadURL: url };
     } catch (e) {
       console.error("FileUploadingConcept: Error generating upload URL:", e);
+      console.error("Error details:", JSON.stringify(e, null, 2));
+      if (e instanceof Error) {
+        console.error("Error name:", e.name);
+        console.error("Error message:", e.message);
+        console.error("Error stack:", e.stack);
+      }
       return { error: "Failed to generate an upload URL." };
     }
   }
