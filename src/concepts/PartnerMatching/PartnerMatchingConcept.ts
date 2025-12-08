@@ -173,19 +173,34 @@ export default class PartnerMatchingConcept {
     // Check if profile already exists
     let profile = await this.profiles.findOne({ _id: user });
     if (profile) {
+      console.log(`[ensurePartnerMatchingProfile] Profile already exists for user: ${user}`);
       return profile;
     }
 
     // Try to create from UserProfile
+    console.log(`[ensurePartnerMatchingProfile] Looking for UserProfile for user: ${user}`);
     const userProfile = await this.userProfiles.findOne({ _id: user });
     if (!userProfile) {
+      console.log(`[ensurePartnerMatchingProfile] No UserProfile found for user: ${user}`);
       return null;
     }
 
+    console.log(`[ensurePartnerMatchingProfile] Found UserProfile for user: ${user}`, {
+      tags: userProfile.tags,
+      timeOfDayCategory: userProfile.timeOfDayCategory,
+    });
+
     const preferences = this.convertUserProfileToPreferences(userProfile);
     if (!preferences) {
+      console.log(`[ensurePartnerMatchingProfile] Could not convert UserProfile to preferences for user: ${user}`, {
+        runningPace: userProfile.tags?.runningPace,
+        runningLevel: userProfile.tags?.runningLevel,
+        timeOfDayCategory: userProfile.timeOfDayCategory,
+      });
       return null;
     }
+
+    console.log(`[ensurePartnerMatchingProfile] Created preferences for user: ${user}`, preferences);
 
     // Create the PartnerMatching profile
     profile = {
@@ -193,18 +208,19 @@ export default class PartnerMatchingConcept {
       preferences,
     };
     await this.profiles.insertOne(profile);
+    console.log(`[ensurePartnerMatchingProfile] Created PartnerMatching profile for user: ${user}`);
     return profile;
   }
 
   /**
    * system suggestMatch (recipient: User, candidate: User): (suggestion: Suggestion)
    *
-   * requires: the recipient and candidate exist and are distinct; both have profiles;
+   * requires: the recipient and candidate exist and are distinct;
    * there is no active match between them; there is no existing suggestion from recipient to candidate;
-   * at least three preferences must be the same for both users
+   * if both users have profiles with preferences, at least three preferences must be the same
    *
    * effects: creates and returns a new match Suggestion with Candidate to Recipient,
-   * sets Status to ‘pending’
+   * sets Status to 'pending'. Preference matching is optional - if profiles exist, matching is performed.
    */
   async suggestMatch(
     { recipient, candidate }: { recipient: User; candidate: User },
@@ -212,39 +228,6 @@ export default class PartnerMatchingConcept {
     try {
       if (recipient === candidate) {
         return { error: "Recipient and candidate cannot be the same user." };
-      }
-
-      // Try to get or create PartnerMatching profiles from UserProfile data
-      const recipientProfile = await this.ensurePartnerMatchingProfile(recipient);
-      const candidateProfile = await this.ensurePartnerMatchingProfile(candidate);
-      
-      // Debug logging
-      console.log(`[suggestMatch] Checking profiles for recipient: ${recipient}, candidate: ${candidate}`);
-      console.log(`[suggestMatch] Recipient profile exists: ${!!recipientProfile}, has preferences: ${!!recipientProfile?.preferences}`);
-      console.log(`[suggestMatch] Candidate profile exists: ${!!candidateProfile}, has preferences: ${!!candidateProfile?.preferences}`);
-      
-      // Check if profiles exist and have valid preferences
-      if (!recipientProfile || !recipientProfile.preferences) {
-        if (!candidateProfile || !candidateProfile.preferences) {
-          console.log(`[suggestMatch] Both users missing profiles or preferences`);
-          return { error: "Both users must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set to be matched." };
-        }
-        console.log(`[suggestMatch] Recipient missing profile or preferences`);
-        return { error: `Recipient user ${recipient} must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set.` };
-      }
-      if (!candidateProfile || !candidateProfile.preferences) {
-        console.log(`[suggestMatch] Candidate missing profile or preferences`);
-        return { error: `Candidate user ${candidate} must have a UserProfile with running preferences (runningPace, runningLevel, timeOfDayCategory) set.` };
-      }
-      
-      // Validate that preferences have all required fields
-      const recipientPrefs = recipientProfile.preferences;
-      const candidatePrefs = candidateProfile.preferences;
-      if (!recipientPrefs.pace || !recipientPrefs.distance || !recipientPrefs.experience || !recipientPrefs.timeOfDay) {
-        return { error: `Recipient user ${recipient} has incomplete preferences. All fields (pace, distance, experience, timeOfDay) must be set.` };
-      }
-      if (!candidatePrefs.pace || !candidatePrefs.distance || !candidatePrefs.experience || !candidatePrefs.timeOfDay) {
-        return { error: `Candidate user ${candidate} has incomplete preferences. All fields (pace, distance, experience, timeOfDay) must be set.` };
       }
 
       const sortedUsers: [User, User] = recipient < candidate
@@ -255,7 +238,7 @@ export default class PartnerMatchingConcept {
         return { error: "An active match already exists between these users." };
       }
 
-      // FIX: Check for a suggestion in one direction only.
+      // Check for a suggestion in one direction only.
       // This allows the necessary reciprocal suggestion to be created.
       const existingSuggestion = await this.suggestions.findOne({
         recipient,
@@ -267,16 +250,30 @@ export default class PartnerMatchingConcept {
         };
       }
 
-      let score = 0;
-      const rPref = recipientProfile.preferences;
-      const cPref = candidateProfile.preferences;
-      if (rPref.pace === cPref.pace) score++;
-      if (Math.abs(rPref.distance - cPref.distance) <= 1) score++; // Match if distance is within 1 mile
-      if (rPref.experience === cPref.experience) score++;
-      if (rPref.timeOfDay === cPref.timeOfDay) score++;
+      // Optional: Try to get profiles for preference matching, but don't require them
+      const recipientProfile = await this.ensurePartnerMatchingProfile(recipient);
+      const candidateProfile = await this.ensurePartnerMatchingProfile(candidate);
+      
+      // If both profiles exist with preferences, perform preference matching
+      // Otherwise, allow the suggestion to be created without preference matching
+      if (recipientProfile?.preferences && candidateProfile?.preferences) {
+        const recipientPrefs = recipientProfile.preferences;
+        const candidatePrefs = candidateProfile.preferences;
+        
+        // Validate that preferences have all required fields
+        if (recipientPrefs.pace && recipientPrefs.distance && recipientPrefs.experience && recipientPrefs.timeOfDay &&
+            candidatePrefs.pace && candidatePrefs.distance && candidatePrefs.experience && candidatePrefs.timeOfDay) {
+          // Perform preference matching
+          let score = 0;
+          if (recipientPrefs.pace === candidatePrefs.pace) score++;
+          if (Math.abs(recipientPrefs.distance - candidatePrefs.distance) <= 1) score++; // Match if distance is within 1 mile
+          if (recipientPrefs.experience === candidatePrefs.experience) score++;
+          if (recipientPrefs.timeOfDay === candidatePrefs.timeOfDay) score++;
 
-      if (score < 3) {
-        return { error: "Users do not have enough matching preferences." };
+          if (score < 3) {
+            return { error: "Users do not have enough matching preferences." };
+          }
+        }
       }
 
       const newSuggestionId = freshID() as Suggestion;
