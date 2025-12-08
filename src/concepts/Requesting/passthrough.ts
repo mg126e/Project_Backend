@@ -103,6 +103,7 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/setIsActive",
   "/api/UserProfile/closeProfile",
   "/api/UserProfile/_getProfile",
+  "/api/UserProfile/suggestMatch",
   "/api/FileUploading/requestUploadURL",
   "/api/FileUploading/delete",
   "/api/SharedGoals/createSharedGoal",

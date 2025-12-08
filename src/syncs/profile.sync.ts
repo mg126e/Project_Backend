@@ -1,4 +1,4 @@
-import { UserProfile, PasswordAuthentication, Requesting, Sessioning, OneRunMatching } from "@concepts";
+import { UserProfile, PasswordAuthentication, Requesting, Sessioning, OneRunMatching, PartnerMatching } from "@concepts";
 import { actions, Frames, Sync } from "@engine";
 import { ID } from "@utils/types.ts";
 
@@ -13,6 +13,7 @@ const SET_PROFILE_IMAGE_PATH = "/UserProfile/setProfileImage";
 const SET_IS_ACTIVE_PATH = "/UserProfile/setIsActive";
 const CLOSE_PROFILE_PATH = "/UserProfile/closeProfile";
 const GET_PROFILE_PATH = "/UserProfile/_getProfile";
+const SUGGEST_MATCH_PATH = "/UserProfile/suggestMatch";
 
 // Create Profile
 export const HandleCreateProfileRequest: Sync = ({ request, session, user }) => ({
@@ -393,4 +394,32 @@ export const HandleGetProfileImageDownloadURLRequest: Sync = ({ request, session
     return new Frames({ ...originalFrame, [downloadURL]: result.downloadURL });
   },
   then: actions([Requesting.respond, { request, downloadURL }]),
+});
+
+// Suggest Match (Thumbs-up)
+export const HandleSuggestMatchRequest: Sync = ({ request, session, user, otherUser }) => ({
+  when: actions([
+    Requesting.request,
+    { path: SUGGEST_MATCH_PATH, session, otherUser },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([PartnerMatching.suggestMatch, { recipient: otherUser, candidate: user }]),
+});
+
+export const RespondToSuggestMatchSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: SUGGEST_MATCH_PATH }, { request }],
+    [PartnerMatching.suggestMatch, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, msg: {} }]),
+});
+
+export const RespondToSuggestMatchError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: SUGGEST_MATCH_PATH }, { request }],
+    [PartnerMatching.suggestMatch, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
 });
