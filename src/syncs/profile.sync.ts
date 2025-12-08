@@ -14,6 +14,9 @@ const SET_IS_ACTIVE_PATH = "/UserProfile/setIsActive";
 const CLOSE_PROFILE_PATH = "/UserProfile/closeProfile";
 const GET_PROFILE_PATH = "/UserProfile/_getProfile";
 const SUGGEST_MATCH_PATH = "/UserProfile/suggestMatch";
+const HAS_MUTUAL_MATCH_PATH = "/UserProfile/_hasMutualMatch";
+const GET_THUMBS_UPS_SENT_PATH = "/UserProfile/_getThumbsUpsSent";
+const GET_THUMBS_UPS_RECEIVED_PATH = "/UserProfile/_getThumbsUpsReceived";
 
 // Create Profile
 export const HandleCreateProfileRequest: Sync = ({ request, session, user }) => ({
@@ -420,6 +423,90 @@ export const RespondToSuggestMatchError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: SUGGEST_MATCH_PATH }, { request }],
     [PartnerMatching.suggestMatch, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
+});
+
+// Has Mutual Match
+export const HandleHasMutualMatchRequest: Sync = ({ request, session, user, otherUser }) => ({
+  when: actions([
+    Requesting.request,
+    { path: HAS_MUTUAL_MATCH_PATH, session, otherUser },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([PartnerMatching._hasMutualMatch, { userA: user, userB: otherUser }]),
+});
+
+export const RespondToHasMutualMatchSuccess: Sync = ({ request, hasMutualMatch }) => ({
+  when: actions(
+    [Requesting.request, { path: HAS_MUTUAL_MATCH_PATH }, { request }],
+    [PartnerMatching._hasMutualMatch, {}, { hasMutualMatch }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { hasMutualMatch } }]),
+});
+
+export const RespondToHasMutualMatchError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: HAS_MUTUAL_MATCH_PATH }, { request }],
+    [PartnerMatching._hasMutualMatch, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
+});
+
+// Get Thumbs Ups Sent
+export const HandleGetThumbsUpsSentRequest: Sync = ({ request, session, user }) => ({
+  when: actions([
+    Requesting.request,
+    { path: GET_THUMBS_UPS_SENT_PATH, session },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([PartnerMatching._getThumbsUpsSent, { user }]),
+});
+
+export const RespondToGetThumbsUpsSentSuccess: Sync = ({ request, userIds }) => ({
+  when: actions(
+    [Requesting.request, { path: GET_THUMBS_UPS_SENT_PATH }, { request }],
+    [PartnerMatching._getThumbsUpsSent, {}, { userIds }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { userIds } }]),
+});
+
+export const RespondToGetThumbsUpsSentError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: GET_THUMBS_UPS_SENT_PATH }, { request }],
+    [PartnerMatching._getThumbsUpsSent, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { error } }]),
+});
+
+// Get Thumbs Ups Received
+export const HandleGetThumbsUpsReceivedRequest: Sync = ({ request, session, user }) => ({
+  when: actions([
+    Requesting.request,
+    { path: GET_THUMBS_UPS_RECEIVED_PATH, session },
+    { request },
+  ]),
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([PartnerMatching._getThumbsUpsReceived, { user }]),
+});
+
+export const RespondToGetThumbsUpsReceivedSuccess: Sync = ({ request, userIds }) => ({
+  when: actions(
+    [Requesting.request, { path: GET_THUMBS_UPS_RECEIVED_PATH }, { request }],
+    [PartnerMatching._getThumbsUpsReceived, {}, { userIds }],
+  ),
+  then: actions([Requesting.respond, { request, msg: { userIds } }]),
+});
+
+export const RespondToGetThumbsUpsReceivedError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: GET_THUMBS_UPS_RECEIVED_PATH }, { request }],
+    [PartnerMatching._getThumbsUpsReceived, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, msg: { error } }]),
 });
