@@ -134,30 +134,66 @@ export const RegisterRequest: Sync = ({ request, username, password, email, veri
   ]),
 });
 
-
+// Create session after registration when email is verified
+export const CreateSessionAfterVerifiedRegistration: Sync = ({ user }) => ({
+  when: actions(
+    [PasswordAuthentication.register, {}, { user }],
+  ),
+  where: async (frames) => {
+    const userId = frames[0][user] as ID;
+    // Only create session if user has verified emails
+    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+    if (verifiedEmails.length > 0) {
+      return frames;
+    }
+    return new Frames();
+  },
+  then: actions([Sessioning.start, { user }]),
+});
 
 // Register response when email is already verified
-export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, verificationRecordId, activeInvites }) => {
+export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, verificationRecordId, activeInvites, session }) => {
   return {
     when: actions(
       [Requesting.request, { path: "/PasswordAuthentication/register", email, verificationRecordId }, { request }],
       [PasswordAuthentication.register, {}, { user }],
     ),
     where: async (frames) => {
+      console.log("[RegisterResponseSuccessVerified.where] Called with frames:", frames);
+      console.log("[RegisterResponseSuccessVerified.where] Frames length:", frames?.length);
+      
+      // Defensive check: ensure we have at least one frame
+      if (!frames || frames.length === 0) {
+        console.log("[RegisterResponseSuccessVerified.where] No frames, returning empty");
+        return new Frames();
+      }
+      
       const originalFrame = frames[0];
+      if (!originalFrame) {
+        console.log("[RegisterResponseSuccessVerified.where] Original frame is null/undefined, returning empty");
+        return new Frames();
+      }
+      
       const req = frames[0];
       const vId = req[verificationRecordId] as ID | undefined;
-      const userId = frames[1][user] as ID;
+      
+      // The user binding should be in frames[0] after both actions are matched
+      // frames[1] doesn't exist - both actions are combined into frames[0]
+      const userId = originalFrame[user] as ID | undefined;
+      console.log("[RegisterResponseSuccessVerified.where] userId from frame:", userId);
+      
+      if (!userId) {
+        console.log("[RegisterResponseSuccessVerified.where] No user ID found in frame, returning empty");
+        return new Frames();
+      }
       
       // Check if verification was already completed
+      let isVerified = false;
       if (vId) {
         try {
           const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
           if (verificationRecord && verificationRecord.isVerified) {
-            // Verification record is verified - allow this sync to match
-            // Fetch active invites to include in response
-            const invites = await OneRunMatching._getActiveInvites();
-            return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
+            isVerified = true;
           }
         } catch (error) {
           console.error(`[RegisterResponseSuccessVerified] Error checking verification record:`, error);
@@ -165,21 +201,41 @@ export const RegisterResponseSuccessVerified: Sync = ({ request, user, email, ve
       }
       
       // Also check if the user has any verified emails
-      try {
-        const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
-        if (verifiedEmails.length > 0) {
-          // Fetch active invites to include in response
-          const invites = await OneRunMatching._getActiveInvites();
-          return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
+      if (!isVerified) {
+        try {
+          const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+          if (verifiedEmails.length > 0) {
+            isVerified = true;
+          }
+        } catch (error) {
+          console.error(`[RegisterResponseSuccessVerified] Error checking verified emails:`, error);
         }
-      } catch (error) {
-        console.error(`[RegisterResponseSuccessVerified] Error checking verified emails:`, error);
       }
       
-      // Not verified, don't match this sync
-      return new Frames();
+      if (!isVerified) {
+        console.log("[RegisterResponseSuccessVerified.where] Email not verified, returning empty");
+        return new Frames();
+      }
+      
+      // Email is verified - create a session for the user
+      console.log("[RegisterResponseSuccessVerified.where] Email verified, creating session for user:", userId);
+      const sessionResult = await Sessioning.start({ user: userId });
+      if ("error" in sessionResult || !sessionResult.session) {
+        console.error("[RegisterResponseSuccessVerified.where] Failed to create session:", sessionResult);
+        return new Frames();
+      }
+      
+      const sessionId = sessionResult.session;
+      console.log("[RegisterResponseSuccessVerified.where] Session created:", sessionId);
+      
+      // Fetch active invites to include in response
+      const invites = await OneRunMatching._getActiveInvites();
+      console.log("[RegisterResponseSuccessVerified.where] Active invites:", invites);
+      
+      // Return frame with session and invites
+      return new Frames({ ...originalFrame, [session]: sessionId, [activeInvites]: invites });
     },
-    then: actions([Requesting.respond, { request, user, activeInvites }]),
+    then: actions([Requesting.respond, { request, user, session, activeInvites }]),
   };
 };
 
@@ -192,17 +248,43 @@ export const RegisterResponseSuccess: Sync = ({ request, user, email, verificati
       [PasswordAuthentication.register, {}, { user }],
     ),
     where: async (frames) => {
+      console.log("[RegisterResponseSuccess.where] Called with frames:", frames);
+      console.log("[RegisterResponseSuccess.where] Frames length:", frames?.length);
+      
+      // Defensive check: ensure we have at least one frame
+      if (!frames || frames.length === 0) {
+        console.log("[RegisterResponseSuccess.where] No frames, returning empty");
+        return new Frames();
+      }
+      
       const originalFrame = frames[0];
+      if (!originalFrame) {
+        console.log("[RegisterResponseSuccess.where] Original frame is null/undefined, returning empty");
+        return new Frames();
+      }
+      
       const req = frames[0];
       const vId = req[verificationRecordId] as ID | undefined;
-      const userId = frames[1][user] as ID;
+      
+      // The user binding should be in frames[0] after both actions are matched
+      // frames[1] doesn't exist - both actions are combined into frames[0]
+      const userId = originalFrame[user] as ID | undefined;
+      console.log("[RegisterResponseSuccess.where] userId from frame:", userId);
+      
+      if (!userId) {
+        console.log("[RegisterResponseSuccess.where] No user ID found in frame, returning empty");
+        return new Frames();
+      }
       
       // Only match if verification is NOT completed
       if (vId) {
         try {
+          console.log(`[RegisterResponseSuccess.where] Checking verification record:`, vId);
           const verificationRecord = await EmailVerification._getVerificationRecord({ recordId: vId });
+          console.log(`[RegisterResponseSuccess.where] Verification record:`, verificationRecord);
           if (verificationRecord && verificationRecord.isVerified) {
             // Verification is completed, don't match this sync (let RegisterResponseSuccessVerified handle it)
+            console.log(`[RegisterResponseSuccess.where] Verification already completed, returning empty to let RegisterResponseSuccessVerified handle it`);
             return new Frames();
           }
         } catch (error) {
@@ -212,9 +294,12 @@ export const RegisterResponseSuccess: Sync = ({ request, user, email, verificati
       
       // Also check if the user has any verified emails
       try {
+        console.log(`[RegisterResponseSuccess.where] Checking verified emails for user:`, userId);
         const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+        console.log(`[RegisterResponseSuccess.where] Verified emails:`, verifiedEmails);
         if (verifiedEmails.length > 0) {
           // User has verified emails, don't match this sync
+          console.log(`[RegisterResponseSuccess.where] User has verified emails, returning empty to let RegisterResponseSuccessVerified handle it`);
           return new Frames();
         }
       } catch (error) {
@@ -223,8 +308,13 @@ export const RegisterResponseSuccess: Sync = ({ request, user, email, verificati
       
       // Verification not completed, allow this sync to match
       // Fetch active invites to include in response
+      console.log(`[RegisterResponseSuccess.where] Verification not completed, allowing sync to match`);
       const invites = await OneRunMatching._getActiveInvites();
-      return new Frames({ ...originalFrame, [activeInvites]: invites }, frames[1]);
+      console.log(`[RegisterResponseSuccess.where] Active invites:`, invites);
+      // frames[1] doesn't exist - both actions are in frames[0]
+      const resultFrames = new Frames({ ...originalFrame, [activeInvites]: invites });
+      console.log(`[RegisterResponseSuccess.where] Returning frames:`, resultFrames);
+      return resultFrames;
     },
     then: actions([Requesting.respond, { request, user, msg: { requiresEmailVerification: true }, activeInvites }]),
   };

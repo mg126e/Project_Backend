@@ -65,6 +65,10 @@ export const inclusions: Record<string, string> = {
     "public action to send a request (thumbs-up) to another user",
   "/api/PartnerMatching/_getThumbsUpsSent":
     "public query to get which users the current user has sent requests to",
+  "/api/PartnerMatching/_getThumbsUpsSentWithIds":
+    "public query to get suggestions with IDs that the current user has sent (needed for canceling requests)",
+  "/api/PartnerMatching/_getSuggestionIdForUser":
+    "public query to get suggestion ID for a specific user pair (needed for canceling a specific request)",
   "/api/PartnerMatching/_getThumbsUpsReceived":
     "public query to get which users have sent requests to the current user",
   "/api/PartnerMatching/_hasMutualMatch":
@@ -92,6 +96,7 @@ export const exclusions: Array<string> = [
   "/api/logout",
   "/api/EmailVerification/requestVerification",
   "/api/EmailVerification/verifyEmail",
+  "/api/EmailVerification/register",
   "/api/UserProfile/createProfile",
   "/api/UserProfile/setName",
   "/api/UserProfile/setBio",
