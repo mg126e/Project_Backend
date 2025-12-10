@@ -18,3 +18,13 @@ I used agentic coding techniques to ensure that API endpoints were correctly con
 Overall, I feel that I’ve strengthened my design skills in terms of creating a project that is intuitive and smooth for the user to operate. I helped leverage logic in the backend and design choices in the frontend to make our features easy to use and accessible from the dashboard.
 
 # Ananya's Reflection
+
+I really enjoyed working on the User Testing assignment. It was so interesting to see how somebody with zero context about our app naturally reacted to it and explored its functionality from scratch. I also enjoyed implementing the Messaging concept in particular, although we initially ran into problems with the concept specification as we were overcomplicating it a bit when trying to fit it in the concept design framework we learnt.
+
+I also think the implementation went well overall. We were able to use Context in a way that helped us identify what could be improved in our concept specifications before re-prompting it. We also used agentic coding tools to make the implementations more robust and structured, also allowing us to make more minor changes almost instantaneously which was a huge advantage, particularly when developing the front-end.
+We struggled with the Functional Design assignment the most because a lot of the concepts appeared simple but were actually difficult to flesh out in practice. It felt more challenging to translate the high-level ideas into the precise, actionable specifications that were required for accurate implementations than we expected and we had to revise our concept specifications multiple times in the development process.
+
+Despite this, I think the process ultimately improved our understanding of how important the concept design and structure is when planning the app’s behaviour before any kind of coding begins. Going forward, I want to continue improving my ability to write detailed functional specifications. I would also love to use the user testing framework outlined here in future apps I work on as I think it was really helpful in identifying points of improvement in the app.
+
+Overall, I had a challenging but great experience working on this project! Collaboration was at the forefront; it was really interesting to see how we could balance working independently and in tandem to create a cohesive app that we are proud of!
+
