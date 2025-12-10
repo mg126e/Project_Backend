@@ -47,8 +47,8 @@ export const CreateMilestoneMapResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-//-- Add Milestone --//
-export const AddMilestoneRequest: Sync = ({ 
+//-- Add Milestone (without photo) --//
+export const AddMilestoneNoPhotoRequest: Sync = ({ 
   request, session, user, milestoneMapId, latitude, longitude, 
   title, description
 }) => ({
@@ -58,27 +58,38 @@ export const AddMilestoneRequest: Sync = ({
       longitude, title, description },
     { request },
   ]),
-  where: async (frames) => {
-    // Only match if photoFileId is not present
-    if (frames[0].photoFileId !== undefined) {
-      return new Frames();
-    }
-    return await frames.query(Sessioning._getUser, { session }, { user });
-  },
+  where: async (frames) =>
+    await frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([MilestoneMap.addMilestone, { 
     milestoneMap: milestoneMapId, latitude, longitude, title, description, 
     addedBy: user
   }]),
 });
 
-// Sync for adding milestone WITH photo
+export const AddMilestoneNoPhotoResponseSuccess: Sync = ({ request, milestone }) => ({
+  when: actions(
+    [Requesting.request, { path: "/MilestoneMap/addMilestone" }, { request }],
+    [MilestoneMap.addMilestone, {}, { milestone }],
+  ),
+  then: actions([Requesting.respond, { request, milestoneId: milestone }]),
+});
+
+export const AddMilestoneNoPhotoResponseError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/MilestoneMap/addMilestone" }, { request }],
+    [MilestoneMap.addMilestone, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+//-- Add Milestone (with photo) --//
 export const AddMilestoneWithPhotoRequest: Sync = ({ 
   request, session, user, milestoneMapId, latitude, longitude, 
   title, description, photoFileId
 }) => ({
   when: actions([
     Requesting.request,
-    { path: "/MilestoneMap/addMilestone", session, milestoneMapId, latitude, 
+    { path: "/MilestoneMap/addMilestoneWithPhoto", session, milestoneMapId, latitude, 
       longitude, title, description, photoFileId },
     { request },
   ]),
@@ -90,17 +101,17 @@ export const AddMilestoneWithPhotoRequest: Sync = ({
   }]),
 });
 
-export const AddMilestoneResponseSuccess: Sync = ({ request, milestone }) => ({
+export const AddMilestoneWithPhotoResponseSuccess: Sync = ({ request, milestone }) => ({
   when: actions(
-    [Requesting.request, { path: "/MilestoneMap/addMilestone" }, { request }],
+    [Requesting.request, { path: "/MilestoneMap/addMilestoneWithPhoto" }, { request }],
     [MilestoneMap.addMilestone, {}, { milestone }],
   ),
   then: actions([Requesting.respond, { request, milestoneId: milestone }]),
 });
 
-export const AddMilestoneResponseError: Sync = ({ request, error }) => ({
+export const AddMilestoneWithPhotoResponseError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/MilestoneMap/addMilestone" }, { request }],
+    [Requesting.request, { path: "/MilestoneMap/addMilestoneWithPhoto" }, { request }],
     [MilestoneMap.addMilestone, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
