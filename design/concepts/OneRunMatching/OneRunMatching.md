@@ -48,10 +48,6 @@ acceptInvite (inviter: UserA, invite: Invite, accepter: UserB): (scheduledRun: R
    **requires** the invite exists, its Sent flag is true, and its acceptance status is false\
    **effects** creates a new Run and the Status of the invite is set to ‘accepted’\
 
-declineInvite (invite: Invite, decliner: User)\
-   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false\
-   **effects** sets invite Status to ‘declined’\
-
 completeRun (user: User, run: Run)\
    **requires** the run exists for the user and has not already been marked Completed\
    **effects** sets the Completed flag of the run to true\
