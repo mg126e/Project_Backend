@@ -6,16 +6,16 @@
 
 
 **state**
-a set of Threads with
-   a user UserA
-   a user UserB
-   a set of Messages
+a set of Threads with\
+   a user UserA\
+   a user UserB\
+   a set of Messages\
 
-a set of Messages with	
-   a Sender user
-   a Timestamp
-   a content String
-   a delivered or read Status
+a set of Messages with\
+   a Sender user\
+   a Timestamp\
+   a content String\
+   a delivered or read Status\
 
 
 **actions**
