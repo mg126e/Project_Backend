@@ -40,26 +40,26 @@ sendInvite (invite: Invite, invitees: Users)\
    **requires** the invitees and invite exists, and its Sent flag is set to False\
    **effects** sends Invite to all invitees (users in its associated region), sets Sent flag to True, sets Status to ‘pending’\
 
-deleteInvite (user: Inviter, invite: Invite)
-   **requires** the invite exists and  the user is the Inviter for that invite
-   **effects** remove Invite from the Inviter’s set of invites
+deleteInvite (user: Inviter, invite: Invite)\
+   **requires** the invite exists and  the user is the Inviter for that invite\
+   **effects** remove Invite from the Inviter’s set of invites\
 
-acceptInvite (inviter: UserA, invite: Invite, accepter: UserB): (scheduledRun: Run)
-   **requires** the invite exists, its Sent flag is true, and its acceptance status is false
-   **effects** creates a new Run and the Status of the invite is set to ‘accepted’
+acceptInvite (inviter: UserA, invite: Invite, accepter: UserB): (scheduledRun: Run)\
+   **requires** the invite exists, its Sent flag is true, and its acceptance status is false\
+   **effects** creates a new Run and the Status of the invite is set to ‘accepted’\
 
-declineInvite (invite: Invite, decliner: User)
-   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false
-   **effects** sets invite Status to ‘declined’   
+declineInvite (invite: Invite, decliner: User)\
+   **requires** the invite exists, its Sent flag is true, and its acceptance Status is set to false\
+   **effects** sets invite Status to ‘declined’\
 
-completeRun (user: User, run: Run)
-   **requires** the run exists for the user and has not already been marked Completed
-   **effects** sets the Completed flag of the run to true
+completeRun (user: User, run: Run)\
+   **requires** the run exists for the user and has not already been marked Completed\
+   **effects** sets the Completed flag of the run to true\
 
-cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)
-   **requires** the run exists for all users and the initiator user, and is at a valid future time
-   **effects** deletes the run from the set of runs for all users associated with that Run 
+cancelRun (initiator: UserA, userB: UserB, run: Run, time: Time)\
+   **requires** the run exists for all users and the initiator user, and is at a valid future time\
+   **effects** deletes the run from the set of runs for all users associated with that Run\
 
-system expireInvite (start: Time): (invite: Invite)
-   **requires** Start time for invite is in the past
-   **effects** returns invite and removes it from set of invites
+system expireInvite (start: Time): (invite: Invite)\
+   **requires** Start time for invite is in the past\
+   **effects** returns invite and removes it from set of invites\
