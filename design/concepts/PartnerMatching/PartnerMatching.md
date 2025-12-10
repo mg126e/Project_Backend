@@ -6,13 +6,10 @@
    users can have multiple long-term running partner matches at the same time  
      
 **state**  
-a set of Users with  
-   a Profile  
+a set of Users with   
+   a set of running Preferences
    a set of active Matches  
    a set of match Suggestions
-
-a Profile with  
-  a set of running Preferences
 
 a set of running Preferences with  
   a Pace selection    
