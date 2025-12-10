@@ -38,3 +38,5 @@ All mentor meeting notes are organized in the [Mentor Meetings](./mentor_meeting
 Our project report is contained [here](design/project_report.md).\
 Full Demo is [here](https://youtu.be/FUb0BCXNpsc).
 
+## Final Reflections
+Our final individual reflections are contained [here](design/final_reflections.md)
