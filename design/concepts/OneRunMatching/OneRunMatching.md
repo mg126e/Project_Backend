@@ -28,8 +28,8 @@
 **actions** 
 
 setRegion (user: User, region: String)
-   **requires** user exists and the String is a valid region
-   **effects** sets the user’s region to the given region String
+	**requires** user exists and the String is a valid region
+	**effects** sets the user’s region to the given region String
 
 createInvite (inviter: User, region: String, start: Time, distance: Number, location: String):
 (invite: Invite)
