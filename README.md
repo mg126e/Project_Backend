@@ -33,9 +33,9 @@ User testing is contained [here](design/user_testing.md).
 
 All mentor meeting notes are organized in the [Mentor Meetings](./mentor_meetings/) folder.
 
-## Project Report
+## Project Report (Design Summary)
 
-Our project report is contained [here](design/project_report.md).\
+Our design summary is contained [here](design/project_report.md).\
 Full Demo is [here](https://youtu.be/FUb0BCXNpsc).
 
 ## Final Reflections
