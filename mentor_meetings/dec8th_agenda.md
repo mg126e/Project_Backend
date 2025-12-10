@@ -28,4 +28,7 @@ We had an issue navigating the matching side of things, but we have resolved it.
 - We will complete the screen recording for tomorrow's deadline
 
 **Meeting Notes**
-
+- Resolved GSC key issue
+- Did a demo of our application
+- Recommendations on which order to complete features
+- Can wait to complete emergency contact texting on our own time
