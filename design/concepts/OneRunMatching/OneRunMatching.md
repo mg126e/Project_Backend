@@ -6,10 +6,10 @@
    once a user accepts, a run is scheduled for the inviter and accepter.
 
 **state**
-	a set of Users with
-	   a region String
-	   a set of run Invites
-	   a set of scheduled Runs
+	a set of Users with\
+	   a region String\
+	   a set of run Invites\
+	   a set of scheduled Runs\
 
 	a set of run Invites with
 	   a Sent flag
