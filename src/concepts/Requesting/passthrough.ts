@@ -97,6 +97,8 @@ export const exclusions: Array<string> = [
   "/api/EmailVerification/requestVerification",
   "/api/EmailVerification/verifyEmail",
   "/api/EmailVerification/register",
+  "/api/EmailVerification/verifyCode",
+  "/api/EmailVerification/resendCode",
   "/api/UserProfile/createProfile",
   "/api/UserProfile/setName",
   "/api/UserProfile/setBio",
