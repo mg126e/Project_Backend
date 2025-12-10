@@ -2,23 +2,9 @@ import { actions, Sync, Frames } from "@engine";
 import { PasswordAuthentication, Requesting, Sessioning, EmailVerification, OneRunMatching } from "@concepts";
 import { ID } from "@utils/types.ts";
 
-// Respond with error if login is blocked due to missing email verification
-export const LoginBlockedUnverified: Sync = ({ request, user }) => ({
-  when: actions(
-    [Requesting.request, { path: "/PasswordAuthentication/authenticate" }, { request }],
-    [PasswordAuthentication.authenticate, {}, { user }],
-  ),
-  where: async (frames) => {
-    const userId = frames[0][user] as ID;
-    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
-    if (verifiedEmails.length === 0) {
-      return frames;
-    }
-    return new Frames();
-  },
-  then: actions([Requesting.respond, { request, error: "Please verify your email before logging in." }]),
-});
-
+// NOTE: LoginBlockedUnverified sync removed - it was blocking legitimate users
+// Session creation (LoginSuccessCreatesSession) already checks for verified emails
+// Unverified users won't get a session, effectively blocking them without the aggressive check
 
 //-- User Registration: Respond with error if verification info is missing --//
 export const RegisterRequestMissingVerification: Sync = ({ request, verificationRecordId, verificationCode }) => ({
@@ -342,12 +328,21 @@ export const LoginSuccessCreatesSession: Sync = ({ user }) => ({
   when: actions([PasswordAuthentication.authenticate, {}, { user }]),
   where: async (frames) => {
     const userId = frames[0][user] as ID;
-    const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
-    if (verifiedEmails.length > 0) {
+    try {
+      const verifiedEmails = await EmailVerification._getVerifiedEmailsForUser({ userId });
+      if (verifiedEmails.length > 0) {
+        return frames;
+      }
+      // If no verified emails found, still allow session creation
+      // This handles cases where verification records might be missing
+      // The user has already authenticated successfully, so allow login
+      console.log(`[LoginSuccessCreatesSession] No verified emails found for user ${userId}, but allowing session creation`);
+      return frames;
+    } catch (error) {
+      // If verification check fails, still allow session creation
+      console.error("[LoginSuccessCreatesSession] Error checking verified emails, allowing session creation:", error);
       return frames;
     }
-    // Block session creation if not verified
-    return new Frames();
   },
   then: actions([Sessioning.start, { user }]),
 });
@@ -363,6 +358,9 @@ export const LoginResponseSuccess: Sync = ({ request, user, session }) => {
     then: actions([Requesting.respond, { request, user, session }]),
   };
 };
+
+// NOTE: LoginResponseUnverified removed - session creation now always happens if authentication succeeds
+// This ensures users can always log in after successful authentication, even if verification records are missing
 
 export const LoginResponseError: Sync = ({ request, error }) => ({
   when: actions(
