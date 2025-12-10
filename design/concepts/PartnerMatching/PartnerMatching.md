@@ -55,3 +55,4 @@ unmatch (activeMatch: Match, user: UserA, user: UserB)
 - suggestMatch is a **system** action as users have no direct control or interaction with this, since matches are automatically generated based on preference settings  
 - The recipient user is the one who receives the suggestion and the candidate user is the one who is being suggested.  
 - Any notion of a createPreferences action is subsumed by the updatePreferences since technically, users can also have no preferences set (presumably when they first create their account).
+- Our logic is that although pace and time of day preference settings appear to be in the user's profile in the front-end, they are actually treated separately and are independent from UserProfile in the back-end, actually being used by PartnerMatching for suggesting matches unlike the other tags.
