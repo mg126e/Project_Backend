@@ -28,6 +28,14 @@ The most significant change was our shift from a run club-based application to a
 
 **Messaging:**
 - Implemented automatic message thread creation and management to ensure users can only message those they have an active match with (PartnerMatching, OneRunMatching)
+- Based on feedback, we revised the concept specification and simplified it so that 2 users share a thread rather than each user owning a 'copy' of the thread. The feedback was really helpful in understanding how to break down a seemingly simple concept like Messaging to fit the concept design framework we learnt and not overcomplicate it.
+
+**PartnerMatching:**
+- To avoid a conflation of concerns with UserProfile, we decided to separate how users interact with this in the front-end from the concept specification driving the back-end. As noted in the spec, we decided that the main running preferences (pace and time of day) would be fields used in PartnerMatching while the other fields are tags in UserProfile. So, although they all appear together for the sake of the user, the concepts do not actually interact with each other.
+- We also removed the match action and just made it a sync triggered by two people accepting each other's suggestions.
+
+**OneRunMatching:**
+- We included a system expireInvite action that causes the invite to expire after the time of the run. As a result, we didn't see a need for a declineInvite action since the user's invites feed would be automatically cleared anyways.
 
 ### Key Learnings
 
