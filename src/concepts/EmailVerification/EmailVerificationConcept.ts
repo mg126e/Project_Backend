@@ -140,9 +140,6 @@ export default class EmailVerificationConcept {
               expirationMinutes: 15,
             },
           );
-          console.log(
-            `[EmailVerification.requestVerification] Verification email sent to ${email}`,
-          );
         } catch (emailError) {
           console.error(
             "[EmailVerification.requestVerification] Failed to send email:",
@@ -371,9 +368,6 @@ export default class EmailVerificationConcept {
               appName: "RunBuddy",
               expirationMinutes: 15,
             },
-          );
-          console.log(
-            `[EmailVerification.resendCode] Verification email resent to ${pendingRecord.email}`,
           );
         } catch (emailError) {
           console.error(
