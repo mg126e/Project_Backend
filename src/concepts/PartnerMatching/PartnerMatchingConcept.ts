@@ -173,42 +173,25 @@ export default class PartnerMatchingConcept {
     // Check if profile already exists
     let profile = await this.profiles.findOne({ _id: user });
     if (profile) {
-      console.log(`[ensurePartnerMatchingProfile] Profile already exists for user: ${user}`);
       return profile;
     }
 
     // Try to create from UserProfile
-    console.log(`[ensurePartnerMatchingProfile] Looking for UserProfile for user: ${user}`);
     const userProfile = await this.userProfiles.findOne({ _id: user });
     if (!userProfile) {
-      console.log(`[ensurePartnerMatchingProfile] No UserProfile found for user: ${user}`);
       return null;
     }
-
-    console.log(`[ensurePartnerMatchingProfile] Found UserProfile for user: ${user}`, {
-      tags: userProfile.tags,
-      timeOfDayCategory: userProfile.timeOfDayCategory,
-    });
 
     const preferences = this.convertUserProfileToPreferences(userProfile);
     if (!preferences) {
-      console.log(`[ensurePartnerMatchingProfile] Could not convert UserProfile to preferences for user: ${user}`, {
-        runningPace: userProfile.tags?.runningPace,
-        runningLevel: userProfile.tags?.runningLevel,
-        timeOfDayCategory: userProfile.timeOfDayCategory,
-      });
       return null;
     }
-
-    console.log(`[ensurePartnerMatchingProfile] Created preferences for user: ${user}`, preferences);
-
     // Create the PartnerMatching profile
     profile = {
       _id: user,
       preferences,
     };
     await this.profiles.insertOne(profile);
-    console.log(`[ensurePartnerMatchingProfile] Created PartnerMatching profile for user: ${user}`);
     return profile;
   }
 

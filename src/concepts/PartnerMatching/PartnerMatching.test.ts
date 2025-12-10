@@ -312,21 +312,16 @@ Deno.test("PartnerMatching: updateProfilePreferences action", async () => {
     const concept = new PartnerMatchingConcept(db);
 
     console.log(
-      "\n > Testing updating a non-existent profile (EXPECTED TO FAIL).",
+      "\n > Testing updating a non-existent profile (auto-creates).",
     );
     const noProfileResult = await concept.updateProfilePreferences({
       user: alice,
       preferences: alicePrefs,
     });
-    assert("error" in noProfileResult);
-    assertEquals(
-      noProfileResult.error,
-      "Profile not found for the given user. Cannot update preferences.",
-    );
+    assert("profile" in noProfileResult);
+    console.log("   ✅ Profile was auto-created with upsert.");
 
-    await createProfile(db, alice, alicePrefs);
-    console.log("\n > Setup: Alice's profile has been created.");
-
+    console.log("\n > Testing a valid profile update.");
     const newPreferences: Preferences = { ...alicePrefs, distance: 5 };
     console.log("\n > Testing a valid profile update.");
     const updateResult = await concept.updateProfilePreferences({ user: alice, preferences: newPreferences });

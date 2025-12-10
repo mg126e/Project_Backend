@@ -1,4 +1,3 @@
-running 9 tests from ./src/concepts/OneRunMatching/OneRunMatching.test.ts
 OneRunMatching: Principle Lifecycle of a Successful Run ...
 ------- output -------
 
@@ -24,15 +23,13 @@ OneRunMatching: Principle Lifecycle of a Successful Run ...
 --- Principle Test Completed Successfully ---
 ----- output end -----
 OneRunMatching: Principle Lifecycle of a Successful Run ... ok (1s)
-
-
 OneRunMatching: createInvite action requirements ...
 ------- output -------
 
 --- Test: createInvite Action Requirements ---
 
- > Testing Requirement: Action must fail if inviter does not exist.
-   ✅ Correctly failed with an error.
+ > Testing Requirement: Action auto-creates user if inviter does not exist.
+   ✅ Correctly auto-created user and created invite.
 
  > Testing Requirement: Action must fail if distance is not positive.
    ✅ Correctly failed with an error.
@@ -40,9 +37,7 @@ OneRunMatching: createInvite action requirements ...
  > Testing Requirement: Action must fail if start time is in the past.
    ✅ Correctly failed with an error.
 ----- output end -----
-OneRunMatching: createInvite action requirements ... ok (696ms)
-
-
+OneRunMatching: createInvite action requirements ... ok (765ms)
 OneRunMatching: Scenario - Simulated Race Condition ...
 ------- output -------
 
@@ -56,9 +51,7 @@ OneRunMatching: Scenario - Simulated Race Condition ...
  > Charlie tries to accept moments later (EXPECTED TO FAIL).
    ✅ Correctly failed, preventing a duplicate run.
 ----- output end -----
-OneRunMatching: Scenario - Simulated Race Condition ... ok (986ms)
-
-
+OneRunMatching: Scenario - Simulated Race Condition ... ok (1s)
 OneRunMatching: Scenario - Invite Cancellation by Inviter ...
 ------- output -------
 
@@ -71,9 +64,7 @@ OneRunMatching: Scenario - Invite Cancellation by Inviter ...
  > Bob tries to accept the now-deleted invite (EXPECTED TO FAIL).
    ✅ Correctly failed, as the invite no longer exists.
 ----- output end -----
-OneRunMatching: Scenario - Invite Cancellation by Inviter ... ok (889ms)
-
-
+OneRunMatching: Scenario - Invite Cancellation by Inviter ... ok (929ms)
 OneRunMatching: User cannot accept their own invite ...
 ------- output -------
 
@@ -84,7 +75,7 @@ OneRunMatching: User cannot accept their own invite ...
  > Alice tries to accept her own invite (EXPECTED TO FAIL).
    ✅ Correctly failed, preventing self-acceptance.
 ----- output end -----
-OneRunMatching: User cannot accept their own invite ... ok (807ms)
+OneRunMatching: User cannot accept their own invite ... ok (775ms)
 OneRunMatching: User not on invitee list cannot accept ...
 ------- output -------
 
@@ -95,9 +86,7 @@ OneRunMatching: User not on invitee list cannot accept ...
  > Denise (from another region) tries to accept the invite (EXPECTED TO FAIL).
    ✅ Correctly failed, as Denise was not an invitee.
 ----- output end -----
-OneRunMatching: User not on invitee list cannot accept ... ok (841ms)
-
-
+OneRunMatching: User not on invitee list cannot accept ... ok (887ms)
 OneRunMatching: Cannot cancel a completed run ...
 ------- output -------
 
@@ -122,9 +111,7 @@ OneRunMatching: System action expireInvite works correctly ...
  > Verifying Effects...
    ✅ Effects Verified: Expired invites were correctly removed everywhere.
 ----- output end -----
-OneRunMatching: System action expireInvite works correctly ... ok (848ms)
-
-
+OneRunMatching: System action expireInvite works correctly ... ok (876ms)
 OneRunMatching: System action expireInvite runs gracefully with no expired invites ...
 ------- output -------
 
@@ -136,6 +123,6 @@ OneRunMatching: System action expireInvite runs gracefully with no expired invit
  > Result: { "expiredInvites": [] }
    ✅ Correctly returned an empty array with no errors.
 ----- output end -----
-OneRunMatching: System action expireInvite runs gracefully with no expired invites ... ok (703ms)
+OneRunMatching: System action expireInvite runs gracefully with no expired invites ... ok (701ms)
 
 ok | 9 passed | 0 failed (8s)
