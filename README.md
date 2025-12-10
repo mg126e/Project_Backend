@@ -35,5 +35,6 @@ All mentor meeting notes are organized in the [Mentor Meetings](./mentor_meeting
 
 ## Project Report
 
-Our project report is contained [here](design/project_report.md).
+Our project report is contained [here](design/project_report.md).\
+Full Demo is [here](https://youtu.be/FUb0BCXNpsc).
 
