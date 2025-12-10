@@ -13,8 +13,8 @@
 
 	a set of run Invites with
 	   a Sent flag
-   a start Time
-	   an Inviter user
+       a start Time
+   	   an Inviter user
 	   a set of invitee Users
 	   a meeting location String
    	   a running distance Number
@@ -23,7 +23,7 @@
 	a set of scheduled Runs with
 	   a user UserA
 	   a user UserB
-   a Completed flag
+	   a Completed flag
 	      
 **actions** 
 
