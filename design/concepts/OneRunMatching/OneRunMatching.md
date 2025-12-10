@@ -27,18 +27,18 @@
 	      
 **actions** 
 
-setRegion (user: User, region: String)
-	**requires** user exists and the String is a valid region
+setRegion (user: User, region: String)\
+	**requires** user exists and the String is a valid region\
 	**effects** sets the user’s region to the given region String
 
 createInvite (inviter: User, region: String, start: Time, distance: Number, location: String):
-(invite: Invite)
-   **requires** inviter exists, region and location are valid, start is a future time,  and distance is greater than zero
-   **effects** creates a new run Invite with given details and Sent flag set to false
+(invite: Invite)\
+   **requires** inviter exists, region and location are valid, start is a future time,  and distance is greater than zero\
+   **effects** creates a new run Invite with given details and Sent flag set to false\
 
-sendInvite (invite: Invite, invitees: Users)
-   **requires** the invitees and invite exists, and its Sent flag is set to False
-   **effects** sends Invite to all invitees (users in its associated region), sets Sent flag to True, sets Status to ‘pending’
+sendInvite (invite: Invite, invitees: Users)\
+   **requires** the invitees and invite exists, and its Sent flag is set to False\
+   **effects** sends Invite to all invitees (users in its associated region), sets Sent flag to True, sets Status to ‘pending’\
 
 deleteInvite (user: Inviter, invite: Invite)
    **requires** the invite exists and  the user is the Inviter for that invite
