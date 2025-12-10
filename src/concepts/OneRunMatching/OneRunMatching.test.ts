@@ -99,10 +99,14 @@ Deno.test("OneRunMatching: createInvite action requirements", async () => {
     const concept = new OneRunMatchingConcept(db);
     await createUser(db, alice, "Cambridge");
 
-    console.log("\n > Testing Requirement: Action must fail if inviter does not exist.");
+    console.log("\n > Testing Requirement: Action auto-creates user if inviter does not exist.");
     const noUserResult = await concept.createInvite({ inviter: bob, region: "Nowhere", start: getOffsetDate(1), distance: 5, location: "N/A" });
-    assert("error" in noUserResult);
-    console.log("   ✅ Correctly failed with an error.");
+    assert("invite" in noUserResult);
+    // Verify the user was auto-created
+    const bobDoc = await concept.users.findOne({ _id: bob });
+    assertExists(bobDoc, "User should be auto-created");
+    assertEquals(bobDoc.region, "Nowhere", "User should have the region from createInvite");
+    console.log("   ✅ Correctly auto-created user and created invite.");
 
     console.log("\n > Testing Requirement: Action must fail if distance is not positive.");
     const zeroDistResult = await concept.createInvite({ inviter: alice, region: "Cambridge", start: getOffsetDate(1), distance: 0, location: "Here" });
