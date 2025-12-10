@@ -1,6 +1,6 @@
-import { assert, assertEquals, assertExists, assertNotEquals } from "jsr:@std/assert";
+import { assert, assertEquals, assertExists } from "jsr:@std/assert";
 import { Db, MongoClient } from "npm:mongodb";
-import { testDb } from "@utils/database.ts";
+import { testDb, freshID } from "@utils/database.ts";
 import MessagingConcept from "./MessagingConcept.ts";
 import { ID } from "@utils/types.ts";
 
@@ -11,6 +11,19 @@ const userAlice = "user:Alice" as ID;
 const userBob = "user:Bob" as ID;
 const userCharlie = "user:Charlie" as ID;
 
+/**
+ * Helper function to create a partner match between two users.
+ * This is needed because _getThreadsForUser filters threads based on active matches.
+ */
+async function createPartnerMatch(db: Db, userA: ID, userB: ID): Promise<void> {
+  const matches = db.collection<{ _id: ID; users: [ID, ID] }>("PartnerMatching.matches");
+  const sortedUsers: [ID, ID] = userA < userB ? [userA, userB] : [userB, userA];
+  await matches.insertOne({
+    _id: freshID(),
+    users: sortedUsers,
+  });
+}
+
 // --- Test Cases ---
 
 Deno.test("Messaging: Principle Lifecycle of a Resilient Chat", async () => {
@@ -20,12 +33,13 @@ Deno.test("Messaging: Principle Lifecycle of a Resilient Chat", async () => {
   [db, client] = await testDb();
   try {
     const concept = new MessagingConcept(db);
-    let threadId: ID;
-    let messageId1: ID;
 
     console.log(
       " > Setup: Three users exist: Alice, Bob, and Charlie. The database is clean.",
     );
+
+    // Create a partner match between Alice and Bob so threads are visible
+    await createPartnerMatch(db, userAlice, userBob);
 
     // Step 1: Alice and Bob are connected, creating a thread.
     console.log("\n[Step 1] A chat thread is created for Alice and Bob.");
@@ -34,7 +48,7 @@ Deno.test("Messaging: Principle Lifecycle of a Resilient Chat", async () => {
       userB: userBob,
     });
     assert("thread" in startChatResult);
-    threadId = startChatResult.thread;
+    const threadId = startChatResult.thread;
     console.log(` > Action: startChat -> New thread created: ${threadId}`);
     const threadState = await concept.threads.findOne({ _id: threadId });
     assertExists(threadState, "Verification failed: Thread should exist.");
@@ -48,7 +62,7 @@ Deno.test("Messaging: Principle Lifecycle of a Resilient Chat", async () => {
       sender: userAlice,
     });
     assert("message" in sendMessage1Result);
-    messageId1 = sendMessage1Result.message;
+    const messageId1 = sendMessage1Result.message;
     console.log(` > Action: sendMessage -> Message created: ${messageId1}`);
     const msg1State = await concept.messages.findOne({ _id: messageId1 });
     assertEquals(msg1State?.status, "delivered");
@@ -240,6 +254,8 @@ Deno.test("Messaging: Scenario - Mutual Deletion and Restoration", async () => {
   try {
     const concept = new MessagingConcept(db);
     console.log("\n > Setup: Alice and Bob start a chat and send a message.");
+    // Create a partner match between Alice and Bob so threads are visible
+    await createPartnerMatch(db, userAlice, userBob);
     const { thread } = await concept.startChat({ userA: userAlice, userB: userBob }) as { thread: ID };
     await concept.sendMessage({ content: "Initial message", thread, sender: userAlice });
 
@@ -277,7 +293,8 @@ Deno.test("Messaging: Scenario - Mutual Deletion and Restoration", async () => {
     const messages = await concept._getMessagesInThread({ thread, user: userAlice });
     assert(!("error" in (messages[0] ?? {})));
     assertEquals(messages.length, 1);
-    assertEquals((messages as any[])[0].content, "Initial message");
+    const message = messages[0] as { content: string };
+    assertEquals(message.content, "Initial message");
     console.log("   ✅ Effect Verified: Previous messages are still present.");
   } finally {
     await client.close();
@@ -290,6 +307,9 @@ Deno.test("Messaging Queries", async (t) => {
   try {
     const concept = new MessagingConcept(db);
     // Setup: Alice has chats with Bob and Charlie. Bob deletes his.
+    // Create partner matches so threads are visible
+    await createPartnerMatch(db, userAlice, userBob);
+    await createPartnerMatch(db, userAlice, userCharlie);
     const { thread: threadAB } = await concept.startChat({ userA: userAlice, userB: userBob }) as { thread: ID };
     await concept.startChat({ userA: userAlice, userB: userCharlie });
     await concept.sendMessage({ content: "Hi Bob", thread: threadAB, sender: userAlice });
